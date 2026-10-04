@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       value: ${{ steps.v.outputs.value }}
     steps:
@@ -40,14 +40,14 @@ jobs:
   nuget:
     name: Push to nuget.org
     needs: [version, build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: nuget
     steps:
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: cryptonet-packages
           path: artifacts
