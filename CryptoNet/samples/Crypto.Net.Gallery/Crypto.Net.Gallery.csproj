@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <Description>Crypto.Net Gallery — interactive developer studio for the Crypto.Net multi-chain toolkit.</Description>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Crypto.Net.Extensions\Crypto.Net.Extensions.csproj" />
+  </ItemGroup>
+</Project>

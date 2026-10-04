@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Rust-accelerated cryptographic core for Crypto.Net: hashing (SHA-2, Keccak, BLAKE2b, RIPEMD-160), secp256k1 ECDSA/Schnorr/Taproot, Ed25519, sr25519, BIP-32/SLIP-10, scrypt/PBKDF2, Base58/Bech32 — with a transparent managed fallback.</Description>
+    <PackageId>Crypto.Net.Native</PackageId>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Crypto.Net.Tests" />
+  </ItemGroup>
+
+  <!-- Native binaries: packed under runtimes/{rid}/native and copied next to the app for local runs. -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\**\*.*" Pack="true" PackagePath="runtimes" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\cryptonet.dll"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\cryptonet.dll')"
+          Link="cryptonet.dll" CopyToOutputDirectory="PreserveNewest" Pack="false" Visible="false" />
+  </ItemGroup>
+</Project>

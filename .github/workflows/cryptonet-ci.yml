@@ -1,0 +1,172 @@
+# Builds the Rust core for every supported runtime, tests Crypto.Net on Windows, Linux and macOS,
+# and packs the NuGet packages with all native binaries.
+name: CryptoNet CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["CryptoNet/**", ".github/workflows/cryptonet-*.yml"]
+  pull_request:
+    paths: ["CryptoNet/**", ".github/workflows/cryptonet-*.yml"]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: Package version (empty = Directory.Build.props)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: CryptoNet
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CARGO_TERM_COLOR: always
+
+jobs:
+  native:
+    name: Rust ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64,     os: windows-latest,   target: x86_64-pc-windows-msvc,    file: cryptonet.dll,      test: true }
+          - { rid: win-arm64,   os: windows-latest,   target: aarch64-pc-windows-msvc,   file: cryptonet.dll,      test: false }
+          - { rid: linux-x64,   os: ubuntu-22.04,     target: x86_64-unknown-linux-gnu,  file: libcryptonet.so,    test: true }
+          - { rid: linux-arm64, os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu, file: libcryptonet.so,    test: true }
+          - { rid: osx-x64,     os: macos-latest,     target: x86_64-apple-darwin,       file: libcryptonet.dylib, test: false }
+          - { rid: osx-arm64,   os: macos-latest,     target: aarch64-apple-darwin,      file: libcryptonet.dylib, test: true }
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: CryptoNet/rust
+          key: ${{ matrix.target }}
+
+      - name: cargo test
+        if: matrix.test
+        working-directory: CryptoNet/rust
+        run: cargo test --release
+
+      - name: cargo build
+        working-directory: CryptoNet/rust
+        run: cargo build --release -p cryptonet-ffi --target ${{ matrix.target }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-${{ matrix.rid }}
+          path: CryptoNet/rust/target/${{ matrix.target }}/release/${{ matrix.file }}
+          if-no-files-found: error
+
+  lint:
+    name: Rust lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: CryptoNet/rust
+      - working-directory: CryptoNet/rust
+        run: |
+          cargo fmt --all --check
+          cargo clippy --all-targets -- -D warnings
+
+  test:
+    name: .NET tests ${{ matrix.rid }}
+    needs: native
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64,   os: windows-latest }
+          - { rid: linux-x64, os: ubuntu-24.04 }
+          - { rid: osx-arm64, os: macos-latest }
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-${{ matrix.rid }}
+          path: CryptoNet/runtimes/${{ matrix.rid }}/native
+
+      - name: dotnet test
+        run: dotnet test tests/Crypto.Net.Tests -c Release --logger "trx;LogFileName=results.trx"
+
+      - name: Native backend was used
+        shell: bash
+        run: |
+          dotnet run --project tools/Crypto.Net.Cli -c Release -- doctor --json | tee doctor.json
+          grep -q '"nativeLoaded": true' doctor.json
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results-${{ matrix.rid }}
+          path: CryptoNet/tests/Crypto.Net.Tests/TestResults/*.trx
+
+  pack:
+    name: Pack NuGet packages
+    needs: [native, test, lint]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: native-*
+          path: CryptoNet/native
+
+      - name: Lay out runtimes/<rid>/native
+        shell: bash
+        run: |
+          for dir in native/native-*; do
+            rid="${dir#native/native-}"
+            mkdir -p "runtimes/$rid/native"
+            cp "$dir"/* "runtimes/$rid/native/"
+          done
+          find runtimes -type f | sort
+
+      - name: dotnet pack
+        shell: bash
+        run: |
+          args=(-c Release -o artifacts)
+          if [ -n "${{ inputs.version }}" ]; then args+=("-p:Version=${{ inputs.version }}"); fi
+          dotnet pack Crypto.Net.slnx "${args[@]}"
+
+      - name: Verify native binaries are inside Crypto.Net.Native
+        shell: bash
+        run: |
+          pkg=$(ls artifacts/Crypto.Net.Native.*.nupkg | grep -v snupkg)
+          unzip -l "$pkg" | grep runtimes/
+          test "$(unzip -l "$pkg" | grep -c 'runtimes/.*/native/')" -eq 6
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cryptonet-packages
+          path: CryptoNet/artifacts/*
+          if-no-files-found: error

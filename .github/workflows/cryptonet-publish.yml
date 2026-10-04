@@ -1,0 +1,73 @@
+# Publishes Crypto.Net to nuget.org. Runs the full CI pipeline first, then pushes the packages with the
+# NUGET_API_KEY repository secret and creates a GitHub release.
+#
+# Trigger: push a tag such as CryptoNet-v1.0.0, or run it manually with a version.
+# NuGet versions are permanent (they can be unlisted, never deleted or replaced).
+name: CryptoNet Publish
+
+on:
+  push:
+    tags: ["CryptoNet-v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish (e.g. 1.0.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      value: ${{ steps.v.outputs.value }}
+    steps:
+      - id: v
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then v="${{ inputs.version }}"; else v="${GITHUB_REF_NAME#CryptoNet-v}"; fi
+          if ! [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then echo "Invalid version '$v'"; exit 1; fi
+          echo "value=$v" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    uses: ./.github/workflows/cryptonet-ci.yml
+    with:
+      version: ${{ needs.version.outputs.value }}
+
+  nuget:
+    name: Push to nuget.org
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    environment: nuget
+    steps:
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: cryptonet-packages
+          path: artifacts
+
+      - name: dotnet nuget push
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        shell: bash
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then echo "NUGET_API_KEY secret is not set"; exit 1; fi
+          for pkg in artifacts/*.nupkg; do
+            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          done
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          tag="CryptoNet-v${{ needs.version.outputs.value }}"
+          gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create "$tag" artifacts/*.nupkg -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Crypto.Net $tag" --notes "See [CHANGELOG.md](https://github.com/DotNetVibeCoderz/Vibe_Crypto/blob/main/CryptoNet/CHANGELOG.md). Built by Gravicode Studios, led by Kang Fadhil."

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>HD Wallet (BIP39, BIP32, BIP44, SLIP-10), encrypted keystore, and key management for Crypto.Net</Description>
+    <PackageId>Crypto.Net.Wallet</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\bip39_english.txt" />
+  </ItemGroup>
+</Project>
