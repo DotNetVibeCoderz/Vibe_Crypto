@@ -20,6 +20,7 @@
 | [Keamanan](keamanan.md) | menjalankan di produksi dengan aman |
 | [Build dan kontribusi](kontribusi.md) | build dari source, menjalankan test, merilis paket |
 | [FAQ](faq.md) | mencari jawaban cepat |
+| [Notebook](../../samples/notebooks/README.md) | mempelajari setiap chain secara interaktif di Polyglot Notebooks |
 
 ## Apa saja yang didukung
 

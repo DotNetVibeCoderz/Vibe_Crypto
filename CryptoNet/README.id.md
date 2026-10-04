@@ -131,6 +131,11 @@ CLI, Gallery dan `ChainCatalog` membaca `CRYPTONET_ANKR_KEY` dan `CRYPTONET_DRPC
 sehingga Crypto.Net mematikan logging HTTP untuk client ber-key. Simpan kunci di user-secrets atau variabel
 lingkungan, jangan pernah di source control.
 
+## Notebook
+
+Enam notebook .NET interaktif — dompet, Bitcoin, Ethereum/EVM, Solana, Polkadot dan Cosmos — dalam bahasa
+Inggris dan Indonesia: [samples/notebooks](samples/notebooks/README.md). Buka di VS Code dengan Polyglot Notebooks.
+
 ## Perintah `cnet`
 
 ```bash

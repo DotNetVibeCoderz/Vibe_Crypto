@@ -74,4 +74,9 @@ transfer kecil ke diri sendiri di testnet:
 dotnet run --project samples/Crypto.Net.QuickStart
 ```
 
+## 6. Belajar secara interaktif
+
+[Notebook](../../samples/notebooks/README.md) membahas setiap chain langkah demi langkah dengan
+pembacaan jaringan live (bahasa Inggris dan Indonesia).
+
 Berikutnya: [Konsep](konsep.md).

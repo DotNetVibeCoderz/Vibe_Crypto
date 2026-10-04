@@ -2,6 +2,12 @@
 
 All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachangelog.com/), versions: SemVer.
 
+## [Unreleased]
+
+### Added
+- Polyglot notebooks for wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos in English and
+  Bahasa Indonesia (`samples/notebooks`), generated from one source and executed against the published 1.0.0 packages.
+
 ## [1.0.0] — 2026-10-05
 
 First public release. Built by Gravicode Studios, led by Kang Fadhil.

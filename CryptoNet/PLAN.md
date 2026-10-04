@@ -30,8 +30,9 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 
 ## Next — 1.1 (hardening and reach)
 
-- [ ] CI (GitHub Actions): Rust build matrix for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `linux-musl-x64`,
-      `osx-x64`, `osx-arm64`; pack with all native binaries; run tests on each OS.
+- [x] CI (GitHub Actions): Rust build matrix for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`;
+      pack with all native binaries; tests on Windows, Linux and macOS; tag-triggered NuGet publishing.
+- [ ] `linux-musl-x64` (Alpine) native build.
 - [ ] `cargo audit` / `cargo deny`, `dotnet list package --vulnerable`, SBOM in CI.
 - [ ] Fuzzing (`cargo-fuzz`) for Base58, Bech32, RLP, SCALE and metadata decoders.
 - [ ] BIP-341 official wallet test vectors (key-path spending suite) in the test project.
@@ -46,7 +47,8 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [ ] Source generators: Solidity ABI → typed services, Anchor IDL → clients; `cnet gen`.
 - [ ] `Crypto.Net.Analyzers` (CNET001–005: hard-coded secrets, secrets as `string`, `Amount` from `double`…).
 - [ ] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`).
-- [ ] Polyglot notebooks (EN/ID).
+- [x] Polyglot notebooks (EN/ID) — one per chain.
+- [ ] Notebooks for indexer, benchmarks and security practices.
 - [ ] VS Code extension "Crypto.Net Tools".
 - [ ] ERC-721/1155, ENS, EIP-4337; SPL Token-2022 extensions; CosmWasm; Polkadot staking/nomination helpers.
 - [ ] Hardware wallets (Ledger/Trezor) and WalletConnect v2 as `ISigner` implementations.

@@ -74,4 +74,9 @@ self-transfers on testnets:
 dotnet run --project samples/Crypto.Net.QuickStart
 ```
 
+## 6. Learn interactively
+
+The [notebooks](../../samples/notebooks/README.md) walk through each chain step by step with live
+network reads (English and Bahasa Indonesia).
+
 Next: [Concepts](concepts.md).

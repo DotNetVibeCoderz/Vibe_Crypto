@@ -23,8 +23,10 @@
 | QuickStart sample | ✅ Done | Runs read-only against 5 networks |
 | Documentation EN + ID | ✅ Done | README ×2, docs 12 + 12 pages |
 | NuGet icon, metadata, scripts | ✅ Done | `assets/icon.png`, `scripts/pack.ps1`, `scripts/publish-nuget.ps1` |
-| NuGet publish | ⏳ Waiting | Needs owner confirmation (versions are permanent) |
-| CI matrix for other RIDs | ⏳ Planned | See PLAN.md 1.1 |
+| GitHub repository | ✅ Done | DotNetVibeCoderz/Vibe_Crypto, folder `CryptoNet/` (PR #1) |
+| CI (6 native RIDs, tests on 3 OSes) | ✅ Done | `cryptonet-ci.yml` green on PR and `main` |
+| NuGet publish 1.0.0 | ✅ Done | 11 packages on nuget.org via `cryptonet-publish.yml`; GitHub release `CryptoNet-v1.0.0` |
+| Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
 
 ## Log
 
@@ -44,3 +46,8 @@
   Osmosis testnets, Polygon).
 - **2026-10-05** — Ankr and dRPC providers with access-denied failover; keys kept out of logs and source.
 - **2026-10-05** — New NuGet icon, package metadata, pack/publish scripts, bilingual documentation and screenshots.
+- **2026-10-05** — Moved into the `DotNetVibeCoderz/Vibe_Crypto` repository (`CryptoNet/`); CI builds native libraries for
+  six RIDs (Windows CRT linked statically) and tests on Windows, Linux and macOS; all green on the first run.
+- **2026-10-05** — Released 1.0.0: tag `CryptoNet-v1.0.0` published 11 packages (+ symbols) to nuget.org with the
+  `NUGET_API_KEY` secret and created the GitHub release.
+- **2026-10-05** — Added Polyglot notebooks for every chain (EN/ID), verified by executing them against nuget.org.

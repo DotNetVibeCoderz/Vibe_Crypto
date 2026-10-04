@@ -20,6 +20,7 @@
 | [Security](security.md) | deploy safely |
 | [Building and contributing](contributing.md) | build from source, run tests, release packages |
 | [FAQ](faq.md) | find quick answers |
+| [Notebooks](../../samples/notebooks/README.md) | learn each chain interactively in Polyglot Notebooks |
 
 ## What is supported
 

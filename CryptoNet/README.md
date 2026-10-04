@@ -138,6 +138,11 @@ The CLI, the Gallery and `ChainCatalog` read `CRYPTONET_ANKR_KEY` and `CRYPTONET
 Ankr keys are part of the URL, so Crypto.Net disables HTTP logging for keyed clients. Keep keys in
 user-secrets or environment variables, never in source control.
 
+## Notebooks
+
+Six interactive .NET notebooks — wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos — in English
+and Bahasa Indonesia: [samples/notebooks](samples/notebooks/README.md). Open them in VS Code with Polyglot Notebooks.
+
 ## The `cnet` command line
 
 ```bash
