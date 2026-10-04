@@ -3,7 +3,7 @@
   Publishes the packages in ./artifacts to NuGet.
 
 .DESCRIPTION
-  Releases normally go through GitHub Actions (.github/workflows/publish.yml, triggered by a v* tag) using the
+  Releases normally go through GitHub Actions (.github/workflows/cryptonet-publish.yml at the repository root, triggered by a CryptoNet-v* tag) using the
   NUGET_API_KEY repository secret. This script is the local fallback.
 
   The API key is read, in order, from -ApiKey, the NUGET_API_KEY environment variable, or the

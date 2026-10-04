@@ -429,8 +429,8 @@ FodyWeavers.xsd
 
 # ---------------------------------------------------------------- Crypto.Net
 # Rust build output
-rust/target/
-# Native binaries are produced by CI (.github/workflows/ci.yml); build locally with scripts/build-native.ps1
+**/rust/target/
+# Native binaries are produced by CI (.github/workflows/cryptonet-ci.yml); build locally with CryptoNet/scripts/build-native.ps1
 runtimes/
 # Secrets: never commit keys, mnemonics or keystores
 *.keystore.json

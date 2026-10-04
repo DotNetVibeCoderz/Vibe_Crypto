@@ -26,7 +26,7 @@ sistem tersebut dan diletakkan di `runtimes/linux-x64/native/libcryptonet.so`, `
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` berjalan di setiap push dan pull request: membangun library Rust untuk `win-x64`,
+`.github/workflows/cryptonet-ci.yml` (di root repositori) berjalan di setiap push dan pull request: membangun library Rust untuk `win-x64`,
 `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64` dan `osx-arm64`, memeriksa `cargo fmt`/`clippy`, menjalankan
 test .NET di Windows, Linux dan macOS dengan library native, dan membuat paket NuGet yang berisi keenam binary
 (bisa diunduh sebagai artifact `packages`).
@@ -34,10 +34,10 @@ test .NET di Windows, Linux dan macOS dengan library native, dan membuat paket N
 ## Merilis
 
 ```bash
-git tag v1.0.0 && git push origin v1.0.0     # menjalankan CI, push ke nuget.org, membuat GitHub release
+git tag CryptoNet-v1.0.0 && git push origin CryptoNet-v1.0.0     # menjalankan CI, push ke nuget.org, membuat GitHub release
 ```
 
-`.github/workflows/publish.yml` juga bisa dijalankan manual dengan versi tertentu. Workflow ini memakai secret
+`.github/workflows/cryptonet-publish.yml` juga bisa dijalankan manual dengan versi tertentu. Workflow ini memakai secret
 repositori `NUGET_API_KEY`. Naikkan `<Version>` di `Directory.Build.props` dan `CHANGELOG.md` terlebih dahulu.
 
 ## Packaging dan publikasi lokal

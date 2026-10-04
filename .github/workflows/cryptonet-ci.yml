@@ -1,11 +1,13 @@
 # Builds the Rust core for every supported runtime, tests Crypto.Net on Windows, Linux and macOS,
 # and packs the NuGet packages with all native binaries.
-name: CI
+name: CryptoNet CI
 
 on:
   push:
     branches: [main]
+    paths: ["CryptoNet/**", ".github/workflows/cryptonet-*.yml"]
   pull_request:
+    paths: ["CryptoNet/**", ".github/workflows/cryptonet-*.yml"]
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -16,6 +18,10 @@ on:
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    working-directory: CryptoNet
 
 env:
   DOTNET_NOLOGO: true
@@ -47,22 +53,22 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: rust
+          workspaces: CryptoNet/rust
           key: ${{ matrix.target }}
 
       - name: cargo test
         if: matrix.test
-        working-directory: rust
+        working-directory: CryptoNet/rust
         run: cargo test --release
 
       - name: cargo build
-        working-directory: rust
+        working-directory: CryptoNet/rust
         run: cargo build --release -p cryptonet-ffi --target ${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.rid }}
-          path: rust/target/${{ matrix.target }}/release/${{ matrix.file }}
+          path: CryptoNet/rust/target/${{ matrix.target }}/release/${{ matrix.file }}
           if-no-files-found: error
 
   lint:
@@ -75,8 +81,8 @@ jobs:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: rust
-      - working-directory: rust
+          workspaces: CryptoNet/rust
+      - working-directory: CryptoNet/rust
         run: |
           cargo fmt --all --check
           cargo clippy --all-targets -- -D warnings
@@ -102,20 +108,22 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: native-${{ matrix.rid }}
-          path: runtimes/${{ matrix.rid }}/native
+          path: CryptoNet/runtimes/${{ matrix.rid }}/native
 
       - name: dotnet test
         run: dotnet test tests/Crypto.Net.Tests -c Release --logger "trx;LogFileName=results.trx"
 
       - name: Native backend was used
         shell: bash
-        run: dotnet run --project tools/Crypto.Net.Cli -c Release -- doctor --json | tee doctor.json && grep -q '"nativeLoaded": true' doctor.json
+        run: |
+          dotnet run --project tools/Crypto.Net.Cli -c Release -- doctor --json | tee doctor.json
+          grep -q '"nativeLoaded": true' doctor.json
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-${{ matrix.rid }}
-          path: tests/Crypto.Net.Tests/TestResults/*.trx
+          path: CryptoNet/tests/Crypto.Net.Tests/TestResults/*.trx
 
   pack:
     name: Pack NuGet packages
@@ -131,7 +139,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: native-*
-          path: native
+          path: CryptoNet/native
 
       - name: Lay out runtimes/<rid>/native
         shell: bash
@@ -159,6 +167,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: packages
-          path: artifacts/*
+          name: cryptonet-packages
+          path: CryptoNet/artifacts/*
           if-no-files-found: error

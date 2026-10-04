@@ -26,7 +26,7 @@ systems and placed in `runtimes/linux-x64/native/libcryptonet.so`, `runtimes/osx
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every push and pull request: it builds the Rust library for `win-x64`,
+`.github/workflows/cryptonet-ci.yml` (repository root) runs on every push and pull request: it builds the Rust library for `win-x64`,
 `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64` and `osx-arm64`, checks `cargo fmt`/`clippy`, runs the .NET
 tests on Windows, Linux and macOS with the native library, and packs NuGet packages that contain all six binaries
 (downloadable as the `packages` artifact).
@@ -34,10 +34,10 @@ tests on Windows, Linux and macOS with the native library, and packs NuGet packa
 ## Releasing
 
 ```bash
-git tag v1.0.0 && git push origin v1.0.0     # runs CI, pushes to nuget.org, creates a GitHub release
+git tag CryptoNet-v1.0.0 && git push origin CryptoNet-v1.0.0     # runs CI, pushes to nuget.org, creates a GitHub release
 ```
 
-`.github/workflows/publish.yml` can also be started manually with a version. It uses the `NUGET_API_KEY`
+`.github/workflows/cryptonet-publish.yml` can also be started manually with a version. It uses the `NUGET_API_KEY`
 repository secret. Bump `<Version>` in `Directory.Build.props` and `CHANGELOG.md` first.
 
 ## Packaging and publishing locally

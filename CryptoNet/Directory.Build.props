@@ -18,11 +18,11 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageProjectUrl>https://github.com/DotNetVibeCoderz/Vibe_Crypto</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/DotNetVibeCoderz/Vibe_Crypto/tree/main/CryptoNet</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DotNetVibeCoderz/Vibe_Crypto</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>crypto;blockchain;web3;bitcoin;taproot;ethereum;evm;eip-1559;eip-712;solana;polkadot;substrate;sr25519;cosmos;secp256k1;ed25519;bip32;bip39;hd-wallet;rust;gravicode</PackageTags>
-    <PackageReleaseNotes>See https://github.com/DotNetVibeCoderz/Vibe_Crypto/blob/main/CHANGELOG.md</PackageReleaseNotes>
+    <PackageReleaseNotes>See https://github.com/DotNetVibeCoderz/Vibe_Crypto/blob/main/CryptoNet/CHANGELOG.md</PackageReleaseNotes>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>

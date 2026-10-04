@@ -10,8 +10,8 @@ Owner requirements (`CryptoNet.txt`):
 - Documentation is bilingual. Any user-visible change updates both `docs/en` and `docs/id`, both READMEs, and `CHANGELOG.md`.
 - Apps and samples get polished UI built with the `frontend-design` skill.
 - `PLAN.md` holds the roadmap and `Progress.md` the dated log; keep both current.
-- Repository: https://github.com/DotNetVibeCoderz/Vibe_Crypto (public, default branch `main`).
-- NuGet publishing goes through `.github/workflows/publish.yml`, triggered by a `v*` tag or a manual run. It uses the `NUGET_API_KEY` repo secret. Publishing is irreversible, so confirm with the user first.
+- Repository: https://github.com/DotNetVibeCoderz/Vibe_Crypto (public, default branch `main`). It is a collection repo; this solution lives in `CryptoNet/`, while `.github/workflows/cryptonet-*.yml` sits at the repo root.
+- NuGet publishing goes through `.github/workflows/cryptonet-publish.yml`, triggered by a `CryptoNet-v*` tag or a manual run. It uses the `NUGET_API_KEY` repo secret. Publishing is irreversible, so confirm with the user first.
 - The local fallback is `scripts/publish-nuget.ps1 -CredentialsFile C:\Users\mifma\Documents\CodeSandbox\PackageCredentials.txt`.
 - RPC API keys live outside the repo: `C:\Users\mifma\Documents\CodeSandbox\drpc.txt` and `ankr.txt`, formatted `label: <key>`. Pass them only through the `CRYPTONET_DRPC_KEY` and `CRYPTONET_ANKR_KEY` env vars. Never print a key or write one into the repo.
 
@@ -38,7 +38,7 @@ dotnet run --project samples/Crypto.Net.QuickStart         # README code, read-o
 ./scripts/pack.ps1                                         # .nupkg into ./artifacts
 ```
 
-CI: `.github/workflows/ci.yml` runs on push and PR.
+CI: `.github/workflows/cryptonet-ci.yml` (repo root) runs on push and PR when `CryptoNet/**` changes.
 - Builds Rust for win-x64/arm64, linux-x64/arm64 and osx-x64/arm64.
 - Runs `cargo fmt --check` and `clippy -D warnings`.
 - Runs the .NET tests on Windows, Linux and macOS.

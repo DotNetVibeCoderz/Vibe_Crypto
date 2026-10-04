@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/DotNetVibeCoderz/Vibe_Crypto/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/DotNetVibeCoderz/Vibe_Crypto/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/DotNetVibeCoderz/Vibe_Crypto/actions/workflows/cryptonet-ci.yml"><img alt="CI" src="https://github.com/DotNetVibeCoderz/Vibe_Crypto/actions/workflows/cryptonet-ci.yml/badge.svg"></a>
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4">
   <img alt="Rust" src="https://img.shields.io/badge/inti-Rust-B7410E">
   <img alt="Lisensi: MIT" src="https://img.shields.io/badge/lisensi-MIT-0f8a63">
@@ -199,7 +199,7 @@ Detail: [docs/id/arsitektur.md](docs/id/arsitektur.md).
 ## Build dari source
 
 Kebutuhan: .NET 10 SDK, Rust (stable) untuk library native. CI membangun binary native untuk Windows, Linux dan
-macOS (x64 dan arm64); rilis dipublikasikan dari tag `v*`.
+macOS (x64 dan arm64); rilis dipublikasikan dari tag `CryptoNet-v*`.
 
 ```powershell
 ./scripts/build-native.ps1          # cargo test + build release, salin ke runtimes/<rid>/native

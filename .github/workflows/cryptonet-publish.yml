@@ -1,13 +1,13 @@
 # Publishes Crypto.Net to nuget.org. Runs the full CI pipeline first, then pushes the packages with the
 # NUGET_API_KEY repository secret and creates a GitHub release.
 #
-# Trigger: push a tag such as v1.0.0, or run it manually with a version.
+# Trigger: push a tag such as CryptoNet-v1.0.0, or run it manually with a version.
 # NuGet versions are permanent (they can be unlisted, never deleted or replaced).
-name: Publish
+name: CryptoNet Publish
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["CryptoNet-v*"]
   workflow_dispatch:
     inputs:
       version:
@@ -27,13 +27,13 @@ jobs:
       - id: v
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then v="${{ inputs.version }}"; else v="${GITHUB_REF_NAME#v}"; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then v="${{ inputs.version }}"; else v="${GITHUB_REF_NAME#CryptoNet-v}"; fi
           if ! [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then echo "Invalid version '$v'"; exit 1; fi
           echo "value=$v" >> "$GITHUB_OUTPUT"
 
   build:
     needs: version
-    uses: ./.github/workflows/ci.yml
+    uses: ./.github/workflows/cryptonet-ci.yml
     with:
       version: ${{ needs.version.outputs.value }}
 
@@ -49,7 +49,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: packages
+          name: cryptonet-packages
           path: artifacts
 
       - name: dotnet nuget push
@@ -67,7 +67,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          tag="v${{ needs.version.outputs.value }}"
+          tag="CryptoNet-v${{ needs.version.outputs.value }}"
           gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
             gh release create "$tag" artifacts/*.nupkg -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-              --title "Crypto.Net $tag" --notes "See [CHANGELOG.md](CHANGELOG.md). Built by Gravicode Studios, led by Kang Fadhil."
+              --title "Crypto.Net $tag" --notes "See [CHANGELOG.md](https://github.com/DotNetVibeCoderz/Vibe_Crypto/blob/main/CryptoNet/CHANGELOG.md). Built by Gravicode Studios, led by Kang Fadhil."
