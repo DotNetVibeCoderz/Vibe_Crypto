@@ -1,0 +1,20 @@
+[package]
+name = "cryptonet-ffi"
+description = "C ABI shared library for Crypto.Net"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "cryptonet"
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+cryptonet-crypto = { path = "../cryptonet-crypto" }
+cryptonet-codec = { path = "../cryptonet-codec" }
+zeroize = "1.8"
+
+[dev-dependencies]
+hex = "0.4"

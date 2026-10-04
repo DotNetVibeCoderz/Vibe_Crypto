@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Core abstractions, domain types, and units for Crypto.Net multi-chain architecture</Description>
+    <PackageId>Crypto.Net.Core</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Native\Crypto.Net.Native.csproj" />
+  </ItemGroup>
+</Project>

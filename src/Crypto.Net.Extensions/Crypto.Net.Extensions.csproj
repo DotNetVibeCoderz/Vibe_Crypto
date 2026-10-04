@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Dependency injection for Crypto.Net: AddCryptoNet() with keyed multi-chain clients, IHttpClientFactory and optional resilience (retry, circuit breaker, timeouts).</Description>
+    <PackageId>Crypto.Net.Extensions</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Bitcoin\Crypto.Net.Bitcoin.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Evm\Crypto.Net.Evm.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Solana\Crypto.Net.Solana.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Polkadot\Crypto.Net.Polkadot.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Cosmos\Crypto.Net.Cosmos.csproj" />
+  </ItemGroup>
+</Project>

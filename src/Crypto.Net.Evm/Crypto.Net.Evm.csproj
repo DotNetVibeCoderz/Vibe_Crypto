@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Ethereum &amp; EVM network adapter for Crypto.Net (EIP-1559, ABI, ERC-20, JSON-RPC)</Description>
+    <PackageId>Crypto.Net.Evm</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+  </ItemGroup>
+</Project>

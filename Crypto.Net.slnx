@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Crypto.Net.Gallery/Crypto.Net.Gallery.csproj" />
+    <Project Path="samples/Crypto.Net.QuickStart/Crypto.Net.QuickStart.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Crypto.Net.Bitcoin/Crypto.Net.Bitcoin.csproj" />
+    <Project Path="src/Crypto.Net.Core/Crypto.Net.Core.csproj" />
+    <Project Path="src/Crypto.Net.Cosmos/Crypto.Net.Cosmos.csproj" />
+    <Project Path="src/Crypto.Net.Evm/Crypto.Net.Evm.csproj" />
+    <Project Path="src/Crypto.Net.Extensions/Crypto.Net.Extensions.csproj" />
+    <Project Path="src/Crypto.Net.Native/Crypto.Net.Native.csproj" />
+    <Project Path="src/Crypto.Net.Polkadot/Crypto.Net.Polkadot.csproj" />
+    <Project Path="src/Crypto.Net.Solana/Crypto.Net.Solana.csproj" />
+    <Project Path="src/Crypto.Net.Testing/Crypto.Net.Testing.csproj" />
+    <Project Path="src/Crypto.Net.Wallet/Crypto.Net.Wallet.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Crypto.Net.Tests/Crypto.Net.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Crypto.Net.Cli/Crypto.Net.Cli.csproj" />
+  </Folder>
+</Solution>

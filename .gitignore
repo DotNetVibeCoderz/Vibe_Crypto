@@ -426,3 +426,17 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# ---------------------------------------------------------------- Crypto.Net
+# Rust build output
+rust/target/
+# Native binaries are produced by CI (.github/workflows/ci.yml); build locally with scripts/build-native.ps1
+runtimes/
+# Secrets: never commit keys, mnemonics or keystores
+*.keystore.json
+UTC--*
+.env
+appsettings.*.local.json
+drpc.txt
+ankr.txt
+PackageCredentials.txt

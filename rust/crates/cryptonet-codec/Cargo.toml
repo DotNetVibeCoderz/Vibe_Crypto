@@ -1,0 +1,16 @@
+[package]
+name = "cryptonet-codec"
+description = "Binary codecs for Crypto.Net (Base58, Bech32/Bech32m, RLP, Hex)"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+bs58 = { version = "0.5", features = ["check"] }
+bech32 = "0.9"
+hex = "0.4"
+
+[dev-dependencies]
+hex = "0.4"

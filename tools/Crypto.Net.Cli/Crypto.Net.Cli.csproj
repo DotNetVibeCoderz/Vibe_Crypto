@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>cnet — the Crypto.Net command line: wallets, keystores, address validation, balances, signing, unit conversion and native-vs-managed benchmarks across Bitcoin, EVM, Solana, Polkadot and Cosmos.</Description>
+    <PackageId>Crypto.Net.Cli</PackageId>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>cnet</ToolCommandName>
+    <AssemblyName>cnet</AssemblyName>
+    <RootNamespace>Crypto.Net.Cli</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" Version="2.0.0" />
+    <PackageReference Include="Spectre.Console" Version="0.50.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Crypto.Net.Extensions\Crypto.Net.Extensions.csproj" />
+  </ItemGroup>
+</Project>

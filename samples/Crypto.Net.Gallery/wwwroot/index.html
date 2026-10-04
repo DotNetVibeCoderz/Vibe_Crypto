@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crypto.Net Gallery</title>
+  <meta name="description" content="Interactive studio for Crypto.Net — multi-chain cryptography for .NET 10 and Rust. Built by Gravicode Studios, led by Kang Fadhil.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Martian+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="#wallet" aria-label="Crypto.Net Gallery home">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><use href="#mark"/></svg>
+      <span class="brand-name">Crypto.Net <em>Gallery</em></span>
+    </a>
+    <div class="engine" id="engine" role="status" aria-live="polite">
+      <span class="engine-dot"></span><span id="engine-label">…</span>
+    </div>
+    <div class="topbar-controls">
+      <div class="seg" role="group" aria-label="Network mode" data-i18n-aria="modeLabel">
+        <button type="button" class="seg-btn" data-mode="testnet" aria-pressed="true" data-i18n="testnet">Testnet</button>
+        <button type="button" class="seg-btn" data-mode="mainnet" aria-pressed="false" data-i18n="mainnet">Mainnet</button>
+      </div>
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" class="seg-btn" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" class="seg-btn" data-lang="id" aria-pressed="false">ID</button>
+      </div>
+      <button type="button" class="icon-btn" id="theme-toggle" aria-label="Toggle colour theme" data-i18n-aria="themeLabel">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="rail" aria-label="Tools">
+      <a href="#wallet" data-page="wallet"><span data-i18n="navWallet">Wallet</span></a>
+      <a href="#inspect" data-page="inspect"><span data-i18n="navInspect">Inspect address</span></a>
+      <a href="#convert" data-page="convert"><span data-i18n="navConvert">Convert units</span></a>
+      <a href="#sign" data-page="sign"><span data-i18n="navSign">Sign &amp; verify</span></a>
+      <a href="#keystore" data-page="keystore"><span data-i18n="navKeystore">Keystore</span></a>
+      <a href="#networks" data-page="networks"><span data-i18n="navNetworks">Live networks</span></a>
+      <a href="#bench" data-page="bench"><span data-i18n="navBench">Rust vs managed</span></a>
+      <p class="rail-foot" data-i18n="attribution">Built by Gravicode Studios, led by Kang Fadhil</p>
+    </nav>
+
+    <main id="main" tabindex="-1">
+      <div class="sandbox-banner" id="mainnet-banner" hidden>
+        <strong data-i18n="mainnetTitle">Mainnet addresses.</strong>
+        <span data-i18n="mainnetBody">Keys made here are demo keys held in memory. Never send real funds to them.</span>
+      </div>
+
+      <!-- ============================================================ WALLET -->
+      <section class="page" id="page-wallet" data-page="wallet">
+        <div class="hero">
+          <div class="hero-art">
+            <svg id="rosette" class="rosette" viewBox="-200 -200 400 400" role="img" aria-labelledby="rosette-title">
+              <title id="rosette-title">Guilloché fingerprint of the current wallet</title>
+            </svg>
+            <p class="hero-fp"><span data-i18n="fingerprint">Fingerprint</span> <code id="fp">—</code></p>
+          </div>
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="walletEyebrow">BIP-39 · BIP-32 · SLIP-10 · substrate-bip39</p>
+            <h1 data-i18n="walletTitle">One phrase, <em>every chain</em>.</h1>
+            <p class="lede" data-i18n="walletLede">Generate a recovery phrase and watch it derive Ethereum, Bitcoin, Solana, Polkadot and Cosmos accounts — the same addresses MetaMask, Phantom, Polkadot.js and Keplr show for that phrase.</p>
+            <form class="controls" id="wallet-form">
+              <label class="field">
+                <span data-i18n="words">Words</span>
+                <select id="words"><option>12</option><option>15</option><option>18</option><option>21</option><option>24</option></select>
+              </label>
+              <label class="field grow">
+                <span data-i18n="passphrase">Passphrase (optional)</span>
+                <input id="passphrase" type="password" autocomplete="off" spellcheck="false">
+              </label>
+              <button class="btn primary" type="submit" data-i18n="generate">Generate wallet</button>
+            </form>
+            <details class="restore">
+              <summary data-i18n="restoreToggle">Restore from an existing phrase</summary>
+              <form id="restore-form" class="restore-form">
+                <textarea id="restore-input" rows="2" spellcheck="false" autocomplete="off" data-i18n-placeholder="restorePlaceholder" placeholder="abandon abandon … about"></textarea>
+                <button class="btn" type="submit" data-i18n="restore">Restore</button>
+              </form>
+            </details>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button role="tab" class="tab" aria-selected="true" data-tab="wallet-demo" data-i18n="tabResult">Result</button>
+          <button role="tab" class="tab" aria-selected="false" data-tab="wallet-code" data-i18n="tabCode">C# code</button>
+        </div>
+        <div class="tab-panel" id="wallet-demo">
+          <div class="phrase-wrap">
+            <div class="phrase-head">
+              <h2 data-i18n="phraseTitle">Recovery phrase</h2>
+              <button class="btn ghost small" type="button" id="reveal" aria-pressed="false" data-i18n="reveal">Reveal</button>
+            </div>
+            <ol class="phrase blurred" id="phrase"></ol>
+          </div>
+          <div class="accounts" id="accounts" aria-live="polite"></div>
+          <p class="meta-line" id="wallet-meta"></p>
+        </div>
+        <div class="tab-panel" id="wallet-code" hidden><pre class="code" data-code="wallet"></pre></div>
+      </section>
+
+      <!-- ============================================================ INSPECT -->
+      <section class="page" id="page-inspect" data-page="inspect" hidden>
+        <header class="page-head">
+          <p class="eyebrow" data-i18n="inspectEyebrow">Checksums · formats · cross-network forms</p>
+          <h1 data-i18n="inspectTitle">Inspect an address</h1>
+          <p class="lede" data-i18n="inspectLede">Paste any address. Crypto.Net checks its checksum and tells you which chains it belongs to.</p>
+        </header>
+        <form class="controls" id="inspect-form">
+          <label class="field grow"><span data-i18n="address">Address</span>
+            <input id="inspect-input" spellcheck="false" autocomplete="off" value="bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"></label>
+          <button class="btn primary" type="submit" data-i18n="inspect">Inspect</button>
+        </form>
+        <div class="chips" aria-label="Examples">
+          <button type="button" class="chip" data-example="0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed">EIP-55</button>
+          <button type="button" class="chip" data-example="bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4">P2WPKH</button>
+          <button type="button" class="chip" data-example="15oF4uVJwmo4TdGW7VfQxNLavjCXviqxT9S1MgbjMNHr6Sp5">SS58</button>
+          <button type="button" class="chip" data-example="cosmos19rl4cm2hmr8afy4kldpxz3fka4jguq0auqdal4">Bech32</button>
+          <button type="button" class="chip" data-example="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">Solana</button>
+          <button type="button" class="chip" data-example="0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD" data-i18n="badChecksum">Bad checksum</button>
+        </div>
+        <div class="result" id="inspect-result" aria-live="polite"></div>
+        <details class="code-drawer"><summary data-i18n="tabCode">C# code</summary><pre class="code" data-code="inspect"></pre></details>
+      </section>
+
+      <!-- ============================================================ CONVERT -->
+      <section class="page" id="page-convert" data-page="convert" hidden>
+        <header class="page-head">
+          <p class="eyebrow" data-i18n="convertEyebrow">Exact arithmetic · no floating point</p>
+          <h1 data-i18n="convertTitle">Convert units</h1>
+          <p class="lede" data-i18n="convertLede">Amounts are integers of the smallest unit. Crypto.Net refuses to round, so 0.1 ETH is always exactly 100000000000000000 wei.</p>
+        </header>
+        <form class="converter" id="convert-form">
+          <input id="conv-value" inputmode="decimal" value="1.5" aria-label="Amount">
+          <select id="conv-from" aria-label="From unit"></select>
+          <span class="arrow" aria-hidden="true">→</span>
+          <select id="conv-to" aria-label="To unit"></select>
+        </form>
+        <p class="conv-out" id="conv-out" aria-live="polite"></p>
+        <details class="code-drawer"><summary data-i18n="tabCode">C# code</summary><pre class="code" data-code="convert"></pre></details>
+      </section>
+
+      <!-- ============================================================ SIGN -->
+      <section class="page" id="page-sign" data-page="sign" hidden>
+        <header class="page-head">
+          <p class="eyebrow" data-i18n="signEyebrow">ECDSA · Schnorr · Ed25519 · sr25519</p>
+          <h1 data-i18n="signTitle">Sign and verify</h1>
+          <p class="lede" data-i18n="signLede">Each signature is made with a fresh demo key, then checked again so you can see verification succeed.</p>
+        </header>
+        <div class="seg wide" role="group" aria-label="Signature scheme" id="schemes">
+          <button type="button" class="seg-btn" data-scheme="eip191" aria-pressed="true">EIP-191</button>
+          <button type="button" class="seg-btn" data-scheme="eip712" aria-pressed="false">EIP-712</button>
+          <button type="button" class="seg-btn" data-scheme="schnorr" aria-pressed="false">Schnorr</button>
+          <button type="button" class="seg-btn" data-scheme="ed25519" aria-pressed="false">Ed25519</button>
+          <button type="button" class="seg-btn" data-scheme="sr25519" aria-pressed="false">sr25519</button>
+        </div>
+        <form id="sign-form" class="stack">
+          <label class="field"><span data-i18n="message">Message</span>
+            <textarea id="sign-message" rows="6" spellcheck="false"></textarea></label>
+          <div><button class="btn primary" type="submit" data-i18n="signBtn">Sign message</button></div>
+        </form>
+        <div class="result" id="sign-result" aria-live="polite"></div>
+        <details class="code-drawer"><summary data-i18n="tabCode">C# code</summary><pre class="code" data-code="sign"></pre></details>
+      </section>
+
+      <!-- ============================================================ KEYSTORE -->
+      <section class="page" id="page-keystore" data-page="keystore" hidden>
+        <header class="page-head">
+          <p class="eyebrow" data-i18n="keystoreEyebrow">Web3 Secret Storage v3 · scrypt · AES-128-CTR</p>
+          <h1 data-i18n="keystoreTitle">Encrypt a key</h1>
+          <p class="lede" data-i18n="keystoreLede">The same file format geth, MetaMask and MyEtherWallet import. Leave the key empty to encrypt a new random one.</p>
+        </header>
+        <form id="ks-form" class="grid-2">
+          <label class="field"><span data-i18n="privateKey">Private key (hex, optional)</span>
+            <input id="ks-key" spellcheck="false" autocomplete="off" placeholder="0x…"></label>
+          <label class="field"><span data-i18n="password">Password</span>
+            <input id="ks-password" type="password" autocomplete="new-password" value="correct horse battery staple"></label>
+          <label class="field"><span data-i18n="kdf">Key derivation</span>
+            <select id="ks-kdf"><option value="light">scrypt N=2¹² (light)</option><option value="pbkdf2">PBKDF2 ×262,144</option></select></label>
+          <div class="align-end"><button class="btn primary" type="submit" data-i18n="encrypt">Encrypt</button></div>
+        </form>
+        <div class="result" id="ks-result" aria-live="polite"></div>
+        <form id="ks-decrypt" class="grid-2" hidden>
+          <label class="field"><span data-i18n="decryptPassword">Password to decrypt</span>
+            <input id="ks-dpass" type="password" autocomplete="off"></label>
+          <div class="align-end"><button class="btn" type="submit" data-i18n="decrypt">Decrypt</button></div>
+        </form>
+        <p class="note" id="ks-dresult" aria-live="polite"></p>
+        <details class="code-drawer"><summary data-i18n="tabCode">C# code</summary><pre class="code" data-code="keystore"></pre></details>
+      </section>
+
+      <!-- ============================================================ NETWORKS -->
+      <section class="page" id="page-networks" data-page="networks" hidden>
+        <header class="page-head">
+          <p class="eyebrow" data-i18n="networksEyebrow">Public RPC endpoints · read-only</p>
+          <h1 data-i18n="networksTitle">Live networks</h1>
+          <p class="lede" data-i18n="networksLede">The head of each chain, fetched just now through Crypto.Net clients. The Gallery never sends transactions.</p>
+        </header>
+        <div class="toolbar"><button class="btn" type="button" id="net-refresh" data-i18n="refresh">Refresh</button></div>
+        <div class="net-grid" id="net-grid"></div>
+        <form class="controls" id="bal-form">
+          <label class="field"><span data-i18n="network">Network</span><select id="bal-net"></select></label>
+          <label class="field grow"><span data-i18n="address">Address</span><input id="bal-address" spellcheck="false" autocomplete="off"></label>
+          <button class="btn primary" type="submit" data-i18n="checkBalance">Check balance</button>
+        </form>
+        <p class="conv-out small" id="bal-out" aria-live="polite"></p>
+        <details class="code-drawer"><summary data-i18n="tabCode">C# code</summary><pre class="code" data-code="networks"></pre></details>
+      </section>
+
+      <!-- ============================================================ BENCHMARK -->
+      <section class="page" id="page-bench" data-page="bench" hidden>
+        <header class="page-head">
+          <p class="eyebrow" data-i18n="benchEyebrow">Same API · two engines</p>
+          <h1 data-i18n="benchTitle">Rust core vs managed C#</h1>
+          <p class="lede" data-i18n="benchLede">Every primitive has both a Rust and a pure C# implementation with byte-identical output. Measure them on this machine.</p>
+        </header>
+        <div class="toolbar">
+          <button class="btn primary" type="button" id="bench-run" data-i18n="runBench">Run benchmark</button>
+          <button class="btn ghost" type="button" id="bench-table-toggle" aria-pressed="false" data-i18n="showTable">Show as table</button>
+        </div>
+        <div class="legend" aria-hidden="true">
+          <span><i class="sw rust"></i>Rust (cryptonet)</span>
+          <span><i class="sw managed"></i>Managed C#</span>
+          <span class="legend-note" data-i18n="logScale">operations per second, log scale</span>
+        </div>
+        <div class="chart" id="bench-chart"><p class="empty" data-i18n="benchEmpty">Run the benchmark to measure both engines (about 5 seconds).</p></div>
+        <div class="chart-tip" id="bench-tip" role="tooltip" hidden></div>
+        <div id="bench-table" hidden></div>
+        <details class="code-drawer"><summary data-i18n="tabCode">C# code</summary><pre class="code" data-code="bench"></pre></details>
+      </section>
+    </main>
+  </div>
+
+  <footer class="foot">
+    <span>Crypto.Net · .NET 10 + Rust · MIT</span>
+    <span data-i18n="attribution">Built by Gravicode Studios, led by Kang Fadhil</span>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="mark" viewBox="0 0 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="1.1">
+        <circle cx="20" cy="20" r="17"/><circle cx="20" cy="20" r="9"/>
+        <path d="M20 3c5 6 5 11 0 17-5-6-5-11 0-17zm0 34c5-6 5-11 0-17-5 6-5 11 0 17zM3 20c6-5 11-5 17 0-6 5-11 5-17 0zm34 0c-6-5-11-5-17 0 6 5 11 5 17 0z"/>
+      </g>
+    </symbol>
+  </svg>
+
+  <script src="i18n.js"></script>
+  <script src="code-samples.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

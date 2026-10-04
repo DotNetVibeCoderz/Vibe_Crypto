@@ -1,0 +1,23 @@
+[workspace]
+members = [
+    "crates/cryptonet-crypto",
+    "crates/cryptonet-codec",
+    "crates/cryptonet-ffi",
+]
+resolver = "2"
+
+[workspace.package]
+version = "1.0.0"
+edition = "2021"
+authors = ["Gravicode Studios", "Kang Fadhil"]
+license = "MIT"
+repository = "https://github.com/DotNetVibeCoderz/Vibe_Crypto"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+# Must stay "unwind": the FFI layer relies on catch_unwind to turn panics into CN_ERR_PANIC
+# instead of aborting the host .NET process.
+panic = "unwind"
+strip = true

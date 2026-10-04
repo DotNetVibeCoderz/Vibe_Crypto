@@ -1,0 +1,34 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>13</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+    <Deterministic>true</Deterministic>
+
+    <!-- Package metadata -->
+    <Version>1.0.0</Version>
+    <Authors>Gravicode Studios, Kang Fadhil</Authors>
+    <Company>Gravicode Studios</Company>
+    <Product>Crypto.Net</Product>
+    <Copyright>Copyright (c) 2026 Gravicode Studios, led by Kang Fadhil</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/DotNetVibeCoderz/Vibe_Crypto</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DotNetVibeCoderz/Vibe_Crypto</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>crypto;blockchain;web3;bitcoin;taproot;ethereum;evm;eip-1559;eip-712;solana;polkadot;substrate;sr25519;cosmos;secp256k1;ed25519;bip32;bip39;hd-wallet;rust;gravicode</PackageTags>
+    <PackageReleaseNotes>See https://github.com/DotNetVibeCoderz/Vibe_Crypto/blob/main/CHANGELOG.md</PackageReleaseNotes>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
+    <None Include="$(MSBuildThisFileDirectory)assets\icon.png" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+</Project>

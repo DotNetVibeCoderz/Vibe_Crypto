@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Bitcoin network adapter for Crypto.Net (SegWit, Taproot, UTXO, Esplora RPC)</Description>
+    <PackageId>Crypto.Net.Bitcoin</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+  </ItemGroup>
+</Project>
