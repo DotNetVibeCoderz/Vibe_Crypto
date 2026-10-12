@@ -61,6 +61,12 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **Wallet**: `Mnemonic.ToIcarusRootKey` and `HdWallet.DeriveBip32Ed25519`.
 - `ChainCatalog`, `AddNear`/`AddAptos`/`AddSui`/`AddTon`/`AddCardano`, address detection, `cnet wallet derive` and
   the Gallery wallet all cover the five new chains.
+- **Crypto.Net.WalletConnect**:
+  - WalletConnect v2 Sign API on Reown's relay, for both apps and wallets.
+  - Pairing URIs, session proposal and settlement, requests and events, ping and disconnect.
+  - `WalletConnectEthereum` provides `personal_sign`, `eth_signTypedData_v4` and `eth_sendTransaction`.
+  - Crypto matches @walletconnect/utils byte for byte. Interop was verified both ways with the official sign-client.
+- **Native core**: X25519 (RFC 7748) in Rust and managed C#.
 - **Crypto.Net.Trezor**:
   - Protocol v1 with Trezor Bridge, UDP (emulator) and replay transports.
   - Ethereum: addresses, legacy and EIP-1559 transactions with chunked data, personal messages, EIP-712 hashes.

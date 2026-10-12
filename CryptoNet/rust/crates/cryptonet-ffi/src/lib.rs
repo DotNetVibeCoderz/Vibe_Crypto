@@ -419,6 +419,18 @@ pub unsafe extern "C" fn cn_slip10_ed25519_ckd_priv(
     })
 }
 
+/// X25519 (RFC 7748): `out = X25519(scalar, u)`.
+#[no_mangle]
+pub unsafe extern "C" fn cn_x25519(scalar32: *const u8, point32: *const u8, out32: *mut u8) -> i32 {
+    guard(|| {
+        let mut r = crypto::x25519::x25519(input(scalar32, 32)?, input(point32, 32)?)
+            .map_err(crypto_err)?;
+        let res = write_fixed(&r, out32);
+        r.zeroize();
+        res
+    })
+}
+
 /// Public key `kL·G` of a BIP32-Ed25519 extended secret.
 #[no_mangle]
 pub unsafe extern "C" fn cn_ed25519_extended_pubkey(kl32: *const u8, out_pk32: *mut u8) -> i32 {

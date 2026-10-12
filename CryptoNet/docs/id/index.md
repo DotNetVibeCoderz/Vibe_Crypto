@@ -21,6 +21,7 @@
 | [Client kontrak](codegen.md) | membuat C# bertipe dari ABI Solidity dan IDL Anchor |
 | [Indexer](indexer.md) | mengindeks event EVM dan transfer ERC-20 ke database, atau menelusuri blok di chain mana pun |
 | [Template project](template.md) | memulai aplikasi console, worker, Web API, library atau project test dengan `dotnet new` |
+| [WalletConnect](walletconnect.md) | terhubung ke wallet mobile pengguna; wallet yang menandatangani |
 | [Hardware wallet](hardware-wallet.md) | menandatangani dengan Ledger atau Trezor: kunci tetap di perangkat |
 | [Ekstensi VS Code](vscode.md) | cek saldo, membuat client, hover unit dan menangkap salah ketik alamat di editor |
 | [Analyzer](analyzer.md) | menangkap kunci hard-coded, amount dari float dan kesalahan lain saat kompilasi |

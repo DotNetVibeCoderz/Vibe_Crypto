@@ -57,7 +57,7 @@ Known gotchas:
 
 **Dependency order:**
 - `Native` → `Core` → `Wallet` → chain packages (`Evm`, `Bitcoin`, `Solana`, `Polkadot`, `Cosmos`, `Near`, `Aptos`, `Sui`, `Ton`, `Cardano`) → `Extensions`.
-- Hardware wallets: `Ledger` (Ethereum and Solana apps) and `Trezor` (Ethereum) depend on the chain packages, not on `Extensions`.
+- Hardware wallets: `Ledger` (Ethereum and Solana apps) and `Trezor` (Ethereum) depend on the chain packages, not on `Extensions`. So does `WalletConnect`; its live test needs `CRYPTONET_WALLETCONNECT_PROJECT_ID`, which is never committed.
 - `Extensions` is referenced by the CLI, the Gallery, QuickStart and the tests.
 - `Testing` (mocks plus official `TestVectors`) depends on Core only.
 

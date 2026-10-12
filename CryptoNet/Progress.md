@@ -31,6 +31,7 @@
 | 1.1 Solana v0 + lookup tables | ✅ Done | Byte-identical to @solana/web3.js 1.98.0 |
 | Crypto.Net.Ledger (Ethereum app) | ✅ Done | Replayed hw-app-eth sessions; CI E2E with the real app in Speculos |
 | Crypto.Net.Near | ✅ Done | Byte-identical to near-api-js; live testnet reads |
+| Crypto.Net.WalletConnect | ✅ Done | Relay session tests; interop both ways with @walletconnect/sign-client |
 | Crypto.Net.Aptos | ✅ Done | Matches @aptos-labs/ts-sdk; live testnet simulation |
 | Crypto.Net.Sui | ✅ Done | Matches @mysten/sui; GraphQL dry run returns the same digest |
 | Crypto.Net.Ton | ✅ Done | Matches @ton/core and @ton/ton; TON Center fee emulation |
@@ -90,3 +91,4 @@
 - **2026-10-13** — Aptos, Sui, TON and Cardano packages. New native primitives: SHA3-256, BIP32-Ed25519 and extended-key signing (ABI 0x00010200). Fuzzing found an OverflowException in the CIP-20 reader, now fixed. All five new chains are in the catalog, the CLI and the Gallery.
 - **2026-10-13** — Ledger Solana app: replayed hw-app-solana sessions; a CI job builds app-solana with Ledger's builder and runs the end-to-end test in Speculos.
 - **2026-10-13** — Crypto.Net.Trezor: messages match trezorlib, and a CI job signs on Trezor's real firmware in the core emulator. The Ledger Solana app now uses the current off-chain message header (the end-to-end run showed the app rejects the legacy one).
+- **2026-10-13** — Added Crypto.Net.WalletConnect and the X25519 primitive. Verified through Reown's relay using the owner's project id (kept out of the repo): a .NET app paired with the official sign-client wallet, and the official app paired with a .NET wallet.

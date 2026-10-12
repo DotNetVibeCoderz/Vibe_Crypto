@@ -58,6 +58,22 @@ public class BackendParityTests
     }
 
     [Fact]
+    public void X25519_MatchesRfc7748OnBothBackends()
+    {
+        byte[] alice = Convert.FromHexString("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a");
+        byte[] bob = Convert.FromHexString("5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb");
+        Backends.AssertSame(() => Backends.Hex(CryptoNative.X25519GetPublicKey(alice)));
+        Backends.AssertSame(() => Backends.Hex(CryptoNative.X25519(alice, CryptoNative.X25519GetPublicKey(bob))));
+        Assert.Equal("8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a", Convert.ToHexStringLower(CryptoNative.X25519GetPublicKey(alice)));
+        Assert.Equal("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742", Convert.ToHexStringLower(CryptoNative.X25519(bob, CryptoNative.X25519GetPublicKey(alice))));
+        foreach (int len in new[] { 1, 7, 99 })
+        {
+            byte[] k = CryptoNative.Sha256(Data(len));
+            Backends.AssertSame(() => Backends.Hex(CryptoNative.X25519(k, CryptoNative.Sha256(Data(len, 2)))));
+        }
+    }
+
+    [Fact]
     public void Bip32Ed25519_MatchesAcrossBackends()
     {
         // Icarus root of "abandon … about" (cardano-serialization-lib), then hardened and soft children.

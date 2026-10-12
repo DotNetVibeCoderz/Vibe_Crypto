@@ -445,6 +445,25 @@ public static unsafe class CryptoNative
         return result;
     }
 
+    /// <summary>X25519 (RFC 7748) Diffie-Hellman: <c>X25519(scalar, u)</c> with the scalar clamped.</summary>
+    public static byte[] X25519(ReadOnlySpan<byte> scalar, ReadOnlySpan<byte> u)
+    {
+        RequireLength(scalar, 32, nameof(scalar));
+        RequireLength(u, 32, nameof(u));
+        if (!IsNativeActive) return X25519Managed.ScalarMult(scalar, u);
+        byte[] o = new byte[32];
+        fixed (byte* s = scalar) fixed (byte* p = u) fixed (byte* r = o) Check(NativeMethods.cn_x25519(s, p, r), "X25519");
+        return o;
+    }
+
+    /// <summary>X25519 public key of a 32-byte secret.</summary>
+    public static byte[] X25519GetPublicKey(ReadOnlySpan<byte> scalar)
+    {
+        Span<byte> nine = stackalloc byte[32];
+        nine[0] = 9;
+        return X25519(scalar, nine);
+    }
+
     /// <summary>Public key <c>kL·G</c> of a BIP32-Ed25519 extended secret (Cardano).</summary>
     public static byte[] Ed25519ExtendedGetPublicKey(ReadOnlySpan<byte> kl)
     {

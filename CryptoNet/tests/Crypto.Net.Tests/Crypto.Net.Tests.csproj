@@ -28,6 +28,7 @@
     <ProjectReference Include="..\..\src\Crypto.Net.Ton\Crypto.Net.Ton.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Cardano\Crypto.Net.Cardano.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Trezor\Crypto.Net.Trezor.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.WalletConnect\Crypto.Net.WalletConnect.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Indexer.EntityFrameworkCore\Crypto.Net.Indexer.EntityFrameworkCore.csproj" />
   </ItemGroup>
 

@@ -50,6 +50,7 @@ internal static unsafe partial class NativeMethods
     [LibraryImport(LibName)] internal static partial int cn_ed25519_verify(byte* pk32, byte* msg, nuint msgLen, byte* sig64);
     [LibraryImport(LibName)] internal static partial int cn_slip10_ed25519_ckd_priv(byte* key32, byte* chainCode32, uint index, byte* outKey32, byte* outCc32);
     [LibraryImport(LibName)] internal static partial int cn_ed25519_extended_pubkey(byte* kl32, byte* outPk32);
+    [LibraryImport(LibName)] internal static partial int cn_x25519(byte* scalar32, byte* point32, byte* out32);
     [LibraryImport(LibName)] internal static partial int cn_ed25519_sign_extended(byte* kl32, byte* kr32, byte* msg, nuint msgLen, byte* outSig64);
     [LibraryImport(LibName)] internal static partial int cn_bip32_ed25519_derive_priv(byte* xprv96, uint index, byte* outXprv96);
     [LibraryImport(LibName)] internal static partial int cn_bip32_ed25519_derive_pub(byte* xpub64, uint index, byte* outXpub64);
