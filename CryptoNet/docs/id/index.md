@@ -11,7 +11,7 @@
 | --- | --- |
 | [Memulai](memulai.md) | memasang paket dan membuat dompet, tanda tangan serta transfer pertama |
 | [Konsep](konsep.md) | memahami `Amount`, `Address`, `ISigner`, `IChainClient`, backend dan error |
-| [Chain](chain.md) | memakai Ethereum/EVM, Bitcoin, Solana, Polkadot atau Cosmos secara mendalam |
+| [Chain](chain.md) | memakai Ethereum/EVM, Bitcoin, Solana, Polkadot, Cosmos, NEAR, Aptos, Sui, TON atau Cardano secara mendalam |
 | [Dompet dan kunci](dompet-dan-kunci.md) | bekerja dengan mnemonic, derivasi HD, xpub dan keystore |
 | [Dependency injection dan penyedia RPC](dependency-injection.md) | mendaftarkan client di ASP.NET Core, menambah Ankr/dRPC, resilience |
 | [CLI `cnet`](cli.md) | mengotomatiskan dompet, saldo dan tanda tangan dari terminal |
@@ -40,9 +40,19 @@
 | RPC | REST Esplora | JSON-RPC | JSON-RPC | JSON-RPC | REST (LCD) |
 | Token | — | ERC-20 | SPL Token | saldo native | saldo bank |
 
+| | NEAR | Aptos | Sui | TON | Cardano |
+| --- | --- | --- | --- | --- | --- |
+| Kurva / skema | Ed25519 | Ed25519 | Ed25519 (intent) | Ed25519 | Ed25519 (BIP32-Ed25519) |
+| Alamat | akun implicit (hex) dan bernama | hex AIP-40 | 0x + 64 hex | raw `0:` dan ramah pengguna `EQ…`/`UQ…` | Bech32 base/enterprise/reward, Byron |
+| Path HD | SLIP-10 `m/44'/397'` | SLIP-10 `m/44'/637'` (Petra) | SLIP-10 `m/44'/784'` | mnemonic TON; SLIP-10 `m/44'/607'` | CIP-1852 (Icarus) |
+| Transaksi | Borsh, 8 action | entry function BCS, simulasi | programmable transaction BCS | Cell/BoC, wallet V4R2 dan W5 | CBOR Conway, native asset, CIP-20 |
+| RPC | JSON-RPC | REST | GraphQL | TON Center v2/v3 | REST Koios |
+| Token | NEP-141 lewat view/function call | coin dan fungible asset | objek coin | jetton | native asset |
+
 Jaringan bawaan: Ethereum, Sepolia, Hoodi, Polygon, Arbitrum, Optimism, Base, BNB Chain, Avalanche, Anvil lokal;
 Bitcoin mainnet/testnet/signet/regtest; Solana mainnet/devnet/testnet/lokal; Polkadot, Kusama, Asset Hub keduanya,
-Westend, Paseo, lokal; Cosmos Hub (+ testnet), Osmosis (+ testnet), `simd` lokal. Jalankan `cnet networks` untuk daftarnya.
+Westend, Paseo, lokal; Cosmos Hub (+ testnet), Osmosis (+ testnet), `simd` lokal; mainnet dan testnet NEAR, Aptos, Sui dan
+TON; Cardano mainnet, preprod dan preview. Jalankan `cnet networks` untuk daftarnya.
 
 Item roadmap (indexer, WalletConnect, hardware wallet, ekstensi VS Code, template, Gallery mobile) dicatat di
 [PLAN.md](../../PLAN.md).

@@ -11,7 +11,7 @@
 | --- | --- |
 | [Getting started](getting-started.md) | install the packages and make your first wallet, signature and transfer |
 | [Concepts](concepts.md) | understand `Amount`, `Address`, `ISigner`, `IChainClient`, backends and errors |
-| [Chains](chains.md) | use Ethereum/EVM, Bitcoin, Solana, Polkadot or Cosmos in depth |
+| [Chains](chains.md) | use Ethereum/EVM, Bitcoin, Solana, Polkadot, Cosmos, NEAR, Aptos, Sui, TON or Cardano in depth |
 | [Wallets and keys](wallet-and-keys.md) | work with mnemonics, HD derivation, xpubs and keystores |
 | [Dependency injection and RPC providers](dependency-injection.md) | register clients in ASP.NET Core, add Ankr/dRPC, resilience |
 | [The `cnet` CLI](cli.md) | script wallets, balances and signatures from a terminal |
@@ -40,9 +40,19 @@
 | RPC | Esplora REST | JSON-RPC | JSON-RPC | JSON-RPC | REST (LCD) |
 | Tokens | — | ERC-20 | SPL Token | native balance | bank balances |
 
+| | NEAR | Aptos | Sui | TON | Cardano |
+| --- | --- | --- | --- | --- | --- |
+| Curve / scheme | Ed25519 | Ed25519 | Ed25519 (intents) | Ed25519 | Ed25519 (BIP32-Ed25519) |
+| Addresses | implicit (hex) and named accounts | AIP-40 hex | 0x + 64 hex | raw `0:` and user-friendly `EQ…`/`UQ…` | Bech32 base/enterprise/reward, Byron |
+| HD paths | SLIP-10 `m/44'/397'` | SLIP-10 `m/44'/637'` (Petra) | SLIP-10 `m/44'/784'` | TON mnemonic; SLIP-10 `m/44'/607'` | CIP-1852 (Icarus) |
+| Transactions | Borsh, all 8 actions | BCS entry functions, simulation | BCS programmable transactions | Cells/BoC, wallets V4R2 and W5 | Conway CBOR, native assets, CIP-20 |
+| RPC | JSON-RPC | REST | GraphQL | TON Center v2/v3 | Koios REST |
+| Tokens | NEP-141 via view/function calls | coins and fungible assets | coin objects | jettons | native assets |
+
 Networks built in: Ethereum, Sepolia, Hoodi, Polygon, Arbitrum, Optimism, Base, BNB Chain, Avalanche, local Anvil;
 Bitcoin mainnet/testnet/signet/regtest; Solana mainnet/devnet/testnet/local; Polkadot, Kusama, their Asset Hubs,
-Westend, Paseo, local; Cosmos Hub (+ testnet), Osmosis (+ testnet), local `simd`. Run `cnet networks` for the list.
+Westend, Paseo, local; Cosmos Hub (+ testnet), Osmosis (+ testnet), local `simd`; NEAR, Aptos, Sui and TON mainnets
+and testnets; Cardano mainnet, preprod and preview. Run `cnet networks` for the list.
 
 Roadmap items (indexer, WalletConnect, hardware wallets, VS Code extension, templates, mobile Gallery) are tracked
 in [PLAN.md](../../PLAN.md).

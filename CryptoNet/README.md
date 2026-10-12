@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Multi-chain cryptography and blockchain clients for .NET 10, powered by a Rust core.</strong><br>
-  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos
+  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos · NEAR · Aptos · Sui · TON · Cardano
 </p>
 
 <p align="center">
@@ -63,6 +63,10 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Generators` | Source generator: Solidity ABI / Hardhat & Foundry artifacts and Anchor IDLs → typed clients (also `cnet gen`) |
 | `Crypto.Net.Ledger` | Ledger hardware wallets: USB HID / Speculos transports, Ethereum app (addresses, transactions, messages, EIP-712) |
 | `Crypto.Net.Near` | NEAR Protocol: ed25519 accounts (implicit and named), Borsh transactions with every action, function calls, RPC |
+| `Crypto.Net.Aptos` | Aptos: AIP-40 addresses, Move type tags, BCS entry-function transactions, simulation, REST client |
+| `Crypto.Net.Sui` | Sui: programmable transactions (BCS build and parse), intent signing, personal messages, GraphQL client with gas selection |
+| `Crypto.Net.Ton` | TON: cells and BoC, TON mnemonics, wallets V4R2 and W5, comments, jettons, TON Center client |
+| `Crypto.Net.Cardano` | Cardano: CIP-1852 BIP32-Ed25519 accounts, Conway transactions with native assets and CIP-20, exact fees, Koios client |
 | `Crypto.Net.Indexer` | EVM log indexer with ABI event decoding, block crawler, checkpoints, hosted services |
 | `Crypto.Net.Indexer.EntityFrameworkCore` | EF Core storage (SQLite, PostgreSQL, SQL Server) for checkpoints, logs and ERC-20 transfers |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` and official test vectors |
@@ -215,7 +219,7 @@ backend uses the platform for those and Rust for everything else. Force either e
 ```
  Apps:        cnet CLI · Gallery (ASP.NET Core) · your code
  DI:          Crypto.Net.Extensions   AddCryptoNet() · ChainCatalog · dRPC · resilience
- Chains:      .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos
+ Chains:      .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos  .Near  .Aptos  .Sui  .Ton  .Cardano
  Wallet/Core: .Wallet (BIP-39/32, SLIP-10, keystore)  ·  .Core (Amount, ISigner, IChainClient, JSON-RPC)
  Native:      Crypto.Net.Native  → CryptoNative (Auto | Native | Managed) → P/Invoke or managed fallback
  ─────────────────────────── C ABI (cn_*, i32 status codes, catch_unwind) ───────────────────────────

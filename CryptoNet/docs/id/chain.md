@@ -7,6 +7,11 @@
 - [Solana](#solana)
 - [Polkadot dan Substrate](#polkadot-dan-substrate)
 - [Cosmos SDK](#cosmos-sdk)
+- [NEAR](#near)
+- [Aptos](#aptos)
+- [Sui](#sui)
+- [TON](#ton)
+- [Cardano](#cardano)
 
 ---
 
@@ -376,3 +381,108 @@ await rest.SignAndBroadcastAsync(osmo, tx);
 cosmjs-types. Pesan kontrak bisa berupa objek (diserialisasi menjadi JSON ringkas) atau string JSON mentah. Pakai
 `QueryContractRawAsync` untuk membaca storage mentah, dan `GetContractInfoAsync` / `GetContractsByCodeAsync` untuk
 metadata kode.
+
+## NEAR
+
+Paket `Crypto.Net.Near`. Jaringan: `NearChain.Mainnet`, `Testnet`, `Localnet` (RPC FastNEAR secara default).
+
+```csharp
+using var near = wallet.GetNearAccount(0, NearChain.Testnet);          // m/44'/397'/0', akun implicit (64 hex)
+using var alice = near.ForAccount("alice.testnet");                    // kunci yang sama bertindak untuk akun bernama
+await using var rpc = new NearRpcClient(NearChain.Testnet);
+TxHash h = await rpc.TransferAsync(alice, "bob.testnet", NearAddress.Near(0.5m));
+await rpc.SignAndSendAsync(alice, "wrap.testnet", [NearAction.FunctionCall.Json("near_deposit", new { }, deposit: NearAddress.Near(1).BaseUnits)]);
+JsonElement meta = await rpc.ViewFunctionAsync("wrap.testnet", "ft_metadata");
+```
+
+Transaksi di-encode dengan Borsh dan mendukung kedelapan action: create account, deploy, function call, transfer,
+stake, add key (akses penuh atau function-call), delete key dan delete account. Hasilnya identik byte demi byte dengan
+near-api-js. `NearAccount.FromSecretKey("ed25519:…")` mengimpor kunci NEAR CLI, dan `ExportSecretKey()` menuliskannya.
+
+## Aptos
+
+Paket `Crypto.Net.Aptos`. Jaringan: `AptosChain.Mainnet`, `Testnet`, `Localnet`.
+
+```csharp
+using var apt = wallet.GetAptosAccount(0, AptosChain.Testnet);        // m/44'/637'/0'/0'/0' (Petra)
+await using var aptos = new AptosRestClient(AptosChain.Testnet);
+TxHash t = await aptos.TransferAsync(apt, "0x…", AptosAddress.Apt(0.1m));
+
+var payload = AptosEntryFunction.Create("0x1::coin::transfer", [MoveTypeTag.Parse("0x1::aptos_coin::AptosCoin")],
+    MoveArg.Address("0x…"), MoveArg.U64(1_000));
+var tx = await aptos.BuildTransactionAsync(apt.Address.Value, payload);
+AptosSimulation sim = await aptos.SimulateAsync(tx, apt.PublicKey);    // gas dan status VM, tanpa tanda tangan
+await aptos.SendRawTransactionAsync(tx.Sign(apt));
+JsonElement r = await aptos.ViewAsync("0x1::chain_id::get");
+```
+
+Alamat mengikuti AIP-40 (`0x1` untuk alamat khusus, selain itu 64 digit hex) dan dihitung sebagai
+`sha3-256(pubkey ‖ 0x00)`. Transaksi berupa `RawTransaction` BCS dengan payload entry function. Tanda tangannya atas
+`sha3("APTOS::RawTransaction")`, dan hasilnya identik byte demi byte dengan @aptos-labs/ts-sdk.
+`AptosAccount.FromPrivateKey` membaca kunci AIP-80 (`ed25519-priv-0x…`). `MoveTypeTag` dan encoder `MoveArg` ada di
+`Crypto.Net.Core` dan dipakai bersama dengan Sui.
+
+## Sui
+
+Paket `Crypto.Net.Sui`. Jaringan: `SuiChain.Mainnet`, `Testnet`, `Devnet`, `Localnet`. Fullnode publik Sui tidak lagi
+melayani JSON-RPC, jadi client-nya memakai GraphQL.
+
+```csharp
+using var sui = wallet.GetSuiAccount(0, SuiChain.Testnet);             // m/44'/784'/0'/0'/0' (Slush / Sui CLI)
+await using var client = new SuiGraphQlClient(SuiChain.Testnet);
+SuiEffects e = await client.TransferAsync(sui, "0x…", SuiAddress.Sui(0.5m));
+
+var tx = new SuiTransactionBuilder(sui.Address.Value);
+var coin = tx.SplitCoins(tx.Gas, tx.PureU64(1_000_000));
+tx.MoveCall("0x2::transfer::public_transfer", [MoveTypeTag.Parse("0x2::coin::Coin<0x2::sui::SUI>")], coin[0], tx.PureAddress("0x…"));
+SuiTransactionData data = await client.BuildAsync(tx);                 // gas coin, harga referensi, budget dari dry run
+SuiEffects done = await client.ExecuteAsync(data.Serialize(), [sui.SignTransaction(data.Serialize())]);
+```
+
+Programmable transaction di-encode dan di-parse sebagai BCS, identik byte demi byte dengan @mysten/sui. Yang didukung:
+move call, split/merge/transfer, make-move-vec, publish dan upgrade, dengan objek owned, shared maupun receiving.
+Tanda tangan memakai intent Sui, jadi `SignPersonalMessage` cocok dengan `signPersonalMessage` di wallet.
+`SuiAccount.FromPrivateKey` membaca `suiprivkey1…`. `SuiSignedTransaction` adalah bentuk `SenderSignedData` yang
+diterima `IChainClient.SendRawTransactionAsync`.
+
+## TON
+
+Paket `Crypto.Net.Ton`. Jaringan: `TonChain.Mainnet`, `Testnet`. Client-nya memakai TON Center (API v2 dan v3).
+
+```csharp
+using var ton = TonAccount.FromMnemonic(words, TonChain.Testnet);        // 24 kata Tonkeeper, wallet W5 secara default
+await using var center = new TonCenterClient(TonChain.Testnet);         // apiKey opsional: tanpa kunci dibatasi 1 rps
+TxHash h = await center.TransferAsync(ton, "0Q…", TonUnits.Ton(0.05m), comment: "halo");
+
+var body = TonJetton.TransferBody(amount: 1_000_000, destination, responseDestination: ton.WalletAddress, forwardComment: "gm");
+TonAddress? jettonWallet = await center.GetJettonWalletAsync(ton.Address.Value, jettonMaster);
+await center.SendAsync(ton, [new TonMessage(jettonWallet!, TonUnits.ToNano(0.05m), Bounce: true, Body: body)]);
+```
+
+- Cell dan bag of cells (`TonCellBuilder`, `TonCellSlice`, `TonBoc`) diserialisasi persis seperti @ton/core.
+- Kontrak wallet V4R2 dan W5 (V5R1). Transfer pertama sekaligus men-deploy wallet (state init disertakan otomatis).
+- `TonMnemonic` mengimplementasikan skema 24 kata milik TON sendiri (dengan password opsional); ini bukan BIP-39.
+  Untuk wallet BIP-39 multi-chain, `wallet.GetTonAccount()` memakai SLIP-10 `m/44'/607'/index'`.
+- Hash transaksi adalah hash external message ternormalisasi TEP-467, yang diindeks oleh TON Center dan explorer.
+
+## Cardano
+
+Paket `Crypto.Net.Cardano`. Jaringan: `CardanoChain.Mainnet`, `Preprod`, `Preview`. Client-nya memakai Koios (tanpa
+kunci).
+
+```csharp
+using var ada = wallet.GetCardanoAccount(account: 0, index: 0, CardanoChain.Preprod);  // CIP-1852, BIP32-Ed25519
+await using var koios = new KoiosClient(CardanoChain.Preprod);
+TxHash h = await koios.TransferAsync(ada, "addr_test1…", CardanoAddress.Ada(5), message: "terima kasih");
+
+var tx = await koios.BuildTransferAsync(ada, [new CardanoOutput("addr_test1…", 2_000_000, [new CardanoAsset(policyId, assetNameHex, 10)])]);
+await koios.SendRawTransactionAsync(tx.Sign(ada));
+```
+
+- Kunci mengikuti Icarus/CIP-3: root berasal dari entropi mnemonic (bukan seed BIP-39). Kunci turunan memakai
+  BIP32-Ed25519, yang diimplementasikan oleh core Rust maupun fallback managed.
+- `GetCardanoAccountXpub` dan `DeriveCardanoAddress` membuat alamat penerima tanpa kunci privat.
+- Alamat base, enterprise, reward dan Byron didukung.
+- Transaksi Conway membawa native asset dalam urutan kanonik dan pesan CIP-20 opsional.
+- `BuildTransferAsync` memilih UTxO, mengembalikan kembalian dan sisa aset ke pengirim, dan menetapkan fee minimum yang
+  tepat. Semuanya identik byte demi byte dengan cardano-serialization-lib.

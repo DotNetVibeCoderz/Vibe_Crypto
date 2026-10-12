@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Kriptografi multi-chain dan client blockchain untuk .NET 10, ditenagai inti Rust.</strong><br>
-  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos
+  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos · NEAR · Aptos · Sui · TON · Cardano
 </p>
 
 <p align="center">
@@ -63,6 +63,10 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Generators` | Source generator: ABI Solidity / artifact Hardhat & Foundry dan IDL Anchor → client bertipe (juga `cnet gen`) |
 | `Crypto.Net.Ledger` | Hardware wallet Ledger: transport USB HID / Speculos, aplikasi Ethereum (alamat, transaksi, pesan, EIP-712) |
 | `Crypto.Net.Near` | NEAR Protocol: akun ed25519 (implicit dan bernama), transaksi Borsh dengan semua action, function call, RPC |
+| `Crypto.Net.Aptos` | Aptos: alamat AIP-40, type tag Move, transaksi entry function BCS, simulasi, client REST |
+| `Crypto.Net.Sui` | Sui: programmable transaction (build dan parse BCS), tanda tangan intent, pesan personal, client GraphQL dengan pemilihan gas |
+| `Crypto.Net.Ton` | TON: cell dan BoC, mnemonic TON, wallet V4R2 dan W5, komentar, jetton, client TON Center |
+| `Crypto.Net.Cardano` | Cardano: akun CIP-1852 BIP32-Ed25519, transaksi Conway dengan native asset dan CIP-20, fee tepat, client Koios |
 | `Crypto.Net.Indexer` | Indexer log EVM dengan decoding event ABI, block crawler, checkpoint, hosted service |
 | `Crypto.Net.Indexer.EntityFrameworkCore` | Penyimpanan EF Core (SQLite, PostgreSQL, SQL Server) untuk checkpoint, log dan transfer ERC-20 |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` dan test vector resmi |
@@ -208,7 +212,7 @@ atau `CRYPTONET_BACKEND=native|managed`.
 ```
  Aplikasi:    CLI cnet · Gallery (ASP.NET Core) · kode Anda
  DI:          Crypto.Net.Extensions   AddCryptoNet() · ChainCatalog · Ankr/dRPC · resilience
- Chain:       .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos
+ Chain:       .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos  .Near  .Aptos  .Sui  .Ton  .Cardano
  Wallet/Core: .Wallet (BIP-39/32, SLIP-10, keystore)  ·  .Core (Amount, ISigner, IChainClient, JSON-RPC)
  Native:      Crypto.Net.Native  → CryptoNative (Auto | Native | Managed) → P/Invoke atau fallback managed
  ─────────────────────────── C ABI (cn_*, kode status i32, catch_unwind) ───────────────────────────

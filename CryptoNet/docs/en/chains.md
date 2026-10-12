@@ -7,6 +7,11 @@
 - [Solana](#solana)
 - [Polkadot and Substrate](#polkadot-and-substrate)
 - [Cosmos SDK](#cosmos-sdk)
+- [NEAR](#near)
+- [Aptos](#aptos)
+- [Sui](#sui)
+- [TON](#ton)
+- [Cardano](#cardano)
 
 ---
 
@@ -375,3 +380,106 @@ await rest.SignAndBroadcastAsync(osmo, tx);
 cosmjs-types does. Contract messages can be objects (serialized to compact JSON) or raw JSON strings. Use
 `QueryContractRawAsync` for raw storage reads, and `GetContractInfoAsync` / `GetContractsByCodeAsync` for code
 metadata.
+
+## NEAR
+
+Package `Crypto.Net.Near`. Networks: `NearChain.Mainnet`, `Testnet`, `Localnet` (FastNEAR RPC by default).
+
+```csharp
+using var near = wallet.GetNearAccount(0, NearChain.Testnet);          // m/44'/397'/0', implicit account (64 hex)
+using var alice = near.ForAccount("alice.testnet");                    // the same key acting for a named account
+await using var rpc = new NearRpcClient(NearChain.Testnet);
+TxHash h = await rpc.TransferAsync(alice, "bob.testnet", NearAddress.Near(0.5m));
+await rpc.SignAndSendAsync(alice, "wrap.testnet", [NearAction.FunctionCall.Json("near_deposit", new { }, deposit: NearAddress.Near(1).BaseUnits)]);
+JsonElement meta = await rpc.ViewFunctionAsync("wrap.testnet", "ft_metadata");
+```
+
+Transactions are Borsh-encoded with all eight actions (create account, deploy, function call, transfer, stake, add
+key with full or function-call access, delete key, delete account) and are byte-identical to near-api-js.
+`NearAccount.FromSecretKey("ed25519:…")` imports NEAR CLI keys; `ExportSecretKey()` writes them.
+
+## Aptos
+
+Package `Crypto.Net.Aptos`. Networks: `AptosChain.Mainnet`, `Testnet`, `Localnet`.
+
+```csharp
+using var apt = wallet.GetAptosAccount(0, AptosChain.Testnet);        // m/44'/637'/0'/0'/0' (Petra)
+await using var aptos = new AptosRestClient(AptosChain.Testnet);
+TxHash t = await aptos.TransferAsync(apt, "0x…", AptosAddress.Apt(0.1m));
+
+var payload = AptosEntryFunction.Create("0x1::coin::transfer", [MoveTypeTag.Parse("0x1::aptos_coin::AptosCoin")],
+    MoveArg.Address("0x…"), MoveArg.U64(1_000));
+var tx = await aptos.BuildTransactionAsync(apt.Address.Value, payload);
+AptosSimulation sim = await aptos.SimulateAsync(tx, apt.PublicKey);    // gas and VM status, no signature needed
+await aptos.SendRawTransactionAsync(tx.Sign(apt));
+JsonElement r = await aptos.ViewAsync("0x1::chain_id::get");
+```
+
+Addresses follow AIP-40 (`0x1` for special addresses, 64 hex digits otherwise) and are `sha3-256(pubkey ‖ 0x00)`.
+Transactions are BCS `RawTransaction`s with entry-function payloads, signed over `sha3("APTOS::RawTransaction")`,
+and are byte-identical to @aptos-labs/ts-sdk. `AptosAccount.FromPrivateKey` reads AIP-80 keys (`ed25519-priv-0x…`).
+`MoveTypeTag` and the `MoveArg` encoders live in `Crypto.Net.Core` and are shared with Sui.
+
+## Sui
+
+Package `Crypto.Net.Sui`. Networks: `SuiChain.Mainnet`, `Testnet`, `Devnet`, `Localnet`. Sui's public fullnodes no
+longer serve JSON-RPC, so the client speaks GraphQL.
+
+```csharp
+using var sui = wallet.GetSuiAccount(0, SuiChain.Testnet);             // m/44'/784'/0'/0'/0' (Slush / Sui CLI)
+await using var client = new SuiGraphQlClient(SuiChain.Testnet);
+SuiEffects e = await client.TransferAsync(sui, "0x…", SuiAddress.Sui(0.5m));
+
+var tx = new SuiTransactionBuilder(sui.Address.Value);
+var coin = tx.SplitCoins(tx.Gas, tx.PureU64(1_000_000));
+tx.MoveCall("0x2::transfer::public_transfer", [MoveTypeTag.Parse("0x2::coin::Coin<0x2::sui::SUI>")], coin[0], tx.PureAddress("0x…"));
+SuiTransactionData data = await client.BuildAsync(tx);                 // gas coins, reference price, dry-run budget
+SuiEffects done = await client.ExecuteAsync(data.Serialize(), [sui.SignTransaction(data.Serialize())]);
+```
+
+Programmable transactions (move calls, split/merge/transfer, make-move-vec, publish, upgrade; owned, shared and
+receiving objects) encode and parse as BCS, byte-identical to @mysten/sui. Signatures use Sui intents, so
+`SignPersonalMessage` matches wallet `signPersonalMessage`. `SuiAccount.FromPrivateKey` reads `suiprivkey1…`.
+`SuiSignedTransaction` is the `SenderSignedData` form that `IChainClient.SendRawTransactionAsync` accepts.
+
+## TON
+
+Package `Crypto.Net.Ton`. Networks: `TonChain.Mainnet`, `Testnet`; the client uses TON Center (API v2 and v3).
+
+```csharp
+using var ton = TonAccount.FromMnemonic(words, TonChain.Testnet);        // Tonkeeper 24 words, W5 wallet by default
+await using var center = new TonCenterClient(TonChain.Testnet);         // optional apiKey: TON Center limits to 1 rps
+TxHash h = await center.TransferAsync(ton, "0Q…", TonUnits.Ton(0.05m), comment: "hello");
+
+var body = TonJetton.TransferBody(amount: 1_000_000, destination, responseDestination: ton.WalletAddress, forwardComment: "gm");
+TonAddress? jettonWallet = await center.GetJettonWalletAsync(ton.Address.Value, jettonMaster);
+await center.SendAsync(ton, [new TonMessage(jettonWallet!, TonUnits.ToNano(0.05m), Bounce: true, Body: body)]);
+```
+
+- Cells and bags of cells (`TonCellBuilder`, `TonCellSlice`, `TonBoc`) serialize exactly like @ton/core.
+- Wallet contracts V4R2 and W5 (V5R1). The first transfer deploys the wallet (state init included automatically).
+- `TonMnemonic` implements TON's own 24-word scheme (with optional password); it is not BIP-39. For multi-chain
+  BIP-39 wallets, `wallet.GetTonAccount()` uses SLIP-10 `m/44'/607'/index'`.
+- Transaction hashes are TEP-467 normalized external-message hashes, which TON Center and explorers index.
+
+## Cardano
+
+Package `Crypto.Net.Cardano`. Networks: `CardanoChain.Mainnet`, `Preprod`, `Preview`; the client uses Koios (no key
+needed).
+
+```csharp
+using var ada = wallet.GetCardanoAccount(account: 0, index: 0, CardanoChain.Preprod);  // CIP-1852, BIP32-Ed25519
+await using var koios = new KoiosClient(CardanoChain.Preprod);
+TxHash h = await koios.TransferAsync(ada, "addr_test1…", CardanoAddress.Ada(5), message: "thanks");
+
+var tx = await koios.BuildTransferAsync(ada, [new CardanoOutput("addr_test1…", 2_000_000, [new CardanoAsset(policyId, assetNameHex, 10)])]);
+await koios.SendRawTransactionAsync(tx.Sign(ada));
+```
+
+- Keys follow Icarus/CIP-3: the root comes from the mnemonic entropy (not the BIP-39 seed). Child keys use
+  BIP32-Ed25519, which the Rust core and the managed fallback both implement.
+- `GetCardanoAccountXpub` plus `DeriveCardanoAddress` generate receive addresses without private keys.
+- Base, enterprise, reward and Byron addresses are supported.
+- Conway transactions carry native assets in canonical order and optional CIP-20 messages.
+- `BuildTransferAsync` selects UTxOs, returns change and leftover assets to the sender, and sets the exact minimum fee.
+  Everything is byte-identical to cardano-serialization-lib.

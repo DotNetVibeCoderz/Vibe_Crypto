@@ -43,6 +43,24 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **Polkadot**:
   - `ScaleEncoder`: a metadata-driven encoder with `EncodeCall(pallet, call, args)` and nested calls.
   - `PolkadotStaking`: staking and nomination-pool calls. Verified by a fee quote from Polkadot Asset Hub.
+- **Crypto.Net.Aptos**: AIP-40 addresses, AIP-80 keys, `m/44'/637'` accounts, BCS entry-function transactions,
+  simulation, view functions and a REST client. Byte-identical to @aptos-labs/ts-sdk.
+- **Crypto.Net.Sui**: `suiprivkey` keys, `m/44'/784'` accounts, programmable transactions (BCS build and parse),
+  intent signing, personal messages, and a GraphQL client with gas selection and dry runs. Byte-identical to @mysten/sui.
+- **Crypto.Net.Ton**:
+  - Cells and bags of cells (same order as @ton/core), raw and user-friendly addresses, and TON mnemonics.
+  - Wallets V4R2 and W5, with automatic deployment on the first transfer.
+  - Comments, jetton transfers, TEP-467 normalized hashes, and a TON Center client.
+- **Crypto.Net.Cardano**:
+  - CIP-1852 accounts with BIP32-Ed25519 (Icarus) keys, account xpubs, and base/enterprise/reward/Byron addresses.
+  - Conway transactions with native assets and CIP-20 messages, UTxO selection with exact fees, and a Koios client.
+  - Byte-identical to cardano-serialization-lib.
+- **Native core (ABI 0x00010200)**: SHA3-256, BIP32-Ed25519 derivation (private and public), and extended-key
+  signing, each in Rust and in the managed fallback.
+- **Core**: `BcsWriter`/`BcsReader`, `MoveAddress`, `MoveTypeTag` and `MoveArg`.
+- **Wallet**: `Mnemonic.ToIcarusRootKey` and `HdWallet.DeriveBip32Ed25519`.
+- `ChainCatalog`, `AddNear`/`AddAptos`/`AddSui`/`AddTon`/`AddCardano`, address detection, `cnet wallet derive` and
+  the Gallery wallet all cover the five new chains.
 - **Crypto.Net.Ledger**:
   - APDU protocol, HID framing, and USB HID, Speculos and replay transports.
   - Ethereum app: addresses, chunked transactions, personal messages, EIP-712.

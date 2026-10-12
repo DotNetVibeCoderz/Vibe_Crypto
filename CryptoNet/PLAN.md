@@ -55,7 +55,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [ ] Trezor, Ledger apps for other chains, WalletConnect v2 (needs a Reown project ID).
 - [x] Gallery desktop (Photino native window) and WASM/PWA (also covers mobile browsers). A native MAUI mobile app is not built.
 - [ ] External security audit before 2.0.
-- [ ] Additional chains: TON, Sui/Aptos, NEAR, Cardano.
+- [x] Additional chains: NEAR, Aptos, Sui, TON, Cardano (cross-checked byte for byte with each chain's reference SDK).
 
 ## Decisions taken
 
