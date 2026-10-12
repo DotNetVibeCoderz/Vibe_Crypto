@@ -21,6 +21,7 @@
 | [Contract clients](codegen.md) | generate typed C# from Solidity ABIs and Anchor IDLs |
 | [Indexer](indexer.md) | index EVM events and ERC-20 transfers into a database, or crawl blocks on any chain |
 | [Project templates](templates.md) | start a console app, worker, Web API, library or test project with `dotnet new` |
+| [VS Code extension](vscode.md) | check balances, generate clients, hover units and catch address typos in the editor |
 | [Analyzers](analyzers.md) | catch hard-coded keys, float amounts and other mistakes at compile time |
 | [Building and contributing](contributing.md) | build from source, run tests, release packages |
 | [FAQ](faq.md) | find quick answers |

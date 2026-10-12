@@ -183,7 +183,7 @@ validate.SetAction(r =>
     }
 
     var matches = ChainCatalog.DetectAddress(addr);
-    if (r.GetValue(json)) { Ui.Json(new { address = addr, valid = matches.Count > 0, matches }); return matches.Count > 0 ? 0 : 1; }
+    if (r.GetValue(json)) { Ui.Json(new { address = addr, valid = matches.Count > 0, matches = matches.Select(m => new { family = m.Family.ToString(), format = m.Format }) }); return matches.Count > 0 ? 0 : 1; }
     if (matches.Count == 0) { Ui.Error("Not recognised by any supported chain"); return 1; }
     var t = Ui.Table("Chain family", "Format");
     foreach (var m in matches) t.AddRow($"[#{Ui.Accent.ToHex()}]{m.Family}[/]", Markup.Escape(m.Format));

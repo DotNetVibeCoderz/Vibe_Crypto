@@ -149,6 +149,12 @@ user-secrets or environment variables, never in source control.
 Nine interactive .NET notebooks — wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot, Cosmos, indexing, benchmarks and security — in English
 and Bahasa Indonesia: [samples/notebooks](samples/notebooks/README.md). Open them in VS Code with Polyglot Notebooks.
 
+## VS Code
+
+**Crypto.Net Tools** (`crypto-net-tools.vsix` on each release): networks view, wallet/balance/address commands,
+contract client generation, unit and address hovers, EIP-55 typo warnings, snippets and local nodes. See
+[docs/en/vscode.md](docs/en/vscode.md).
+
 ## The `cnet` command line
 
 ```bash

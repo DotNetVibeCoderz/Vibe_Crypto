@@ -244,6 +244,41 @@ jobs:
           name: test-results-${{ matrix.rid }}
           path: CryptoNet/tests/Crypto.Net.Tests/TestResults/*.trx
 
+  vscode:
+    name: VS Code extension
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: CryptoNet/tools/vscode-extension
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install, typecheck, unit tests
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm test
+
+      - name: Integration test in a real VS Code
+        run: xvfb-run -a npm run test:integration
+
+      - name: Package .vsix
+        shell: bash
+        run: |
+          # Marketplace versions must be plain x.y.z, so a prerelease suffix is dropped for the extension.
+          v="${{ inputs.version }}"; if [ -n "$v" ]; then npm version "${v%%-*}" --no-git-tag-version --allow-same-version; fi
+          npm run package
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: crypto-net-tools-vsix
+          path: CryptoNet/tools/vscode-extension/crypto-net-tools.vsix
+          if-no-files-found: error
+
   templates:
     name: dotnet new templates
     needs: native

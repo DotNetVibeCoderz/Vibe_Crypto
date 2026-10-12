@@ -43,11 +43,19 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **Polkadot**:
   - `ScaleEncoder`: a metadata-driven encoder with `EncodeCall(pallet, call, args)` and nested calls.
   - `PolkadotStaking`: staking and nomination-pool calls. Verified by a fee quote from Polkadot Asset Hub.
+- **VS Code extension "Crypto.Net Tools"**:
+  - Networks view.
+  - Commands for wallet, balance, address, units, client generation, templates, notebooks and doctor.
+  - C# hovers for units and addresses, and EIP-55 typo diagnostics.
+  - Snippets and local-node launcher.
+  - EN/ID localization.
+  - Tested in a real VS Code in CI; the `.vsix` is attached to releases.
 - Notebooks 07 (indexer to SQLite), 08 (Rust vs managed benchmarks) and 09 (security practices) in EN/ID. All
   nine notebooks now target 1.2.0 and were executed against the packed packages.
 - `MockRpcError` in Crypto.Net.Testing lets an `OnRpc` factory answer with an error.
 
 ### Changed
+- `cnet address validate --json` reports chain families by name.
 - The `cnet-worker` template indexes ERC-20 transfers of `Watcher:Tokens` into SQLite.
 
 ## [1.1.0] — 2026-10-12

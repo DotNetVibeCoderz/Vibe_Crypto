@@ -142,6 +142,12 @@ lingkungan, jangan pernah di source control.
 Sembilan notebook .NET interaktif — dompet, Bitcoin, Ethereum/EVM, Solana, Polkadot, Cosmos, indexing, benchmark dan keamanan — dalam bahasa
 Inggris dan Indonesia: [samples/notebooks](samples/notebooks/README.md). Buka di VS Code dengan Polyglot Notebooks.
 
+## VS Code
+
+**Crypto.Net Tools** (`crypto-net-tools.vsix` di setiap rilis): view jaringan, perintah dompet/saldo/alamat, pembuatan
+client kontrak, hover unit dan alamat, peringatan salah ketik EIP-55, snippet dan node lokal. Lihat
+[docs/id/vscode.md](docs/id/vscode.md).
+
 ## Perintah `cnet`
 
 ```bash
