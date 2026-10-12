@@ -48,7 +48,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [x] `Crypto.Net.Analyzers` (CNET001–005: hard-coded secrets, secrets as `string`, `Amount` from `double`…).
 - [x] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`), `cnet-contract-client`.
 - [x] Polyglot notebooks (EN/ID) — one per chain.
-- [ ] Notebooks for indexer, benchmarks and security practices.
+- [x] Notebooks for indexer, benchmarks and security practices.
 - [ ] VS Code extension "Crypto.Net Tools".
 - [x] ERC-721/1155, ENS, EIP-4337; SPL Token-2022 extensions; CosmWasm; Polkadot staking/nomination helpers.
 - [ ] Hardware wallets (Ledger/Trezor) and WalletConnect v2 as `ISigner` implementations.

@@ -16,6 +16,9 @@ Notebook memasang `Crypto.Net.Extensions` dari nuget.org, membaca jaringan publi
 | 04 | [Solana](04-solana.en.ipynb) | [Solana](04-solana.id.ipynb) | Phantom keys, devnet, PDA/ATA, transaction simulation |
 | 05 | [Polkadot and Substrate](05-polkadot.en.ipynb) | [Polkadot dan Substrate](05-polkadot.id.ipynb) | sr25519/ed25519, `//Alice`, SS58, SCALE, metadata-driven extrinsic + fee |
 | 06 | [Cosmos SDK](06-cosmos.en.ipynb) | [Cosmos SDK](06-cosmos.id.ipynb) | Bech32 prefixes, REST, SIGN_MODE_DIRECT, gas simulation |
+| 07 | [Indexing events](07-indexer.en.ipynb) | [Mengindeks event](07-indexer.id.ipynb) | Event decoding, EvmLogIndexer → SQLite (EF Core), LINQ, BlockCrawler on Asset Hub |
+| 08 | [Rust vs managed](08-benchmarks.en.ipynb) | [Rust vs managed](08-benchmarks.id.ipynb) | CryptoBenchmark, UseBackend timing, parity, why SHA-2 stays on the platform |
+| 09 | [Security practices](09-security.en.ipynb) | [Praktik keamanan](09-security.id.ipynb) | SecureBuffer, keystores, exact amounts, checksums, replay protection, hostile input, key redaction |
 
 ## Run / Menjalankan
 

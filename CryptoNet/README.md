@@ -146,7 +146,7 @@ user-secrets or environment variables, never in source control.
 
 ## Notebooks
 
-Six interactive .NET notebooks — wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos — in English
+Nine interactive .NET notebooks — wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot, Cosmos, indexing, benchmarks and security — in English
 and Bahasa Indonesia: [samples/notebooks](samples/notebooks/README.md). Open them in VS Code with Polyglot Notebooks.
 
 ## The `cnet` command line

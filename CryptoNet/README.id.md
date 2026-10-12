@@ -139,7 +139,7 @@ lingkungan, jangan pernah di source control.
 
 ## Notebook
 
-Enam notebook .NET interaktif — dompet, Bitcoin, Ethereum/EVM, Solana, Polkadot dan Cosmos — dalam bahasa
+Sembilan notebook .NET interaktif — dompet, Bitcoin, Ethereum/EVM, Solana, Polkadot, Cosmos, indexing, benchmark dan keamanan — dalam bahasa
 Inggris dan Indonesia: [samples/notebooks](samples/notebooks/README.md). Buka di VS Code dengan Polyglot Notebooks.
 
 ## Perintah `cnet`
