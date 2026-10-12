@@ -43,6 +43,11 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **Polkadot**:
   - `ScaleEncoder`: a metadata-driven encoder with `EncodeCall(pallet, call, args)` and nested calls.
   - `PolkadotStaking`: staking and nomination-pool calls. Verified by a fee quote from Polkadot Asset Hub.
+- **Gallery desktop and WebAssembly**:
+  - `Crypto.Net.Gallery.Core` makes the Gallery API host-neutral.
+  - `Crypto.Net.Gallery.Desktop` is a native window (Photino) with the server in-process on loopback.
+  - `Crypto.Net.Gallery.Wasm` runs the whole Gallery in the browser on .NET WebAssembly, installable as a PWA.
+    CI checks it in headless Chrome.
 - **VS Code extension "Crypto.Net Tools"**:
   - Networks view.
   - Commands for wallet, balance, address, units, client generation, templates, notebooks and doctor.

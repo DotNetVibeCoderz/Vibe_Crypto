@@ -42,7 +42,7 @@ window.I18N = {
     logScale: "operations per second, log scale", benchEmpty: "Run the benchmark to measure both engines (about 5 seconds).",
     opsPerSec: "ops/s", faster: "faster", operation: "Operation", rust: "Rust", managed: "Managed", speedup: "Speed-up",
     nativeMissing: "The Rust library is not loaded, so only the managed engine was measured.",
-    engineNative: "Rust core · ABI {abi}", engineManaged: "Managed fallback",
+    engineNative: "Rust core · ABI {abi}", engineManaged: "Managed fallback", engineBrowser: "WebAssembly · managed C#",
     requestFailed: "Request failed: {msg}",
   },
   id: {
@@ -87,7 +87,7 @@ window.I18N = {
     logScale: "operasi per detik, skala log", benchEmpty: "Jalankan benchmark untuk mengukur kedua mesin (sekitar 5 detik).",
     opsPerSec: "ops/dtk", faster: "lebih cepat", operation: "Operasi", rust: "Rust", managed: "Managed", speedup: "Percepatan",
     nativeMissing: "Library Rust tidak termuat, jadi hanya mesin managed yang diukur.",
-    engineNative: "Inti Rust · ABI {abi}", engineManaged: "Fallback managed",
+    engineNative: "Inti Rust · ABI {abi}", engineManaged: "Fallback managed", engineBrowser: "WebAssembly · C# managed",
     requestFailed: "Permintaan gagal: {msg}",
   },
 };

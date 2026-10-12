@@ -39,3 +39,29 @@ Tata letak berfungsi hingga lebar layar ponsel.
 
 Parameter URL untuk screenshot dan demo: `?theme=light|dark`, `?lang=en|id`, `?still=1` (tanpa animasi),
 `?autorun=1` (menjalankan aksi halaman saat dibuka).
+
+## Desktop dan WebAssembly
+
+UI yang sama berjalan di tiga host. Ketiganya memakai `Crypto.Net.Gallery.Core`, sehingga setiap halaman berperilaku
+identik.
+
+| Host | Menjalankan | Mesin |
+| --- | --- | --- |
+| Web (ASP.NET Core) | `dotnet run --project samples/Crypto.Net.Gallery` | Inti Rust |
+| Desktop: jendela native di Windows, macOS dan Linux (Photino; WebView2 / WKWebView / WebKitGTK) | `dotnet run --project samples/Crypto.Net.Gallery.Desktop` | Inti Rust |
+| Browser, PWA yang bisa offline (.NET WebAssembly) | `dotnet publish samples/Crypto.Net.Gallery.Wasm -c Release -o out`, lalu sajikan `out/wwwroot` | C# managed |
+
+![Gallery desktop](../assets/screenshots/gallery-desktop.png)
+
+Aplikasi desktop menjalankan server Gallery di dalam proses pada port `127.0.0.1` acak. Tidak ada yang mendengarkan di
+antarmuka lain.
+
+Build WebAssembly menjalankan seluruh API di dalam halaman: `host.js` menyalakan .NET dan `app.js` memanggilnya alih-alih
+`/api`. Tidak ada server, sehingga bisa di-hosting di situs statis mana pun (GitHub Pages, CDN) dan dipasang di ponsel
+sebagai PWA. Ada dua batasan di browser: inti Rust tidak tersedia, sehingga tanda tangan sr25519 (Polkadot) dinonaktifkan;
+dan halaman jaringan langsung hanya bekerja dengan endpoint RPC yang mengizinkan CORS.
+
+![Gallery WebAssembly](../assets/screenshots/gallery-wasm.png)
+
+CI mem-publish build WebAssembly (artifact `gallery-wasm`) dan memeriksanya di Chrome headless: halaman harus berhasil
+menyalakan .NET dan menurunkan dompet.

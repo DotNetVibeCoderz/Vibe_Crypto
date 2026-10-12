@@ -178,7 +178,9 @@ heads and a Rust-vs-managed benchmark — each with the C# that produces it. Eng
 light and dark themes, testnet by default.
 
 ```bash
-dotnet run --project samples/Crypto.Net.Gallery   # http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery           # web, http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery.Desktop   # native window (Windows, macOS, Linux)
+dotnet publish samples/Crypto.Net.Gallery.Wasm -c Release # static WebAssembly site / PWA
 ```
 
 | | |

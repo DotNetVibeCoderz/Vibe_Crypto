@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/samples/">
+    <Project Path="samples/Crypto.Net.Gallery.Core/Crypto.Net.Gallery.Core.csproj" />
+    <Project Path="samples/Crypto.Net.Gallery.Desktop/Crypto.Net.Gallery.Desktop.csproj" />
+    <Project Path="samples/Crypto.Net.Gallery.Wasm/Crypto.Net.Gallery.Wasm.csproj" />
     <Project Path="samples/Crypto.Net.Gallery/Crypto.Net.Gallery.csproj" />
     <Project Path="samples/Crypto.Net.QuickStart/Crypto.Net.QuickStart.csproj" />
   </Folder>

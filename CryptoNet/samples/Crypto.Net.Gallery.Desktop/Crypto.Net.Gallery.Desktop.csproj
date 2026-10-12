@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <Description>Crypto.Net Gallery as a desktop app (Windows, macOS, Linux): the Gallery UI in a native webview window.</Description>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <ApplicationIcon>..\..\assets\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Photino.NET" Version="3.2.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Gallery\Crypto.Net.Gallery.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Same UI as the web Gallery. -->
+    <Content Remove="wwwroot\**" />
+    <None Include="..\Crypto.Net.Gallery\wwwroot\**\*" LinkBase="wwwroot" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\assets\icon.png" Link="icon.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\assets\icon.ico" Link="icon.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

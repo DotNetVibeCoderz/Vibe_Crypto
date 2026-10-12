@@ -43,6 +43,14 @@
 
   // ------------------------------------------------------------------ helpers
   async function api(path, body) {
+    // WebAssembly Gallery: the same API runs in .NET inside the page (see wasm-boot.js), no server involved.
+    if (window.cryptonetReady) {
+      const invoke = await window.cryptonetReady;
+      const reply = JSON.parse(await invoke(body === undefined ? "GET" : "POST", path, body === undefined ? null : JSON.stringify(body)));
+      const data = JSON.parse(reply.body || "{}");
+      if (reply.status !== 200) throw new Error(data.error || "Error " + reply.status);
+      return data;
+    }
     const res = await fetch("/api" + path, body === undefined
       ? {}
       : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -101,7 +109,8 @@
     const el = $("#engine");
     el.classList.toggle("native", s.nativeLoaded);
     el.classList.toggle("managed", !s.nativeLoaded);
-    $("#engine-label").textContent = s.nativeLoaded ? t("engineNative", { abi: s.abiVersion }) : t("engineManaged");
+    $("#engine-label").textContent = s.nativeLoaded ? t("engineNative", { abi: s.abiVersion })
+      : s.host === "browser" ? t("engineBrowser") : t("engineManaged");
     el.title = `${s.rid} · ${s.runtime}`;
   }
 

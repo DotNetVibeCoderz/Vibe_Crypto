@@ -39,3 +39,28 @@ by default. Layout works down to phone width.
 
 URL parameters for screenshots and demos: `?theme=light|dark`, `?lang=en|id`, `?still=1` (no animation),
 `?autorun=1` (runs the page's action on open).
+
+## Desktop and WebAssembly
+
+The same UI runs in three hosts. They share `Crypto.Net.Gallery.Core`, so each page behaves identically.
+
+| Host | Run | Engine |
+| --- | --- | --- |
+| Web (ASP.NET Core) | `dotnet run --project samples/Crypto.Net.Gallery` | Rust core |
+| Desktop: a native window on Windows, macOS and Linux (Photino; WebView2 / WKWebView / WebKitGTK) | `dotnet run --project samples/Crypto.Net.Gallery.Desktop` | Rust core |
+| Browser, offline-capable PWA (.NET WebAssembly) | `dotnet publish samples/Crypto.Net.Gallery.Wasm -c Release -o out`, then serve `out/wwwroot` | Managed C# |
+
+![Desktop Gallery](../assets/screenshots/gallery-desktop.png)
+
+The desktop app hosts the Gallery server in-process on a random `127.0.0.1` port. Nothing listens on other
+interfaces.
+
+The WebAssembly build runs the whole API inside the page: `host.js` boots .NET and `app.js` calls it instead of
+`/api`. There is no server, so it can be hosted on any static site (GitHub Pages, a CDN) and installed on phones
+as a PWA. Two limits apply in the browser: the Rust core is unavailable, so sr25519 (Polkadot) signing is disabled;
+and live-network pages work only with RPC endpoints that allow CORS.
+
+![WebAssembly Gallery](../assets/screenshots/gallery-wasm.png)
+
+CI publishes the WebAssembly build (artifact `gallery-wasm`) and checks it in headless Chrome: the page must boot
+.NET and derive a wallet.

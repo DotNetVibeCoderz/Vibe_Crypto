@@ -171,7 +171,9 @@ live, dan benchmark Rust vs managed — masing-masing lengkap dengan kode C#-nya
 tema terang dan gelap, testnet secara default.
 
 ```bash
-dotnet run --project samples/Crypto.Net.Gallery   # http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery           # web, http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery.Desktop   # jendela native (Windows, macOS, Linux)
+dotnet publish samples/Crypto.Net.Gallery.Wasm -c Release # situs WebAssembly statis / PWA
 ```
 
 | | |
