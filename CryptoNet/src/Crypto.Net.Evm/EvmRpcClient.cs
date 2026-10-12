@@ -5,6 +5,16 @@ using Crypto.Net.Core;
 namespace Crypto.Net.Evm;
 
 /// <summary>An event log returned by <c>eth_getLogs</c> or a receipt.</summary>
+/// <summary>
+/// An <c>eth_getLogs</c> filter. <see cref="Topics"/> holds one entry per topic position: null matches anything,
+/// a list matches any of its values.
+/// </summary>
+public sealed record EvmLogFilter(ulong FromBlock, ulong? ToBlock = null)
+{
+    public IReadOnlyList<string> Addresses { get; init; } = [];
+    public IReadOnlyList<IReadOnlyList<string>?> Topics { get; init; } = [];
+}
+
 public sealed record EvmLog(string Address, IReadOnlyList<string> Topics, string Data, ulong BlockNumber, string TransactionHash, ulong LogIndex);
 
 /// <summary>Full EVM receipt including logs.</summary>
@@ -149,6 +159,23 @@ public sealed class EvmRpcClient : IChainClient
         if (address is not null) filter["address"] = address;
         if (topics is not null) filter["topics"] = topics;
         var r = await _rpc.CallAsync("eth_getLogs", [filter], ct);
+        return r.EnumerateArray().Select(ParseLog).ToList();
+    }
+
+    /// <summary><c>eth_getLogs</c> with several addresses and OR-ed topics per position.</summary>
+    public async ValueTask<IReadOnlyList<EvmLog>> GetLogsAsync(EvmLogFilter filter, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(filter);
+        var body = new Dictionary<string, object?>
+        {
+            ["fromBlock"] = HexUtil.FormatQuantity(filter.FromBlock),
+            ["toBlock"] = filter.ToBlock is null ? "latest" : HexUtil.FormatQuantity(filter.ToBlock.Value),
+        };
+        if (filter.Addresses.Count == 1) body["address"] = filter.Addresses[0];
+        else if (filter.Addresses.Count > 1) body["address"] = filter.Addresses;
+        if (filter.Topics.Count > 0)
+            body["topics"] = filter.Topics.Select(t => t switch { null => null, { Count: 1 } one => (object)one[0], _ => t }).ToList();
+        var r = await _rpc.CallAsync("eth_getLogs", [body], ct);
         return r.EnumerateArray().Select(ParseLog).ToList();
     }
 

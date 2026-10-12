@@ -13,7 +13,7 @@ cnet new webapi -n Payments.Api --network solana-devnet     # same thing through
 | Template | What you get |
 | --- | --- |
 | `cnet-console` | Console app: derives an account for the configured network, prints the head and the balance |
-| `cnet-worker` | Worker Service: follows new blocks and logs balance changes of watched addresses |
+| `cnet-worker` | Worker Service: follows new blocks, logs balance changes and indexes ERC-20 transfers into SQLite ([Indexer](indexer.md)) |
 | `cnet-webapi` | Minimal API with OpenAPI: networks, heads, balances, address detection; testnets only unless `CryptoNet:AllowMainnet` |
 | `cnet-lib` | Class library with a DI-registered `PortfolioService`, plus an xUnit project that uses `Crypto.Net.Testing` mocks |
 | `cnet-test` | xUnit project with official vectors, `MockHttpMessageHandler`, and a `docker-compose.yml` for Anvil, a Polkadot dev chain and `solana-test-validator` |

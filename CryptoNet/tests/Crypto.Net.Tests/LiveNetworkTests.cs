@@ -41,6 +41,27 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Indexer_DecodesSepoliaUsdcTransfers()
+    {
+        await using var client = new EvmRpcClient(EvmChain.Sepolia);
+        ulong head = await client.GetBlockNumberAsync();
+        var events = new List<Crypto.Net.Evm.EvmDecodedEvent>();
+        var indexer = new Crypto.Net.Indexer.EvmLogIndexer(client, new Crypto.Net.Indexer.InMemoryCheckpointStore(),
+            new Crypto.Net.Indexer.DelegateLogHandler((b, _) => { events.AddRange(b.Events); return Task.CompletedTask; }),
+            new Crypto.Net.Indexer.EvmLogIndexerOptions
+            {
+                Addresses = ["0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"], // Circle USDC on Sepolia
+                Events = [Crypto.Net.Evm.EvmEvent.Erc20Transfer],
+                StartBlock = head - 300,
+                Confirmations = 5,
+                MaxBlockRange = 100,
+            });
+        Assert.Equal(head - 5, await indexer.RunOnceAsync());
+        Assert.NotEmpty(events);
+        Assert.All(events, e => Assert.IsType<System.Numerics.BigInteger>(e["value"]));
+    }
+
+    [LiveFact]
     public async Task WebSocketSubscriptions_ReceiveHeads()
     {
         static CancellationToken Budget() => new CancellationTokenSource(TimeSpan.FromSeconds(90)).Token;

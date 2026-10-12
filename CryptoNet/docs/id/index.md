@@ -18,6 +18,7 @@
 | [Gallery](gallery.md) | menjelajahi setiap fitur secara interaktif |
 | [Arsitektur](arsitektur.md) | melihat bagaimana inti Rust, C ABI dan fallback managed saling terhubung |
 | [Keamanan](keamanan.md) | menjalankan di produksi dengan aman |
+| [Indexer](indexer.md) | mengindeks event EVM dan transfer ERC-20 ke database, atau menelusuri blok di chain mana pun |
 | [Template project](template.md) | memulai aplikasi console, worker, Web API, library atau project test dengan `dotnet new` |
 | [Analyzer](analyzer.md) | menangkap kunci hard-coded, amount dari float dan kesalahan lain saat kompilasi |
 | [Build dan kontribusi](kontribusi.md) | build dari source, menjalankan test, merilis paket |

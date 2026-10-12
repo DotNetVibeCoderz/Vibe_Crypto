@@ -29,6 +29,7 @@
 | Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
 | 1.1 Taproot trees, PSBT v0/v2, multisig | ✅ Done | BIP-341, BIP-174/370 and Bitcoin Core sighash vectors |
 | 1.1 Solana v0 + lookup tables | ✅ Done | Byte-identical to @solana/web3.js 1.98.0 |
+| Crypto.Net.Indexer (+ EF Core storage) | ✅ Done | Mock + SQLite tests; live Sepolia USDC; cnet-worker indexes into SQLite |
 | Crypto.Net.Templates (5 templates) + `cnet new` | ✅ Done | `scripts/test-templates.sh` in CI: instantiate, build, test |
 | Crypto.Net.Analyzers (CNET001–005) | ✅ Done | Roslyn tests incl. code fix; dogfooded on CLI, QuickStart, Gallery |
 | 1.1 musl build, audit/deny/SBOM, fuzzing | ✅ Done | CI jobs `native-musl`, `test-musl`, `security`, `fuzz`; fuzzing found and fixed 3 decoder crashes |
@@ -68,3 +69,4 @@
 - **2026-10-12** — Hardening: decoder fuzzing found and fixed 3 crash classes (metadata compact overflow, EVM decode overflow and nulls, RLP length/nesting). CI gains Alpine/musl, cargo audit/deny, the NuGet vulnerability scan, a CycloneDX SBOM and fuzz jobs.
 - **2026-10-12** — Crypto.Net.Analyzers package (CNET001–005, CNET005 code fix), documented in EN/ID.
 - **2026-10-12** — dotnet new templates and `cnet new`. Released 1.1.0.
+- **2026-10-12** — Crypto.Net.Indexer and its EF Core storage. `EvmEvent` decoding. The worker template now indexes real Sepolia USDC transfers into SQLite.

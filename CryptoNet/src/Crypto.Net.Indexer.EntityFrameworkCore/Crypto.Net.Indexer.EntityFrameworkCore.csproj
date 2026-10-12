@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Entity Framework Core storage for Crypto.Net.Indexer: checkpoints, raw EVM logs and ERC-20 transfers with idempotent writes. Works with SQLite, PostgreSQL, SQL Server and any relational EF Core provider.</Description>
+    <PackageTags>$(PackageTags);indexer;efcore;sqlite</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Indexer\Crypto.Net.Indexer.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
+  </ItemGroup>
+</Project>

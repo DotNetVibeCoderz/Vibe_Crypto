@@ -10,6 +10,8 @@
     <Project Path="src/Crypto.Net.Cosmos/Crypto.Net.Cosmos.csproj" />
     <Project Path="src/Crypto.Net.Evm/Crypto.Net.Evm.csproj" />
     <Project Path="src/Crypto.Net.Extensions/Crypto.Net.Extensions.csproj" />
+    <Project Path="src/Crypto.Net.Indexer.EntityFrameworkCore/Crypto.Net.Indexer.EntityFrameworkCore.csproj" />
+    <Project Path="src/Crypto.Net.Indexer/Crypto.Net.Indexer.csproj" />
     <Project Path="src/Crypto.Net.Native/Crypto.Net.Native.csproj" />
     <Project Path="src/Crypto.Net.Polkadot/Crypto.Net.Polkadot.csproj" />
     <Project Path="src/Crypto.Net.Solana/Crypto.Net.Solana.csproj" />

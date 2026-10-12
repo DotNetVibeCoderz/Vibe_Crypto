@@ -4,6 +4,24 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
+### Added
+- **Crypto.Net.Indexer**:
+  - `EvmLogIndexer` pages from a checkpoint to the confirmed head with adaptive ranges and at-least-once delivery.
+  - `BlockCrawler` works on any chain.
+  - Checkpoint stores: in-memory and file.
+  - Hosted-service registration: `AddEvmLogIndexer`, `AddBlockCrawler`.
+- **Crypto.Net.Indexer.EntityFrameworkCore**:
+  - `CryptoNetIndexerDbContext` / `ApplyCryptoNetIndexer`.
+  - `EfCheckpointStore`.
+  - `EfEvmLogStore`: idempotent raw logs and ERC-20 transfers.
+- **EVM**:
+  - `EvmEvent`: event signatures with `indexed` and anonymous events, plus log decoding (ERC-20/721 ready-made).
+  - `EvmLogFilter` for multi-address / OR-topic `eth_getLogs`.
+- `MockRpcError` in Crypto.Net.Testing lets an `OnRpc` factory answer with an error.
+
+### Changed
+- The `cnet-worker` template indexes ERC-20 transfers of `Watcher:Tokens` into SQLite.
+
 ## [1.1.0] — 2026-10-12
 
 ### Security

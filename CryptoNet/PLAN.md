@@ -43,7 +43,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 
 ## Later — ecosystem (from solution-design.md)
 
-- [ ] `Crypto.Net.Indexer`: block crawler, log processor, checkpoints, EF Core/SQLite storage.
+- [x] `Crypto.Net.Indexer`: block crawler, log processor, checkpoints, EF Core/SQLite storage.
 - [ ] Source generators: Solidity ABI → typed services, Anchor IDL → clients; `cnet gen`.
 - [x] `Crypto.Net.Analyzers` (CNET001–005: hard-coded secrets, secrets as `string`, `Amount` from `double`…).
 - [x] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`); `cnet-contract-client` follows the source generators.
