@@ -18,6 +18,10 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   `BitcoinAddress.FromScriptNestedSegwit`. PSBT signing and finalizing for bare, P2SH, P2WSH and P2SH-P2WSH.
 - **Taproot**: script trees (`TaprootNode`, `Taproot.LeafSpends` control blocks). Full BIP-341 sighash
   (ANYONECANPAY/NONE/SINGLE, script path, annex). `SignTaprootKeyPath`. Official BIP-341 wallet vectors.
+- **WebSocket subscriptions**: `WebSocketRpcClient` in Core multiplexes calls and subscriptions over one socket.
+  Typed streams per chain: `SubscribeEvmHeadsAsync`/`SubscribeEvmLogsAsync`/`SubscribeEvmPendingTransactionsAsync`;
+  `SubscribeSolanaSlotsAsync`/`SubscribeSolanaAccountAsync`/`SubscribeSolanaLogsAsync`/`WaitForSolanaSignatureAsync`;
+  `SubscribeSubstrateHeadsAsync`/`SubscribeSubstrateFinalizedHeadsAsync`/`SubmitAndWatchExtrinsicAsync`.
 - **Polkadot events**: `RuntimeMetadata` keeps the full type registry, storage entries and event/error enums.
   `ScaleDecoder` decodes any SCALE value. `SubstrateEvents` decodes `System.Events` and dispatch errors.
   `GetEventsAsync`, `GetExtrinsicEventsAsync` and `GetStorageAsync` are new. `StorageKeys` covers xxHash/twox

@@ -155,7 +155,7 @@ public sealed class EvmRpcClient : IChainClient
     private static string? Str(JsonElement e, string name) =>
         e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
-    private static EvmLog ParseLog(JsonElement l) => new(
+    internal static EvmLog ParseLog(JsonElement l) => new(
         Str(l, "address") ?? "",
         l.GetProperty("topics").EnumerateArray().Select(t => t.GetString()!).ToList(),
         Str(l, "data") ?? "0x",

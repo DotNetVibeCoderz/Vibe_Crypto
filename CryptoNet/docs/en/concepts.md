@@ -59,6 +59,28 @@ Extensions add `WaitForReceiptAsync(hash, pollInterval, timeout)` and `WatchBloc
 `IAsyncEnumerable<BlockInfo>`). Chain-specific clients add much more (`EstimateFeesAsync`, `GetUtxosAsync`,
 `GetMetadataAsync`, `SimulateAsync`…).
 
+## WebSocket subscriptions
+
+`WebSocketRpcClient` runs JSON-RPC over one WebSocket. It multiplexes calls and subscriptions, and each chain package
+adds typed streams. `http(s)://` URLs are converted to `ws(s)://`.
+
+```csharp
+await using var ws = new WebSocketRpcClient("wss://ethereum-rpc.publicnode.com");
+await foreach (EvmBlockHeader head in ws.SubscribeEvmHeadsAsync(ct)) { ... }
+await foreach (EvmLog log in ws.SubscribeEvmLogsAsync(usdc, [HexUtil.Encode(EvmAbi.GetEventTopic("Transfer(address,address,uint256)"))], ct)) { ... }
+
+await using var sol = new WebSocketRpcClient(SolanaChain.Devnet.DefaultRpcUrl);
+string? error = await sol.WaitForSolanaSignatureAsync(signature);      // also SubscribeSolanaSlots/Account/LogsAsync
+
+await using var dot = new WebSocketRpcClient(PolkadotChain.Polkadot.DefaultRpcUrl);
+await foreach (var status in dot.SubmitAndWatchExtrinsicAsync(signedExtrinsic))   // ready → inBlock → finalized
+    Console.WriteLine($"{status.Status} {status.BlockHash}");
+```
+
+Leaving an `await foreach` sends the matching unsubscribe call. If the connection drops, pending calls fail and every
+open stream ends with a `WebSocketException`. Reconnect with a new client, or fall back to polling with
+`WatchBlocksAsync`. An `RpcEndpoint` with headers (for example a dRPC key) can be passed to the constructor.
+
 ## Errors
 
 | Exception | Meaning |

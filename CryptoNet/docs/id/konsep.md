@@ -61,6 +61,28 @@ Extension menambahkan `WaitForReceiptAsync(hash, pollInterval, timeout)` dan `Wa
 (`IAsyncEnumerable<BlockInfo>`). Client per chain menambahkan jauh lebih banyak (`EstimateFeesAsync`,
 `GetUtxosAsync`, `GetMetadataAsync`, `SimulateAsync`…).
 
+## Subscription WebSocket
+
+`WebSocketRpcClient` menjalankan JSON-RPC lewat satu WebSocket. Panggilan dan subscription dimultipleks, dan tiap paket
+chain menambahkan stream bertipe. URL `http(s)://` dikonversi menjadi `ws(s)://`.
+
+```csharp
+await using var ws = new WebSocketRpcClient("wss://ethereum-rpc.publicnode.com");
+await foreach (EvmBlockHeader head in ws.SubscribeEvmHeadsAsync(ct)) { ... }
+await foreach (EvmLog log in ws.SubscribeEvmLogsAsync(usdc, [HexUtil.Encode(EvmAbi.GetEventTopic("Transfer(address,address,uint256)"))], ct)) { ... }
+
+await using var sol = new WebSocketRpcClient(SolanaChain.Devnet.DefaultRpcUrl);
+string? error = await sol.WaitForSolanaSignatureAsync(signature);      // juga SubscribeSolanaSlots/Account/LogsAsync
+
+await using var dot = new WebSocketRpcClient(PolkadotChain.Polkadot.DefaultRpcUrl);
+await foreach (var status in dot.SubmitAndWatchExtrinsicAsync(signedExtrinsic))   // ready → inBlock → finalized
+    Console.WriteLine($"{status.Status} {status.BlockHash}");
+```
+
+Keluar dari `await foreach` mengirim panggilan unsubscribe yang sesuai. Jika koneksi putus, panggilan yang tertunda gagal
+dan setiap stream yang terbuka berakhir dengan `WebSocketException`. Sambungkan ulang dengan client baru, atau kembali ke
+polling dengan `WatchBlocksAsync`. `RpcEndpoint` dengan header (misalnya key dRPC) bisa diberikan ke konstruktor.
+
 ## Error
 
 | Exception | Arti |
