@@ -136,6 +136,10 @@ public sealed class SolanaRpcClient : IChainClient
         return value.ValueKind == JsonValueKind.Null ? null : Convert.FromBase64String(value.GetProperty("data")[0].GetString()!);
     }
 
+    /// <summary>Decodes a mint of either token program, including Token-2022 extensions; null when it does not exist.</summary>
+    public async ValueTask<TokenMint?> GetMintAsync(string mint, CancellationToken ct = default) =>
+        await GetAccountDataAsync(mint, ct) is { } data ? TokenMint.Parse(data) : null;
+
     /// <summary>Fetches and decodes an address lookup table; null when the account does not exist.</summary>
     public async ValueTask<AddressLookupTableAccount?> GetAddressLookupTableAsync(string tableAddress, CancellationToken ct = default)
     {

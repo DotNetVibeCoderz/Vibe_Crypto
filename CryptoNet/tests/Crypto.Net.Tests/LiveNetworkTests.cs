@@ -41,6 +41,17 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Token2022_PyusdMintOnMainnet()
+    {
+        await using var rpc = new SolanaRpcClient(SolanaChain.MainnetBeta);
+        var mint = await rpc.GetMintAsync("2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo"); // PayPal USD (Token-2022)
+        Assert.NotNull(mint);
+        Assert.Equal(6, mint!.Decimals);
+        Assert.NotNull(mint.TransferFeeConfig);
+        Assert.Equal("PYUSD", mint.Metadata?.Symbol);
+    }
+
+    [LiveFact]
     public async Task Ens_And_Erc721_OnMainnet()
     {
         await using var rpc = new EvmRpcClient(EvmChain.Ethereum);
