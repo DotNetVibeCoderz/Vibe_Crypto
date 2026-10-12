@@ -41,6 +41,19 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task CosmWasm_ContractInfoOnOsmosis()
+    {
+        using var rest = new Crypto.Net.Cosmos.CosmosRestClient(Crypto.Net.Cosmos.CosmosChain.Osmosis);
+        string? contract = null;
+        for (ulong code = 1; code < 30 && contract is null; code++)
+            contract = (await rest.GetContractsByCodeAsync(code, 1)).FirstOrDefault();
+        Assert.NotNull(contract);
+        var info = await rest.GetContractInfoAsync(contract!);
+        Assert.Equal(contract, info.Address);
+        Assert.StartsWith("osmo1", info.Creator);
+    }
+
+    [LiveFact]
     public async Task Token2022_PyusdMintOnMainnet()
     {
         await using var rpc = new SolanaRpcClient(SolanaChain.MainnetBeta);
