@@ -12,6 +12,8 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   - `EvmTransaction.DecodeSigned`: overflow on large nonce, chain id or `v`, and `NullReferenceException`s on
     wrongly shaped RLP.
   - `EvmRlp`: negative 4-byte lengths, and unbounded nesting that could overflow the stack.
+  - Rust `schnorr_verify` / `schnorr_sign` panicked inside k256 on keys or signatures of the wrong length. The FFI
+    turned this into `CN_ERR_PANIC`; it now returns an ordinary invalid-input result.
 
   All of these now throw `FormatException`.
 - CI runs `cargo audit`, `cargo deny`, a NuGet vulnerability scan and produces a CycloneDX SBOM.
