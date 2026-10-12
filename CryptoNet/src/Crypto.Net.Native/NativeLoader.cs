@@ -11,7 +11,7 @@ public static class NativeLoader
     private const string LibraryName = "cryptonet";
 
     /// <summary>Minimum ABI version (0xMMmmpppp) this assembly requires.</summary>
-    public const uint RequiredAbiVersion = 0x00010100;
+    public const uint RequiredAbiVersion = 0x00010200;
 
     private static readonly Lazy<bool> _isAvailable = new(Initialize, LazyThreadSafetyMode.ExecutionAndPublication);
 

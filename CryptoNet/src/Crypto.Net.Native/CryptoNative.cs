@@ -165,6 +165,20 @@ public static unsafe class CryptoNative
         Keccak.Hash256(data, destination);
     }
 
+    /// <summary>FIPS 202 SHA3-256 (Aptos). Unlike <see cref="Keccak256(ReadOnlySpan{byte})"/>, it uses the SHA-3 padding.</summary>
+    public static byte[] Sha3_256(ReadOnlySpan<byte> data) { var o = new byte[32]; Sha3_256(data, o); return o; }
+
+    public static void Sha3_256(ReadOnlySpan<byte> data, Span<byte> destination)
+    {
+        RequireDestination(destination, 32);
+        if (IsNativeActive)
+        {
+            fixed (byte* d = data) fixed (byte* o = destination) Check(NativeMethods.cn_sha3_256(d, (nuint)data.Length, o), "SHA3-256");
+            return;
+        }
+        Keccak.Hash256(data, destination, 0x06);
+    }
+
     public static byte[] Ripemd160(ReadOnlySpan<byte> data) { var o = new byte[20]; Ripemd160(data, o); return o; }
 
     public static void Ripemd160(ReadOnlySpan<byte> data, Span<byte> destination)

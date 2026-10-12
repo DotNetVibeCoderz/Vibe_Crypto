@@ -28,7 +28,7 @@ pub const CN_ERR_INVALID_INPUT: i32 = -5;
 pub const CN_ERR_PANIC: i32 = -99;
 
 /// ABI version `0xMMmmpppp`. Bump the minor for additive changes, the major for breaking ones.
-pub const CN_ABI_VERSION: u32 = 0x0001_0100;
+pub const CN_ABI_VERSION: u32 = 0x0001_0200;
 
 type FfiResult = Result<(), i32>;
 
@@ -125,6 +125,7 @@ fixed_hash!(cn_sha256, crypto::hash::sha256, 32);
 fixed_hash!(cn_double_sha256, crypto::hash::double_sha256, 32);
 fixed_hash!(cn_sha512, crypto::hash::sha512, 64);
 fixed_hash!(cn_keccak256, crypto::hash::keccak256, 32);
+fixed_hash!(cn_sha3_256, crypto::hash::sha3_256, 32);
 fixed_hash!(cn_ripemd160, crypto::hash::ripemd160, 20);
 fixed_hash!(cn_hash160, crypto::hash::hash160, 20);
 fixed_hash!(cn_blake2b_256, crypto::hash::blake2b_256, 32);

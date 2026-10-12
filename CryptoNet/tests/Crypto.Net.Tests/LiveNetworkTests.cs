@@ -54,6 +54,27 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Aptos_TestnetReadsAndSimulation()
+    {
+        await using var aptos = new Crypto.Net.Aptos.AptosRestClient(Crypto.Net.Aptos.AptosChain.Testnet);
+        var ledger = await aptos.GetLedgerInfoAsync();
+        Assert.Equal(2, ledger.ChainId);
+        Assert.True(ledger.BlockHeight > 0);
+        var chainId = await aptos.ViewAsync("0x1::chain_id::get");
+        Assert.Equal(2, chainId[0].GetInt32());
+        Assert.NotNull(await aptos.GetAccountResourceAsync("0x1", "0x1::account::Account"));
+
+        // Simulate (never submit) a transfer from an unfunded key: the node must decode and price it.
+        using var account = new Crypto.Net.Aptos.AptosAccount(Enumerable.Repeat((byte)7, 32).ToArray(), Crypto.Net.Aptos.AptosChain.Testnet);
+        Assert.Equal(0m, (await aptos.GetBalanceAsync(account.Address)).ToDecimal());
+        var tx = await aptos.BuildTransactionAsync(account.Address.Value, Crypto.Net.Aptos.AptosEntryFunction.Transfer("0x1", 1));
+        var sim = await aptos.SimulateAsync(tx, account.PublicKey);
+        Assert.False(sim.Success);
+        Assert.Contains("INSUFFICIENT_BALANCE", sim.VmStatus, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(await aptos.GetReceiptAsync(new Crypto.Net.Core.TxHash("0x" + new string('0', 64))));
+    }
+
+    [LiveFact]
     public async Task Staking_NominateIsAcceptedByAssetHub()
     {
         // Sign (never submit) a nominate extrinsic and ask the runtime to price it: decoding errors would fail here.

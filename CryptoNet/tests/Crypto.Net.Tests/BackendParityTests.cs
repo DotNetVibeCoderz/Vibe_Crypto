@@ -67,6 +67,7 @@ public class BackendParityTests
             Backends.AssertSame(() => Backends.Hex(CryptoNative.DoubleSha256(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Sha512(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Keccak256(d)));
+            Backends.AssertSame(() => Backends.Hex(CryptoNative.Sha3_256(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Ripemd160(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Hash160(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Blake2b256(d)));

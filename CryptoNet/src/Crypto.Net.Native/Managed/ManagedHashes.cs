@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Crypto.Net.Native.Managed;
 
-/// <summary>Keccak-256 (original Keccak padding, as used by Ethereum).</summary>
+/// <summary>Keccak-256 (original Keccak padding 0x01, as used by Ethereum) and SHA3-256 (padding 0x06).</summary>
 internal static class Keccak
 {
     private static readonly ulong[] RoundConstants =
@@ -18,7 +18,7 @@ internal static class Keccak
 
     private static readonly int[] Rotations = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14];
 
-    public static void Hash256(ReadOnlySpan<byte> input, Span<byte> output)
+    public static void Hash256(ReadOnlySpan<byte> input, Span<byte> output, byte domain = 0x01)
     {
         const int Rate = 136;
         Span<ulong> state = stackalloc ulong[25];
@@ -34,7 +34,7 @@ internal static class Keccak
         Span<byte> block = stackalloc byte[Rate];
         block.Clear();
         input.CopyTo(block);
-        block[input.Length] ^= 0x01;
+        block[input.Length] ^= domain;
         block[Rate - 1] ^= 0x80;
         Absorb(state, block);
         Permute(state);

@@ -25,6 +25,7 @@ internal static unsafe partial class NativeMethods
     [LibraryImport(LibName)] internal static partial int cn_double_sha256(byte* data, nuint len, byte* out32);
     [LibraryImport(LibName)] internal static partial int cn_sha512(byte* data, nuint len, byte* out64);
     [LibraryImport(LibName)] internal static partial int cn_keccak256(byte* data, nuint len, byte* out32);
+    [LibraryImport(LibName)] internal static partial int cn_sha3_256(byte* data, nuint len, byte* out32);
     [LibraryImport(LibName)] internal static partial int cn_ripemd160(byte* data, nuint len, byte* out20);
     [LibraryImport(LibName)] internal static partial int cn_hash160(byte* data, nuint len, byte* out20);
     [LibraryImport(LibName)] internal static partial int cn_blake2b(byte* data, nuint len, byte* output, nuint outLen);

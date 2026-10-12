@@ -65,7 +65,7 @@ Known gotchas:
   - Variable-size outputs use `(out, cap, *written)` and return `CN_ERR_BUFFER_TOO_SMALL` with the required size.
   - Every entry point runs inside `catch_unwind`. The release profile must keep `panic = "unwind"`.
 - `src/Crypto.Net.Native/NativeMethods.cs` mirrors those exports by hand. Keep the two in sync.
-- `NativeLoader` checks the ABI version (`RequiredAbiVersion` = 0x00010100, same major).
+- `NativeLoader` checks the ABI version (`RequiredAbiVersion` = 0x00010200, same major).
 - `CryptoNative` routes each call by `CryptoBackend`:
   - `Auto` uses Rust, except SHA-2/HMAC/PBKDF2, which go to the hardware-accelerated platform crypto.
   - `Native` forces Rust; `Managed` forces C#.

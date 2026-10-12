@@ -2,7 +2,7 @@ use blake2::digest::{Update, VariableOutput};
 use blake2::Blake2bVar;
 use ripemd::Ripemd160;
 use sha2::{Digest, Sha256, Sha512};
-use sha3::Keccak256;
+use sha3::{Keccak256, Sha3_256};
 
 #[inline]
 pub fn sha256(data: &[u8]) -> [u8; 32] {
@@ -32,6 +32,12 @@ pub fn sha512(data: &[u8]) -> [u8; 64] {
 #[inline]
 pub fn keccak256(data: &[u8]) -> [u8; 32] {
     Keccak256::digest(data).into()
+}
+
+/// FIPS 202 SHA3-256 (Aptos addresses and transaction prefixes).
+#[inline]
+pub fn sha3_256(data: &[u8]) -> [u8; 32] {
+    Sha3_256::digest(data).into()
 }
 
 #[inline]
@@ -90,6 +96,18 @@ mod tests {
         assert_eq!(
             h(&keccak256(b"")),
             "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        );
+    }
+
+    #[test]
+    fn sha3_256_vectors() {
+        assert_eq!(
+            h(&sha3_256(b"")),
+            "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a"
+        );
+        assert_eq!(
+            h(&sha3_256(b"abc")),
+            "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532"
         );
     }
 

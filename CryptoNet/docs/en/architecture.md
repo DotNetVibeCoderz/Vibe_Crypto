@@ -39,7 +39,7 @@ ABI rules (see the header comment of `rust/crates/cryptonet-ffi/src/lib.rs`):
   becomes `CN_ERR_PANIC` instead of terminating the .NET process.
 - Secret intermediates are zeroized (`zeroize`).
 - `cn_abi_version()` returns `0xMMmmpppp`. .NET requires the same major and at least
-  `NativeLoader.RequiredAbiVersion` (currently `0x00010100`); otherwise it falls back to managed code.
+  `NativeLoader.RequiredAbiVersion` (currently `0x00010200`); otherwise it falls back to managed code.
 
 ## Loading the native library
 
