@@ -39,7 +39,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [ ] Decode `System.Events` so Polkadot receipts report dispatch success.
 - [ ] WebSocket subscriptions (`eth_subscribe`, `slotSubscribe`, `chain_subscribeNewHeads`).
 - [x] PSBT (BIP-174/370) import/export and multisig.
-- [ ] Solana versioned (v0) transactions with address lookup tables.
+- [x] Solana versioned (v0) transactions with address lookup tables.
 
 ## Later — ecosystem (from solution-design.md)
 

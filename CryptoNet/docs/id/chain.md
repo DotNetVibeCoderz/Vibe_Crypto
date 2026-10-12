@@ -182,6 +182,27 @@ Akun dideduplikasi dan diurutkan (fee payer, signer writable, signer read-only, 
 `SolanaAddress.FindProgramAddress(seeds, programId)` dan `GetAssociatedTokenAddress(owner, mint)` menurunkan PDA.
 Kunci bisa diimpor/ekspor dalam format Phantom (Base58, 64 byte) dan solana-cli (array JSON).
 
+### Transaksi versioned dan lookup table
+
+```csharp
+// Buat tabel, lalu isi dengan akun yang sering dipakai
+ulong slot = await rpc.GetBlockNumberAsync();
+var (create, tableAddress) = AddressLookupTableProgram.Create(sol.Address.Value, sol.Address.Value, slot);
+var extend = AddressLookupTableProgram.Extend(tableAddress, sol.Address.Value, recipients, sol.Address.Value);
+
+// Pakai: akun non-signer yang ada di tabel dimuat lewat indeks (message v0)
+var table = await rpc.GetAddressLookupTableAsync(tableAddress);
+var tx = new SolanaTransaction(sol.Address.Value, blockhash).WithLookupTables(table!);
+foreach (var r in recipients) tx.Add(SystemProgram.Transfer(sol.Address.Value, r, 1_000));
+sol.Sign(tx);
+
+var (signatures, message) = SolanaMessage.ParseTransaction(tx.Serialize());   // decode legacy atau v0
+IReadOnlyList<string> keys = message.ResolveAccountKeys([table!]);
+```
+
+Message v0 dikompilasi persis seperti `compileToV0Message` di `@solana/web3.js`. Signer dan program id tetap statis.
+`Freeze`, `Deactivate` dan `Close` melengkapi program lookup table.
+
 ---
 
 ## Polkadot dan Substrate

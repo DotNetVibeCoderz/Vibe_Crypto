@@ -14,6 +14,9 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   `BitcoinAddress.FromScriptNestedSegwit`. PSBT signing and finalizing for bare, P2SH, P2WSH and P2SH-P2WSH.
 - **Taproot**: script trees (`TaprootNode`, `Taproot.LeafSpends` control blocks). Full BIP-341 sighash
   (ANYONECANPAY/NONE/SINGLE, script path, annex). `SignTaprootKeyPath`. Official BIP-341 wallet vectors.
+- **Solana v0**: versioned messages with address lookup tables. `WithLookupTables` compiles exactly as
+  web3.js `compileToV0Message`. Adds the `AddressLookupTableProgram` (create/extend/freeze/deactivate/close),
+  `GetAddressLookupTableAsync`, and the `SolanaMessage` decoder for legacy and v0 wire transactions.
 - `BitcoinTransaction.Parse`. Legacy and BIP-143 sighash for every hash type, checked against Bitcoin Core's
   `sighash.json`.
 

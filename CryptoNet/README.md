@@ -56,7 +56,7 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Wallet` | BIP-39 mnemonics, BIP-32/SLIP-10 HD keys, xprv/xpub/zpub, Web3 v3 keystores, `KeySigner` |
 | `Crypto.Net.Evm` | EIP-55, Legacy/EIP-2930/EIP-1559 transactions, ABI codec, EIP-191/712, ERC-20, JSON-RPC client |
 | `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, Taproot script trees, legacy/BIP-143/BIP-341 signing, PSBT (BIP-174/370), multisig, coin selection, Esplora |
-| `Crypto.Net.Solana` | Transactions, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC |
+| `Crypto.Net.Solana` | Legacy and v0 transactions, address lookup tables, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC |
 | `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, RPC |
 | `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |

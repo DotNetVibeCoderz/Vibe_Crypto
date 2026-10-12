@@ -56,7 +56,7 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Wallet` | Mnemonic BIP-39, kunci HD BIP-32/SLIP-10, xprv/xpub/zpub, keystore Web3 v3, `KeySigner` |
 | `Crypto.Net.Evm` | EIP-55, transaksi Legacy/EIP-2930/EIP-1559, codec ABI, EIP-191/712, ERC-20, client JSON-RPC |
 | `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, script tree Taproot, signing legacy/BIP-143/BIP-341, PSBT (BIP-174/370), multisig, coin selection, Esplora |
-| `Crypto.Net.Solana` | Transaksi, System/SPL Token/ATA/Compute Budget/Memo, PDA, kunci Phantom & solana-cli, RPC |
+| `Crypto.Net.Solana` | Transaksi legacy dan v0, address lookup table, Transaksi, System/SPL Token/ATA/Compute Budget/Memo, PDA, kunci Phantom & solana-cli, RPC |
 | `Crypto.Net.Polkadot` | SS58, derivasi Substrate sr25519/ed25519, SCALE, extrinsic berbasis metadata runtime, RPC |
 | `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` dengan client ber-key, resilience, `ChainCatalog`, penyedia Ankr/dRPC, benchmark |

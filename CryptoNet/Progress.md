@@ -28,6 +28,7 @@
 | NuGet publish 1.0.0 | ✅ Done | 11 packages on nuget.org via `cryptonet-publish.yml`; GitHub release `CryptoNet-v1.0.0` |
 | Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
 | 1.1 Taproot trees, PSBT v0/v2, multisig | ✅ Done | BIP-341, BIP-174/370 and Bitcoin Core sighash vectors |
+| 1.1 Solana v0 + lookup tables | ✅ Done | Byte-identical to @solana/web3.js 1.98.0 |
 
 ## Log
 
@@ -56,3 +57,4 @@
   official BIP-341 wallet vectors.
 - **2026-10-12** — PSBT v0/v2 with all roles and multisig (P2SH, P2WSH, P2SH-P2WSH, sortedmulti). It passes every
   BIP-174/370 vector and Bitcoin Core's 500 legacy sighash cases.
+- **2026-10-12** — Solana v0 messages, address lookup table program and message decoder; byte-identical to web3.js.

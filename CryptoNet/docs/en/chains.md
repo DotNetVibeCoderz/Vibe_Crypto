@@ -182,6 +182,27 @@ Accounts are de-duplicated and ordered (fee payer, writable signers, read-only s
 `SolanaAddress.FindProgramAddress(seeds, programId)` and `GetAssociatedTokenAddress(owner, mint)` derive PDAs.
 Keys import/export in Phantom (Base58, 64 bytes) and solana-cli (JSON array) formats.
 
+### Versioned transactions and lookup tables
+
+```csharp
+// Create a table, then extend it with the accounts you reuse
+ulong slot = await rpc.GetBlockNumberAsync();
+var (create, tableAddress) = AddressLookupTableProgram.Create(sol.Address.Value, sol.Address.Value, slot);
+var extend = AddressLookupTableProgram.Extend(tableAddress, sol.Address.Value, recipients, sol.Address.Value);
+
+// Use it: non-signer accounts found in the table are loaded by index (v0 message)
+var table = await rpc.GetAddressLookupTableAsync(tableAddress);
+var tx = new SolanaTransaction(sol.Address.Value, blockhash).WithLookupTables(table!);
+foreach (var r in recipients) tx.Add(SystemProgram.Transfer(sol.Address.Value, r, 1_000));
+sol.Sign(tx);
+
+var (signatures, message) = SolanaMessage.ParseTransaction(tx.Serialize());   // decode legacy or v0
+IReadOnlyList<string> keys = message.ResolveAccountKeys([table!]);
+```
+
+v0 messages compile exactly as `@solana/web3.js` `compileToV0Message` does. Signers and program ids stay static.
+`Freeze`, `Deactivate` and `Close` complete the lookup table program.
+
 ---
 
 ## Polkadot and Substrate

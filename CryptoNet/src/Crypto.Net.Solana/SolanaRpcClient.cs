@@ -127,6 +127,18 @@ public sealed class SolanaRpcClient : IChainClient
         return data.Length >= 45 ? data[44] : throw new InvalidOperationException($"{mint} is not a mint account");
     }
 
+    /// <summary>Fetches and decodes an address lookup table; null when the account does not exist.</summary>
+    public async ValueTask<AddressLookupTableAccount?> GetAddressLookupTableAsync(string tableAddress, CancellationToken ct = default)
+    {
+        var options = new Dictionary<string, string> { ["encoding"] = "base64", ["commitment"] = "confirmed" };
+        var r = await _rpc.CallAsync("getAccountInfo", [tableAddress, options], ct);
+        var value = r.GetProperty("value");
+        if (value.ValueKind == JsonValueKind.Null) return null;
+        if (value.GetProperty("owner").GetString() != AddressLookupTableProgram.ProgramId)
+            throw new InvalidOperationException($"{tableAddress} is not an address lookup table");
+        return AddressLookupTableAccount.Parse(tableAddress, Convert.FromBase64String(value.GetProperty("data")[0].GetString()!));
+    }
+
     /// <summary>Signs, simulates and sends a SOL transfer from <paramref name="account"/>.</summary>
     public async ValueTask<TxHash> TransferAsync(SolanaAccount account, string to, Amount amount, ulong priorityFeeMicroLamports = 0, CancellationToken ct = default)
     {
