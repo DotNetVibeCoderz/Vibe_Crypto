@@ -244,9 +244,28 @@ jobs:
           name: test-results-${{ matrix.rid }}
           path: CryptoNet/tests/Crypto.Net.Tests/TestResults/*.trx
 
+  templates:
+    name: dotnet new templates
+    needs: native
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-linux-x64
+          path: CryptoNet/runtimes/linux-x64/native
+
+      - name: Instantiate, build and test every template against freshly packed packages
+        run: bash scripts/test-templates.sh "$RUNNER_TEMP/templates"
+
   pack:
     name: Pack NuGet packages
-    needs: [native, native-musl, test, test-musl, lint, security]
+    needs: [native, native-musl, test, test-musl, lint, security, templates]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7

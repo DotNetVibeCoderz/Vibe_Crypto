@@ -4,6 +4,8 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-12
+
 ### Security
 - Decoder fuzzing (cargo-fuzz targets and .NET mutation fuzz tests in CI) found and fixed crashes on malformed input:
   - `RuntimeMetadata.Parse`: `OverflowException` on oversized compact type ids.
@@ -20,6 +22,11 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   meant inclusion. `RuntimeMetadata.Types` is public and uses the new `ScaleTypeInfo` records.
 
 ### Added
+- **Crypto.Net.Templates**: `dotnet new` templates.
+  - The templates are `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib` (with tests) and `cnet-test` (with docker-compose local nodes).
+  - `cnet new` is a CLI shortcut for them.
+  - `ChainCatalog.DeriveAccount` derives the standard account for any catalog network.
+  - CI smoke-tests every template against freshly packed packages.
 - **Crypto.Net.Analyzers**: new Roslyn package.
   - CNET001: hard-coded mnemonics, keys, WIF and xprv strings.
   - CNET002: secrets kept in strings.

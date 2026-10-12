@@ -63,10 +63,12 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` and official test vectors |
 | `Crypto.Net.Analyzers` | Roslyn rules CNET001–005: hard-coded keys, secrets in strings, float amounts, mainnet in Debug, dropped cancellation tokens |
 | `Crypto.Net.Cli` | The `cnet` dotnet tool |
+| `Crypto.Net.Templates` | `dotnet new` templates: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # pulls in every chain
 dotnet tool install -g Crypto.Net.Cli      # the cnet command
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
 ```
 
 ## Quick start

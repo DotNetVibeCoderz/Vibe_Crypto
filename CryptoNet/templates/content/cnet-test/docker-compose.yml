@@ -1,0 +1,14 @@
+# Local development nodes. Start with: docker compose up -d
+services:
+  anvil:            # EVM, chain id 31337, http://127.0.0.1:8545
+    image: ghcr.io/foundry-rs/foundry:stable
+    entrypoint: ["anvil", "--host", "0.0.0.0"]
+    ports: ["8545:8545"]
+  substrate:        # Polkadot dev chain with //Alice funded, ws/http on 9944
+    image: parity/polkadot:stable2503
+    command: ["--dev", "--rpc-external", "--rpc-cors", "all"]
+    ports: ["9944:9944"]
+  solana:           # solana-test-validator, http://127.0.0.1:8899
+    image: solanalabs/solana:v1.18.26
+    entrypoint: ["solana-test-validator", "--bind-address", "0.0.0.0"]
+    ports: ["8899:8899", "8900:8900"]

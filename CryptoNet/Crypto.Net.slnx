@@ -16,6 +16,9 @@
     <Project Path="src/Crypto.Net.Testing/Crypto.Net.Testing.csproj" />
     <Project Path="src/Crypto.Net.Wallet/Crypto.Net.Wallet.csproj" />
   </Folder>
+  <Folder Name="/templates/">
+    <Project Path="templates/Crypto.Net.Templates.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Crypto.Net.Tests/Crypto.Net.Tests.csproj" />
   </Folder>

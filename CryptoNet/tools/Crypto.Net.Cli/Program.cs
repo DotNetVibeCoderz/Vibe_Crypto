@@ -255,6 +255,27 @@ tx.SetAction(async (r, ct) =>
 });
 root.Subcommands.Add(tx);
 
+// ------------------------------------------------------------------ new (dotnet new templates)
+string[] templateNames = ["console", "worker", "webapi", "lib", "test"];
+var templateArg = new Argument<string>("template") { Description = string.Join(", ", templateNames) };
+var nameOpt = new Option<string?>("--name", "-n") { Description = "Project name (defaults to the folder name)" };
+var outputOpt = new Option<string?>("--output", "-o") { Description = "Output folder" };
+var templateNetworkOpt = new Option<string?>("--network") { Description = "Default network key, e.g. sepolia, solana-devnet, westend" };
+var newCmd = new Command("new", "Create a project from the Crypto.Net templates (wraps `dotnet new cnet-*`)") { templateArg, nameOpt, outputOpt, templateNetworkOpt };
+newCmd.SetAction(async (r, ct) =>
+{
+    string template = r.GetValue(templateArg)!.Replace("cnet-", "", StringComparison.OrdinalIgnoreCase);
+    if (!templateNames.Contains(template, StringComparer.OrdinalIgnoreCase)) { Ui.Error($"Unknown template '{template}'. Choose one of: {string.Join(", ", templateNames)}"); return 1; }
+    var arguments = new List<string> { "new", "cnet-" + template.ToLowerInvariant() };
+    if (r.GetValue(nameOpt) is { } n) arguments.AddRange(["-n", n]);
+    if (r.GetValue(outputOpt) is { } o) arguments.AddRange(["-o", o]);
+    if (r.GetValue(templateNetworkOpt) is { } net) arguments.AddRange(["--Network", ChainCatalog.Get(net).Key]);
+    int code = await RunDotnet(arguments, ct);
+    if (code != 0) Ui.Warn("If the template is missing, install it with: dotnet new install Crypto.Net.Templates");
+    return code;
+});
+root.Subcommands.Add(newCmd);
+
 // ------------------------------------------------------------------ sign / verify (EVM)
 var sign = new Command("sign", "Sign messages (EIP-191) and typed data (EIP-712)");
 var messageArg = new Argument<string>("message");
@@ -411,4 +432,13 @@ static EvmAccount ResolveEvmAccount(string? privateKey, string? mnemonic, uint i
     mnemonic ??= Ui.Secret("Mnemonic:");
     using var w = HdWallet.FromMnemonic(mnemonic);
     return w.GetEvmAccount(index);
+}
+
+static async Task<int> RunDotnet(IEnumerable<string> arguments, CancellationToken ct)
+{
+    var psi = new System.Diagnostics.ProcessStartInfo("dotnet") { UseShellExecute = false };
+    foreach (string a in arguments) psi.ArgumentList.Add(a);
+    using var process = System.Diagnostics.Process.Start(psi) ?? throw new InvalidOperationException("Could not start dotnet");
+    await process.WaitForExitAsync(ct);
+    return process.ExitCode;
 }

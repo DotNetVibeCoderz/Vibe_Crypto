@@ -28,7 +28,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 | Quality | 95 .NET tests (official vectors, backend parity, mocked RPC, opt-in live tests), 30 Rust tests | ✅ |
 | Docs & distribution | README EN/ID, 12-page docs EN + ID, screenshots, NuGet icon, pack/publish scripts | ✅ |
 
-## Next — 1.1 (hardening and reach)
+## Release 1.1 — delivered 2026-10-12 (hardening and reach)
 
 - [x] CI (GitHub Actions): Rust build matrix for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`;
       pack with all native binaries; tests on Windows, Linux and macOS; tag-triggered NuGet publishing.
@@ -46,7 +46,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [ ] `Crypto.Net.Indexer`: block crawler, log processor, checkpoints, EF Core/SQLite storage.
 - [ ] Source generators: Solidity ABI → typed services, Anchor IDL → clients; `cnet gen`.
 - [x] `Crypto.Net.Analyzers` (CNET001–005: hard-coded secrets, secrets as `string`, `Amount` from `double`…).
-- [ ] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`).
+- [x] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`); `cnet-contract-client` follows the source generators.
 - [x] Polyglot notebooks (EN/ID) — one per chain.
 - [ ] Notebooks for indexer, benchmarks and security practices.
 - [ ] VS Code extension "Crypto.Net Tools".

@@ -1,3 +1,4 @@
+using Crypto.Net.Wallet;
 using Crypto.Net.Bitcoin;
 using Crypto.Net.Core;
 using Crypto.Net.Cosmos;
@@ -55,6 +56,26 @@ public static class ChainCatalog
         ["atom"] = "cosmoshub", ["cosmos"] = "cosmoshub", ["osmo"] = "osmosis",
         ["matic"] = "polygon", ["pol"] = "polygon", ["arb"] = "arbitrum", ["op"] = "optimism", ["bsc"] = "bnb", ["avax"] = "avalanche",
     };
+
+    /// <summary>
+    /// Derives the standard account for <paramref name="entry"/> from <paramref name="wallet"/>: BIP-44 for EVM and Cosmos,
+    /// BIP-84 (native SegWit) for Bitcoin, Phantom's path for Solana, and the root sr25519 key (or <c>//index</c>) for
+    /// Substrate. Dispose the returned account to wipe its private key.
+    /// </summary>
+    public static IAccount DeriveAccount(HdWallet wallet, CatalogEntry entry, uint index = 0)
+    {
+        ArgumentNullException.ThrowIfNull(wallet);
+        ArgumentNullException.ThrowIfNull(entry);
+        return entry.Chain switch
+        {
+            EvmChain evm => wallet.GetEvmAccount(index, evm),
+            BitcoinNetwork btc => wallet.GetBitcoinAccount(BitcoinAddressType.SegWitP2WPKH, index, btc),
+            SolanaChain sol => wallet.GetSolanaAccount(index, sol),
+            PolkadotChain dot => wallet.GetPolkadotAccount(index == 0 ? "" : $"//{index}", dot),
+            CosmosChain cosmos => wallet.GetCosmosAccount(index, cosmos),
+            _ => throw new NotSupportedException($"Unsupported chain {entry.Chain.Name}"),
+        };
+    }
 
     /// <summary>Finds a network by key (<c>sepolia</c>), alias (<c>eth</c>, <c>btc</c>, <c>sol</c>…) or display name.</summary>
     public static CatalogEntry? Find(string name)

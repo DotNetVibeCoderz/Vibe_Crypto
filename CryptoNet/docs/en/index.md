@@ -18,6 +18,7 @@
 | [The Gallery](gallery.md) | explore every feature interactively |
 | [Architecture](architecture.md) | see how the Rust core, the C ABI and the managed fallback fit together |
 | [Security](security.md) | deploy safely |
+| [Project templates](templates.md) | start a console app, worker, Web API, library or test project with `dotnet new` |
 | [Analyzers](analyzers.md) | catch hard-coded keys, float amounts and other mistakes at compile time |
 | [Building and contributing](contributing.md) | build from source, run tests, release packages |
 | [FAQ](faq.md) | find quick answers |

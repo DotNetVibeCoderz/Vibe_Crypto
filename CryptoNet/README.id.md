@@ -63,10 +63,12 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` dan test vector resmi |
 | `Crypto.Net.Analyzers` | Aturan Roslyn CNET001–005: kunci hard-coded, rahasia dalam string, amount dari float, mainnet di Debug, cancellation token yang terlewat |
 | `Crypto.Net.Cli` | Tool dotnet `cnet` |
+| `Crypto.Net.Templates` | Template `dotnet new`: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # menarik semua chain
 dotnet tool install -g Crypto.Net.Cli      # perintah cnet
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
 ```
 
 ## Mulai cepat
