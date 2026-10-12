@@ -187,7 +187,7 @@ jobs:
         working-directory: CryptoNet/rust
         run: |
           for target in $(cargo fuzz list); do
-            cargo fuzz run "$target" -- -max_total_time=60
+            cargo fuzz run --target x86_64-unknown-linux-gnu "$target" -- -max_total_time=60
           done
 
       - uses: actions/setup-dotnet@v6
