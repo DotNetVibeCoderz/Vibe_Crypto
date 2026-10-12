@@ -135,3 +135,84 @@ public class LedgerTests
         Assert.Equal("058000002c8000003c800000008000000000000000", Convert.ToHexStringLower(LedgerEthereumApp.SerializePath("44'/60'/0'/0'/0")));
     }
 }
+
+/// <summary>The Solana app, replaying the APDU sessions recorded in Ledger's hw-app-solana tests.</summary>
+public class LedgerSolanaTests
+{
+    private const string Tx = "010001035eb9862fe23e544a2a0969cc157cb31fd72901cc2824d536a67fb8ee911e02363b9ba3a2ebaf40c1cd672a80a8e1932b982cca8264be33c39359701e113c3da20000000000000000000000000000000000000000000000000000000000000000030303030303030303030303030303030303030303030303030303030303030301020200010c020000002a00000000000000";
+
+    [Fact]
+    public async Task Configuration()
+    {
+        using var t = new ReplayLedgerTransport("=> e004000000\n<= 00000100069000");
+        var c = await new LedgerSolanaApp(t).GetConfigurationAsync();
+        Assert.Equal(("1.0.6", false, 0), (c.Version, c.BlindSigningEnabled, c.PublicKeyDisplayMode));
+    }
+
+    [Fact]
+    public async Task Address_WithAndWithoutDisplay()
+    {
+        using var t = new ReplayLedgerTransport("""
+            => e005000015058000002c800001f5800000008000000080000000
+            <= 4d65a10662b9759d62bb59048366705454654cf4f9b4b3525cf314429e46c6919000
+            => e005010015058000002c800001f5800000008000000080000000
+            <= 4d65a10662b9759d62bb59048366705454654cf4f9b4b3525cf314429e46c6919000
+            """);
+        var app = new LedgerSolanaApp(t);
+        string expected = CryptoNative.Base58Encode(Convert.FromHexString("4d65a10662b9759d62bb59048366705454654cf4f9b4b3525cf314429e46c691"));
+        Assert.Equal(expected, await app.GetAddressAsync("44'/501'/0'/0'/0'"));
+        Assert.Equal(expected, await app.GetAddressAsync("m/44'/501'/0/0/0", display: true));   // levels are hardened for the app
+        Assert.True(t.Completed);
+    }
+
+    [Fact]
+    public async Task SignTransaction_SignatureVerifiesForTheFeePayer()
+    {
+        using var t = new ReplayLedgerTransport($"""
+            => e0060100a001028000002c800001f5{Tx}
+            <= 1ad0702faddc8b2072c59547637c10e6affad2f186b69cf3288f2b029de2e309e1d73b73eb925a79f7b0d026ee07203d714e15807267001fbd3914de76a5490e9000
+            """);
+        byte[] message = Convert.FromHexString(Tx);
+        byte[] sig = await new LedgerSolanaApp(t).SignMessageBytesAsync("44'/501'", message);
+        Assert.True(CryptoNative.Ed25519Verify(message.AsSpan(4, 32), message, sig));
+    }
+
+    [Fact]
+    public async Task LongTransaction_IsChunked()
+    {
+        const string message = "010001035eb9862fe23e544a2a0969cc157cb31fd72901cc2824d536a67fb8ee911e02363b9ba3a2ebaf40c1cd672a80a8e1932b982cca8264be33c39359701e113c3da20000000000000000000000000000000000000000000000000000000000000000030303030303030303030303030303030303030303030303030303030303030307020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000";
+        using var t = new ReplayLedgerTransport("""
+            => e0060102ff01028000002c800001f5010001035eb9862fe23e544a2a0969cc157cb31fd72901cc2824d536a67fb8ee911e02363b9ba3a2ebaf40c1cd672a80a8e1932b982cca8264be33c39359701e113c3da20000000000000000000000000000000000000000000000000000000000000000030303030303030303030303030303030303030303030303030303030303030307020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a00000000000000020200010c020000002a
+            <= 9000
+            => e00601010700000000000000
+            <= d9ed529ab24ab4e796c006cf85e7e51db85825b31d3477dd3bf8350745b7a9cdc29840442d96dbeca73289a06841655d9f5c342bd6f697dcfdb6dadf8a0784049000
+            """);
+        byte[] m = Convert.FromHexString(message);
+        byte[] sig = await new LedgerSolanaApp(t).SignMessageBytesAsync("44'/501'", m);
+        Assert.True(CryptoNative.Ed25519Verify(m.AsSpan(4, 32), m, sig));
+        Assert.True(t.Completed);
+    }
+
+    [Fact]
+    public async Task OffchainMessage()
+    {
+        byte[] formatted = LedgerSolanaApp.FormatOffchainMessage("Long Off-Chain Test Message.");
+        Assert.Equal("ff736f6c616e61206f6666636861696e00001c004c6f6e67204f66662d436861696e2054657374204d6573736167652e", Convert.ToHexStringLower(formatted));
+        using var t = new ReplayLedgerTransport("""
+            => e00701003a01028000002c800001f5ff736f6c616e61206f6666636861696e00001c004c6f6e67204f66662d436861696e2054657374204d6573736167652e
+            <= dd23d8f798aeb0085f97f3aae20e52866bf529e0d880959784ff0e91beaf6f2eb73b7b0ef484801399066b92561f6c523b27f9579e17d0f8106b33edc5f45b079000
+            """);
+        byte[] sig = await new LedgerSolanaApp(t).SignOffchainMessageAsync("44'/501'", formatted);
+        Assert.Equal(64, sig.Length);
+        Assert.Equal(1, LedgerSolanaApp.FormatOffchainMessage("héllo")[17]);
+    }
+
+    [Fact]
+    public async Task BlindSigningRequired_IsReported()
+    {
+        using var t = new ReplayLedgerTransport("=> e004000000\n<= 6808");
+        var ex = await Assert.ThrowsAsync<LedgerException>(() => new LedgerSolanaApp(t).GetConfigurationAsync());
+        Assert.Equal(0x6808, ex.StatusWord);
+    }
+}
+

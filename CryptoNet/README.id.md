@@ -61,7 +61,7 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST, CosmWasm dan CW20 |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` dengan client ber-key, resilience, `ChainCatalog`, penyedia Ankr/dRPC, benchmark |
 | `Crypto.Net.Generators` | Source generator: ABI Solidity / artifact Hardhat & Foundry dan IDL Anchor → client bertipe (juga `cnet gen`) |
-| `Crypto.Net.Ledger` | Hardware wallet Ledger: transport USB HID / Speculos, aplikasi Ethereum (alamat, transaksi, pesan, EIP-712) |
+| `Crypto.Net.Ledger` | Hardware wallet Ledger: transport USB HID / Speculos, aplikasi Ethereum (alamat, transaksi, pesan, EIP-712), aplikasi Solana (transaksi, pesan off-chain) |
 | `Crypto.Net.Near` | NEAR Protocol: akun ed25519 (implicit dan bernama), transaksi Borsh dengan semua action, function call, RPC |
 | `Crypto.Net.Aptos` | Aptos: alamat AIP-40, type tag Move, transaksi entry function BCS, simulasi, client REST |
 | `Crypto.Net.Sui` | Sui: programmable transaction (build dan parse BCS), tanda tangan intent, pesan personal, client GraphQL dengan pemilihan gas |

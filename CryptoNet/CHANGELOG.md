@@ -61,6 +61,9 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **Wallet**: `Mnemonic.ToIcarusRootKey` and `HdWallet.DeriveBip32Ed25519`.
 - `ChainCatalog`, `AddNear`/`AddAptos`/`AddSui`/`AddTon`/`AddCardano`, address detection, `cnet wallet derive` and
   the Gallery wallet all cover the five new chains.
+- **Ledger Solana app** (`LedgerSolanaApp`): addresses, chunked legacy/v0 transactions, off-chain messages. Verified
+  with hw-app-solana's recorded sessions and, in CI, against the Solana app built from source and run in Speculos.
+  `SolanaTransaction.AddSignature` attaches signatures made elsewhere.
 - **Crypto.Net.Ledger**:
   - APDU protocol, HID framing, and USB HID, Speculos and replay transports.
   - Ethereum app: addresses, chunked transactions, personal messages, EIP-712.

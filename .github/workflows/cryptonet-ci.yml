@@ -312,6 +312,45 @@ jobs:
         if: failure()
         run: docker logs speculos | tail -100
 
+  ledger-solana:
+    name: Ledger (Speculos + Solana app)
+    needs: native
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-linux-x64
+          path: CryptoNet/runtimes/linux-x64/native
+
+      - name: Build Ledger's Solana app (pinned commit) with Ledger's app builder
+        run: |
+          git clone --quiet https://github.com/LedgerHQ/app-solana.git app-solana
+          git -C app-solana checkout --quiet 22d6c9b78d6721acdc6d0ce49788a2fd9ea409a0
+          git -C app-solana submodule update --init --recursive --quiet
+          docker run --rm -v "$PWD/app-solana:/app" -w /app ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest             bash -c 'make BOLOS_SDK=$NANOX_SDK -j4'
+          ls -l app-solana/build/nanox/bin/app.elf
+
+      - name: Start Speculos with the Solana app (public test seed)
+        run: |
+          docker run -d --name speculos -p 9999:9999 -p 5000:5000 -v "$PWD/app-solana/build/nanox/bin:/apps" ghcr.io/ledgerhq/speculos:latest             --model nanox /apps/app.elf --display headless --apdu-port 9999 --api-port 5000             --seed "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:5000/events > /dev/null && break; sleep 2; done
+          curl -s http://127.0.0.1:5000/events | head -c 400
+
+      - name: Ledger Solana end-to-end tests
+        env:
+          CRYPTONET_SPECULOS: "1"
+        run: dotnet test tests/Crypto.Net.Tests -c Release --filter "FullyQualifiedName~LedgerSolanaSpeculosTests" --logger "console;verbosity=normal"
+
+      - name: Speculos log
+        if: failure()
+        run: docker logs speculos | tail -100
+
   gallery:
     name: Gallery (desktop build + WebAssembly in Chrome)
     runs-on: ubuntu-24.04
