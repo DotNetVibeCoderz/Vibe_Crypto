@@ -419,6 +419,66 @@ pub unsafe extern "C" fn cn_slip10_ed25519_ckd_priv(
     })
 }
 
+/// Public key `kL·G` of a BIP32-Ed25519 extended secret.
+#[no_mangle]
+pub unsafe extern "C" fn cn_ed25519_extended_pubkey(kl32: *const u8, out_pk32: *mut u8) -> i32 {
+    guard(|| {
+        write_fixed(
+            &crypto::bip32_ed25519::public_key(input(kl32, 32)?).map_err(crypto_err)?,
+            out_pk32,
+        )
+    })
+}
+
+/// Ed25519 signature with an extended key `(kL, kR)` (BIP32-Ed25519 / Cardano).
+#[no_mangle]
+pub unsafe extern "C" fn cn_ed25519_sign_extended(
+    kl32: *const u8,
+    kr32: *const u8,
+    msg: *const u8,
+    msg_len: usize,
+    out_sig64: *mut u8,
+) -> i32 {
+    guard(|| {
+        write_fixed(
+            &crypto::bip32_ed25519::sign(input(kl32, 32)?, input(kr32, 32)?, input(msg, msg_len)?)
+                .map_err(crypto_err)?,
+            out_sig64,
+        )
+    })
+}
+
+/// BIP32-Ed25519 child of an extended private key `kL ‖ kR ‖ chainCode` (96 bytes).
+#[no_mangle]
+pub unsafe extern "C" fn cn_bip32_ed25519_derive_priv(
+    xprv96: *const u8,
+    index: u32,
+    out_xprv96: *mut u8,
+) -> i32 {
+    guard(|| {
+        let mut k =
+            crypto::bip32_ed25519::derive_private(input(xprv96, 96)?, index).map_err(crypto_err)?;
+        let r = write_fixed(&k, out_xprv96);
+        k.zeroize();
+        r
+    })
+}
+
+/// BIP32-Ed25519 non-hardened child of an extended public key `A ‖ chainCode` (64 bytes).
+#[no_mangle]
+pub unsafe extern "C" fn cn_bip32_ed25519_derive_pub(
+    xpub64: *const u8,
+    index: u32,
+    out_xpub64: *mut u8,
+) -> i32 {
+    guard(|| {
+        write_fixed(
+            &crypto::bip32_ed25519::derive_public(input(xpub64, 64)?, index).map_err(crypto_err)?,
+            out_xpub64,
+        )
+    })
+}
+
 /// Substrate ed25519 hard derivation (`//junction` only).
 #[no_mangle]
 pub unsafe extern "C" fn cn_substrate_ed25519_derive(

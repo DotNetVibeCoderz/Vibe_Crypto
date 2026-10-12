@@ -144,6 +144,7 @@ name = "cryptonet-crypto"
 version = "1.1.0"
 dependencies = [
  "blake2",
+ "curve25519-dalek",
  "ed25519-dalek",
  "hex",
  "hmac",

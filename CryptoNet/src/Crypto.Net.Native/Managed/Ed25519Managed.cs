@@ -140,6 +140,85 @@ internal static class Ed25519Managed
 
     public static bool IsOnCurve(ReadOnlySpan<byte> point) => Decode(point) is not null;
 
+    // BIP32-Ed25519 extended keys: kL is the scalar itself (no hashing, no clamping), kR the nonce prefix.
+
+    public static byte[] ExtendedPublicKey(ReadOnlySpan<byte> kl) =>
+        Encode(Multiply(B, new BigInteger(kl, isUnsigned: true, isBigEndian: false) % L));
+
+    public static byte[] SignExtended(ReadOnlySpan<byte> kl, ReadOnlySpan<byte> kr, ReadOnlySpan<byte> message)
+    {
+        BigInteger a = new BigInteger(kl, isUnsigned: true, isBigEndian: false) % L;
+        byte[] pk = Encode(Multiply(B, a));
+        byte[] msg = message.ToArray();
+        BigInteger r = HashModL(kr.ToArray(), msg);
+        byte[] rEnc = Encode(Multiply(B, r));
+        BigInteger k = HashModL(rEnc, pk, msg);
+        BigInteger s = (r + k * a) % L;
+        byte[] sig = new byte[64];
+        rEnc.CopyTo(sig, 0);
+        s.TryWriteBytes(sig.AsSpan(32), out _, isUnsigned: true, isBigEndian: false);
+        return sig;
+    }
+
+    public static byte[] Bip32DerivePrivate(ReadOnlySpan<byte> xprv, uint index)
+    {
+        ReadOnlySpan<byte> kl = xprv[..32], kr = xprv[32..64], cc = xprv[64..96];
+        byte[] idx = BitConverter.GetBytes(index);
+        if (!BitConverter.IsLittleEndian) Array.Reverse(idx);
+        byte[] z, i;
+        if (index >= 0x80000000)
+        {
+            z = HMACSHA512.HashData(cc, [0x00, .. kl, .. kr, .. idx]);
+            i = HMACSHA512.HashData(cc, [0x01, .. kl, .. kr, .. idx]);
+        }
+        else
+        {
+            byte[] a = ExtendedPublicKey(kl);
+            z = HMACSHA512.HashData(cc, [0x02, .. a, .. idx]);
+            i = HMACSHA512.HashData(cc, [0x03, .. a, .. idx]);
+        }
+        byte[] o = new byte[96];
+        Add28Mul8(kl, z.AsSpan(0, 28), o.AsSpan(0, 32));
+        int carry = 0;
+        for (int j = 0; j < 32; j++)
+        {
+            int v = z[32 + j] + kr[j] + carry;
+            o[32 + j] = (byte)v;
+            carry = v >> 8;
+        }
+        i.AsSpan(32).CopyTo(o.AsSpan(64));
+        CryptographicOperations.ZeroMemory(z);
+        CryptographicOperations.ZeroMemory(i);
+        return o;
+    }
+
+    public static byte[] Bip32DerivePublic(ReadOnlySpan<byte> xpub, uint index)
+    {
+        if (index >= 0x80000000) throw new ArgumentException("Hardened children cannot be derived from a public key", nameof(index));
+        Point a = Decode(xpub[..32]) ?? throw new ArgumentException("Invalid ed25519 public key", nameof(xpub));
+        byte[] idx = BitConverter.GetBytes(index);
+        if (!BitConverter.IsLittleEndian) Array.Reverse(idx);
+        byte[] z = HMACSHA512.HashData(xpub[32..], [0x02, .. xpub[..32], .. idx]);
+        byte[] i = HMACSHA512.HashData(xpub[32..], [0x03, .. xpub[..32], .. idx]);
+        Span<byte> zl8 = stackalloc byte[32];
+        Add28Mul8(new byte[32], z.AsSpan(0, 28), zl8);
+        byte[] o = new byte[64];
+        Encode(Add(a, Multiply(B, new BigInteger(zl8, isUnsigned: true, isBigEndian: false) % L))).CopyTo(o, 0);
+        i.AsSpan(32).CopyTo(o.AsSpan(32));
+        return o;
+    }
+
+    private static void Add28Mul8(ReadOnlySpan<byte> x, ReadOnlySpan<byte> zl, Span<byte> o)
+    {
+        int carry = 0;
+        for (int j = 0; j < 32; j++)
+        {
+            int v = x[j] + (j < 28 ? zl[j] << 3 : 0) + carry;
+            o[j] = (byte)v;
+            carry = v >> 8;
+        }
+    }
+
     public static bool Verify(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature)
     {
         if (publicKey.Length != 32 || signature.Length != 64) return false;

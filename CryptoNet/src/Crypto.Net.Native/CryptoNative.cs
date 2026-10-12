@@ -445,6 +445,52 @@ public static unsafe class CryptoNative
         return result;
     }
 
+    /// <summary>Public key <c>kL·G</c> of a BIP32-Ed25519 extended secret (Cardano).</summary>
+    public static byte[] Ed25519ExtendedGetPublicKey(ReadOnlySpan<byte> kl)
+    {
+        RequireLength(kl, 32, nameof(kl));
+        if (!IsNativeActive) return Ed25519Managed.ExtendedPublicKey(kl);
+        byte[] pk = new byte[32];
+        fixed (byte* k = kl) fixed (byte* o = pk) Check(NativeMethods.cn_ed25519_extended_pubkey(k, o), "Ed25519 extended public key");
+        return pk;
+    }
+
+    /// <summary>Ed25519 signature with an extended key: <paramref name="kl"/> is the scalar, <paramref name="kr"/> the nonce prefix.</summary>
+    public static byte[] Ed25519SignExtended(ReadOnlySpan<byte> kl, ReadOnlySpan<byte> kr, ReadOnlySpan<byte> message)
+    {
+        RequireLength(kl, 32, nameof(kl));
+        RequireLength(kr, 32, nameof(kr));
+        if (!IsNativeActive) return Ed25519Managed.SignExtended(kl, kr, message);
+        byte[] sig = new byte[64];
+        fixed (byte* l = kl) fixed (byte* r = kr) fixed (byte* m = message) fixed (byte* o = sig)
+            Check(NativeMethods.cn_ed25519_sign_extended(l, r, m, (nuint)message.Length, o), "Ed25519 extended sign");
+        return sig;
+    }
+
+    /// <summary>
+    /// BIP32-Ed25519 child (Khovratovich–Law V2, as Cardano uses) of an extended private key
+    /// <c>kL ‖ kR ‖ chainCode</c> (96 bytes); hardened when <paramref name="index"/> ≥ 2^31.
+    /// </summary>
+    public static byte[] Bip32Ed25519DerivePrivate(ReadOnlySpan<byte> xprv, uint index)
+    {
+        RequireLength(xprv, 96, nameof(xprv));
+        if (!IsNativeActive) return Ed25519Managed.Bip32DerivePrivate(xprv, index);
+        byte[] o = new byte[96];
+        fixed (byte* k = xprv) fixed (byte* p = o) Check(NativeMethods.cn_bip32_ed25519_derive_priv(k, index, p), "BIP32-Ed25519 derivation");
+        return o;
+    }
+
+    /// <summary>Non-hardened BIP32-Ed25519 child of an extended public key <c>A ‖ chainCode</c> (64 bytes).</summary>
+    public static byte[] Bip32Ed25519DerivePublic(ReadOnlySpan<byte> xpub, uint index)
+    {
+        RequireLength(xpub, 64, nameof(xpub));
+        if (index >= 0x80000000) throw new ArgumentException("Hardened children cannot be derived from a public key", nameof(index));
+        if (!IsNativeActive) return Ed25519Managed.Bip32DerivePublic(xpub, index);
+        byte[] o = new byte[64];
+        fixed (byte* k = xpub) fixed (byte* p = o) Check(NativeMethods.cn_bip32_ed25519_derive_pub(k, index, p), "BIP32-Ed25519 public derivation");
+        return o;
+    }
+
     /// <summary>Substrate ed25519 hard derivation of a 32-byte seed along a path such as <c>//Alice</c>.</summary>
     public static byte[] SubstrateEd25519Derive(ReadOnlySpan<byte> seed, string path)
     {

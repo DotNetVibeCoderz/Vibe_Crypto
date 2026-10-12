@@ -22,6 +22,7 @@
     <Project Path="src/Crypto.Net.Aptos/Crypto.Net.Aptos.csproj" />
     <Project Path="src/Crypto.Net.Sui/Crypto.Net.Sui.csproj" />
     <Project Path="src/Crypto.Net.Ton/Crypto.Net.Ton.csproj" />
+    <Project Path="src/Crypto.Net.Cardano/Crypto.Net.Cardano.csproj" />
     <Project Path="src/Crypto.Net.Polkadot/Crypto.Net.Polkadot.csproj" />
     <Project Path="src/Crypto.Net.Solana/Crypto.Net.Solana.csproj" />
     <Project Path="src/Crypto.Net.Testing/Crypto.Net.Testing.csproj" />

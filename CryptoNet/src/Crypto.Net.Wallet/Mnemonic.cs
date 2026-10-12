@@ -157,4 +157,28 @@ public static class Mnemonic
             CryptographicOperations.ZeroMemory(salt);
         }
     }
+
+    /// <summary>
+    /// Cardano Icarus root key (CIP-3), used by Daedalus, Yoroi, Eternl and Lace: PBKDF2-HMAC-SHA512 with the
+    /// passphrase as password and the mnemonic entropy as salt, 4096 rounds, 96 bytes (<c>kL ‖ kR ‖ chainCode</c>),
+    /// then clamped. Like the Substrate seed, it comes from the entropy, not the BIP-39 seed.
+    /// </summary>
+    public static byte[] ToIcarusRootKey(string mnemonic, string? passphrase = "")
+    {
+        byte[] entropy = ToEntropy(mnemonic);
+        byte[] password = Encoding.UTF8.GetBytes((passphrase ?? "").Normalize(NormalizationForm.FormKD));
+        try
+        {
+            byte[] key = CryptoNative.Pbkdf2Sha512(password, entropy, 4096, 96);
+            key[0] &= 0xf8;
+            key[31] &= 0x1f;
+            key[31] |= 0x40;
+            return key;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(entropy);
+            CryptographicOperations.ZeroMemory(password);
+        }
+    }
 }

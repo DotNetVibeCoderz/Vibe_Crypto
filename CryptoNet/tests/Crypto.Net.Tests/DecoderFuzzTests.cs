@@ -230,6 +230,25 @@ public class DecoderFuzzTests
     }
 
     [Fact]
+    public void Cardano_TransactionsMetadataAndAddresses()
+    {
+        using var account = Crypto.Net.Cardano.CardanoAccount.FromMnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", network: Crypto.Net.Cardano.CardanoChain.Preprod);
+        var tx = new Crypto.Net.Cardano.CardanoTransaction
+        {
+            Inputs = [new(new string('1', 64), 1)],
+            Outputs = [new(account.Address.Value, 2_000_000, [new(new string('2', 56), "41", 5)])],
+            Fee = 170_000,
+            Ttl = 5,
+            AuxiliaryData = Crypto.Net.Cardano.CardanoMetadata.Message("fuzz me " + new string('z', 90)),
+        };
+        Fuzz("cardano-tx", [tx.Sign(account)], b => Crypto.Net.Cardano.CardanoTransaction.IdOf(b));
+        Fuzz("cardano-cip20", [tx.AuxiliaryData], b => Crypto.Net.Cardano.CardanoMetadata.ReadMessage(b));
+        Fuzz("cardano-byron", [CryptoNative.Base58Decode("Ae2tdPwUPEZFRbyhz3cpfC2CumGzNkFBN2L42rcUc2yjQpEkxDbkPodpMAi")],
+            b => Crypto.Net.Cardano.CardanoAddress.IsValid(CryptoNative.Base58Encode(b)));
+    }
+
+    [Fact]
     public void Text_Codecs()
     {
         var rng = new Random(Seed);

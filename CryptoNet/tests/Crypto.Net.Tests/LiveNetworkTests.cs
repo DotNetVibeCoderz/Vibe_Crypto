@@ -116,6 +116,27 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Cardano_PreprodReadsAndBuildsTransfer()
+    {
+        await using var koios = new Crypto.Net.Cardano.KoiosClient(Crypto.Net.Cardano.CardanoChain.Preprod);
+        var tip = await koios.GetTipAsync();
+        Assert.True(tip.BlockHeight > 0 && tip.Slot > 0);
+        var pp = await koios.GetProtocolParametersAsync();
+        Assert.True(pp.MinFeeA > 0 && pp.MinFeeB > 0 && pp.CoinsPerUtxoByte > 0);
+
+        // The public test phrase's preprod account usually holds test ADA; build and sign (never submit) a transfer.
+        using var account = Crypto.Net.Cardano.CardanoAccount.FromMnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", network: Crypto.Net.Cardano.CardanoChain.Preprod);
+        var utxos = await koios.GetUtxosAsync(account.Address.Value);
+        if (utxos.Sum(u => (decimal)u.Lovelace) < 5_000_000) return;
+        var tx = await koios.BuildTransferAsync(account, [new Crypto.Net.Cardano.CardanoOutput(account.EnterpriseAddress, 2_000_000)], "Crypto.Net live test");
+        byte[] signed = tx.Sign(account);
+        Assert.Equal(pp.MinFee(signed.Length), tx.Fee);
+        Assert.Equal(tx.Id, Crypto.Net.Cardano.CardanoTransaction.IdOf(signed));
+        Assert.Null(await koios.GetReceiptAsync(new Crypto.Net.Core.TxHash(new string('0', 64))));
+    }
+
+    [LiveFact]
     public async Task Staking_NominateIsAcceptedByAssetHub()
     {
         // Sign (never submit) a nominate extrinsic and ask the runtime to price it: decoding errors would fail here.
