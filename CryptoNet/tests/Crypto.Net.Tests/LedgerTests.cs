@@ -205,6 +205,9 @@ public class LedgerSolanaTests
         byte[] sig = await new LedgerSolanaApp(t).SignOffchainMessageAsync("44'/501'", formatted);
         Assert.Equal(64, sig.Length);
         Assert.Equal(1, LedgerSolanaApp.FormatOffchainMessage("héllo")[17]);
+        byte[] current = LedgerSolanaApp.FormatOffchainMessage("hi", ["11111111111111111111111111111112"]);
+        Assert.Equal(16 + 1 + 32 + 1 + 1 + 32 + 2 + 2, current.Length);
+        Assert.Equal((0, 0, 1, 2), (current[16], current[49], current[50], current[83]));
     }
 
     [Fact]

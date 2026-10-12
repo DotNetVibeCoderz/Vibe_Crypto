@@ -96,7 +96,7 @@ public class LedgerSolanaSpeculosTests
         var signed = await LedgerSpeculosTests.WithApproval(app.SignTransactionAsync(path, tx));
         Assert.Equal(64, Crypto.Net.Native.CryptoNative.Base58Decode(signed.Signature).Length);   // AddSignature verified it
 
-        byte[] message = LedgerSolanaApp.FormatOffchainMessage("Crypto.Net + Ledger");
+        byte[] message = LedgerSolanaApp.FormatOffchainMessage("Crypto.Net + Ledger", [address]);
         byte[] sig = await LedgerSpeculosTests.WithApproval(app.SignOffchainMessageAsync(path, message));
         Assert.True(Crypto.Net.Native.CryptoNative.Ed25519Verify(Crypto.Net.Native.CryptoNative.Base58Decode(address), message, sig));
     }

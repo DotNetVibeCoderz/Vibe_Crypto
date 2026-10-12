@@ -54,15 +54,46 @@ public sealed class LedgerSolanaApp(ILedgerTransport transport)
         SendAsync(InsSignOffchain, 1, [1, .. SerializePath(path), .. formattedMessage.Span], ct);
 
     /// <summary>
-    /// Off-chain message, version 0: <c>"\xffsolana offchain" ‖ version ‖ format ‖ length (u16 LE) ‖ text</c>. Format 0
-    /// is printable ASCII, 1 is UTF-8 (up to 1212 bytes).
+    /// Off-chain message with the current header, which Ledger's Solana app requires:
+    /// <c>"ÿsolana offchain" ‖ version 0 ‖ application domain (32) ‖ format ‖ signer count ‖ signers ‖ length (u16 LE)
+    /// ‖ text</c>. Format 0 is printable ASCII, 1 is UTF-8.
+    /// </summary>
+    public static byte[] FormatOffchainMessage(string text, IReadOnlyList<string> signers, ReadOnlySpan<byte> applicationDomain = default)
+    {
+        ArgumentNullException.ThrowIfNull(signers);
+        byte[] body = Body(text, out byte format);
+        if (signers.Count is 0 or > 255) throw new ArgumentException("An off-chain message needs 1 to 255 signers", nameof(signers));
+        if (applicationDomain.Length is not (0 or 32)) throw new ArgumentException("The application domain is 32 bytes", nameof(applicationDomain));
+        var o = new List<byte>(20 + 32 + 2 + 32 * signers.Count + body.Length);
+        o.Add(0xff);
+        o.AddRange("solana offchain"u8.ToArray());
+        o.Add(0);
+        o.AddRange(applicationDomain.Length == 0 ? new byte[32] : applicationDomain.ToArray());
+        o.Add(format);
+        o.Add((byte)signers.Count);
+        foreach (string signer in signers) o.AddRange(SolanaAddress.Decode(signer));
+        o.Add((byte)body.Length);
+        o.Add((byte)(body.Length >> 8));
+        o.AddRange(body);
+        return [.. o];
+    }
+
+    /// <summary>
+    /// The short legacy header (<c>"ÿsolana offchain" ‖ version 0 ‖ format ‖ length ‖ text</c>) that the Agave CLI
+    /// and older Ledger app versions use.
     /// </summary>
     public static byte[] FormatOffchainMessage(string text)
     {
-        byte[] body = Encoding.UTF8.GetBytes(text);
-        if (body.Length is 0 or > 1212) throw new ArgumentException("Off-chain messages must be 1 to 1212 bytes", nameof(text));
-        byte format = body.All(b => b is >= 0x20 and <= 0x7e) ? (byte)0 : (byte)1;
+        byte[] body = Body(text, out byte format);
         return [0xff, .. "solana offchain"u8, 0, format, (byte)body.Length, (byte)(body.Length >> 8), .. body];
+    }
+
+    private static byte[] Body(string text, out byte format)
+    {
+        byte[] body = Encoding.UTF8.GetBytes(text);
+        if (body.Length is 0 or > 65535) throw new ArgumentException("Off-chain messages must be 1 to 65535 bytes", nameof(text));
+        format = body.All(b => b is >= 0x20 and <= 0x7e) ? (byte)0 : (byte)1;
+        return body;
     }
 
     /// <summary>Paths as the app expects them: every level hardened.</summary>

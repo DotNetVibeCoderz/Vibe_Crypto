@@ -43,7 +43,7 @@ tx.Instructions.Add(SystemProgram.Transfer(address, "…", 1_000_000));
 await sol.SignTransactionAsync(path, tx);                       // tanda tangan diverifikasi lalu dilampirkan
 await rpc.SendRawTransactionAsync(tx.Serialize());
 
-byte[] sig = await sol.SignOffchainMessageAsync(path, LedgerSolanaApp.FormatOffchainMessage("Masuk ke example.org"));
+byte[] sig = await sol.SignOffchainMessageAsync(path, LedgerSolanaApp.FormatOffchainMessage("Masuk ke example.org", [address]));
 ```
 
 Transaksi panjang dikirim dalam potongan 255 byte, dan setiap level path dibuat hardened sesuai kebutuhan aplikasi.

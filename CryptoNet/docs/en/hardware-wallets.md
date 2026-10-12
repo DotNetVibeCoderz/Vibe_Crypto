@@ -46,7 +46,7 @@ tx.Instructions.Add(SystemProgram.Transfer(address, "…", 1_000_000));
 await sol.SignTransactionAsync(path, tx);                       // the signature is verified and attached
 await rpc.SendRawTransactionAsync(tx.Serialize());
 
-byte[] sig = await sol.SignOffchainMessageAsync(path, LedgerSolanaApp.FormatOffchainMessage("Sign in to example.org"));
+byte[] sig = await sol.SignOffchainMessageAsync(path, LedgerSolanaApp.FormatOffchainMessage("Sign in to example.org", [address]));
 ```
 
 Long transactions are sent in 255-byte chunks, and every path level is hardened as the app requires.
