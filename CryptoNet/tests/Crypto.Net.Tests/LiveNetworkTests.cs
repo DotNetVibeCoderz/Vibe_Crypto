@@ -41,6 +41,23 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Ens_And_Erc721_OnMainnet()
+    {
+        await using var rpc = new EvmRpcClient(EvmChain.Ethereum);
+        var ens = new EnsClient(rpc);
+        const string vitalik = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+        Assert.Equal(vitalik, await ens.ResolveAddressAsync("vitalik.eth"));
+        Assert.Equal("vitalik.eth", await ens.LookupAddressAsync(vitalik));
+        Assert.Null(await ens.ResolveAddressAsync("this-name-should-not-exist-cryptonet-" + Guid.NewGuid().ToString("N")[..8] + ".eth"));
+
+        // The ENS .eth registrar is an ERC-721: token id = uint256(keccak256(label)).
+        var registrar = new Erc721Client(rpc, "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85");
+        Assert.True(await registrar.SupportsInterfaceAsync(InterfaceIds.Erc721));
+        var tokenId = new System.Numerics.BigInteger(Crypto.Net.Native.CryptoNative.Keccak256("vitalik"u8), isUnsigned: true, isBigEndian: true);
+        Assert.True(EvmAddress.IsValid(await registrar.GetOwnerAsync(tokenId)));
+    }
+
+    [LiveFact]
     public async Task Indexer_DecodesSepoliaUsdcTransfers()
     {
         await using var client = new EvmRpcClient(EvmChain.Sepolia);
