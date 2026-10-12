@@ -61,6 +61,8 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST, CosmWasm dan CW20 |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` dengan client ber-key, resilience, `ChainCatalog`, penyedia Ankr/dRPC, benchmark |
 | `Crypto.Net.Generators` | Source generator: ABI Solidity / artifact Hardhat & Foundry dan IDL Anchor → client bertipe (juga `cnet gen`) |
+| `Crypto.Net.Ledger` | Hardware wallet Ledger: transport USB HID / Speculos, aplikasi Ethereum (alamat, transaksi, pesan, EIP-712) |
+| `Crypto.Net.Near` | NEAR Protocol: akun ed25519 (implicit dan bernama), transaksi Borsh dengan semua action, function call, RPC |
 | `Crypto.Net.Indexer` | Indexer log EVM dengan decoding event ABI, block crawler, checkpoint, hosted service |
 | `Crypto.Net.Indexer.EntityFrameworkCore` | Penyimpanan EF Core (SQLite, PostgreSQL, SQL Server) untuk checkpoint, log dan transfer ERC-20 |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` dan test vector resmi |

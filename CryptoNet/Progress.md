@@ -29,6 +29,8 @@
 | Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
 | 1.1 Taproot trees, PSBT v0/v2, multisig | ✅ Done | BIP-341, BIP-174/370 and Bitcoin Core sighash vectors |
 | 1.1 Solana v0 + lookup tables | ✅ Done | Byte-identical to @solana/web3.js 1.98.0 |
+| Crypto.Net.Ledger (Ethereum app) | ✅ Done | Replayed hw-app-eth sessions; CI E2E with the real app in Speculos |
+| Crypto.Net.Near | ✅ Done | Byte-identical to near-api-js; live testnet reads |
 | Gallery desktop + WebAssembly/PWA | ✅ Done | Desktop window verified on Windows; WASM verified in headless Chrome (wallet derived in-page) |
 | VS Code extension Crypto.Net Tools | ✅ Done | Unit tests + integration test in an isolated VS Code; .vsix packaged in CI |
 | Notebooks 07–09 (indexer, benchmarks, security) | ✅ Done | All 9 × 2 executed with dotnet-repl against locally packed 1.2 packages |
@@ -80,3 +82,4 @@
 - **2026-10-13** — Notebooks 07–09 (EN/ID). Every notebook was executed against freshly packed 1.2 packages.
 - **2026-10-13** — VS Code extension: an integration test in a real VS Code checks activation, commands, the wei→ETH hover and the EIP-55 diagnostic.
 - **2026-10-13** — Gallery refactored onto a host-neutral core. New desktop app (Photino) and WebAssembly/PWA build, with screenshots of both.
+- **2026-10-13** — Ledger support, verified end to end against the real Ethereum app in Speculos. NEAR package, cross-checked with near-api-js.

@@ -61,6 +61,8 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client, CosmWasm and CW20 |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |
 | `Crypto.Net.Generators` | Source generator: Solidity ABI / Hardhat & Foundry artifacts and Anchor IDLs → typed clients (also `cnet gen`) |
+| `Crypto.Net.Ledger` | Ledger hardware wallets: USB HID / Speculos transports, Ethereum app (addresses, transactions, messages, EIP-712) |
+| `Crypto.Net.Near` | NEAR Protocol: ed25519 accounts (implicit and named), Borsh transactions with every action, function calls, RPC |
 | `Crypto.Net.Indexer` | EVM log indexer with ABI event decoding, block crawler, checkpoints, hosted services |
 | `Crypto.Net.Indexer.EntityFrameworkCore` | EF Core storage (SQLite, PostgreSQL, SQL Server) for checkpoints, logs and ERC-20 transfers |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` and official test vectors |

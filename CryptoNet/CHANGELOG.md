@@ -43,6 +43,16 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **Polkadot**:
   - `ScaleEncoder`: a metadata-driven encoder with `EncodeCall(pallet, call, args)` and nested calls.
   - `PolkadotStaking`: staking and nomination-pool calls. Verified by a fee quote from Polkadot Asset Hub.
+- **Crypto.Net.Ledger**:
+  - APDU protocol, HID framing, and USB HID, Speculos and replay transports.
+  - Ethereum app: addresses, chunked transactions, personal messages, EIP-712.
+  - Verified against Ledger's recorded sessions and, in CI, against the real Ethereum app in Speculos.
+- **Crypto.Net.Near**:
+  - Keys (`m/44'/397'`), implicit and named accounts.
+  - Borsh transactions with all eight actions (identical to near-api-js).
+  - Function calls, access keys, and an RPC client.
+- Borsh moved from Crypto.Net.Solana to Crypto.Net.Core (`Crypto.Net.Core.BorshWriter`/`BorshReader`), since NEAR uses
+  it too. `JsonRpcClient.CallWithObjectParamsAsync` sends by-name parameters.
 - **Gallery desktop and WebAssembly**:
   - `Crypto.Net.Gallery.Core` makes the Gallery API host-neutral.
   - `Crypto.Net.Gallery.Desktop` is a native window (Photino) with the server in-process on loopback.

@@ -51,7 +51,8 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [x] Notebooks for indexer, benchmarks and security practices.
 - [x] VS Code extension "Crypto.Net Tools" (.vsix on GitHub releases; Marketplace publishing needs a `VSCE_PAT` secret).
 - [x] ERC-721/1155, ENS, EIP-4337; SPL Token-2022 extensions; CosmWasm; Polkadot staking/nomination helpers.
-- [ ] Hardware wallets (Ledger/Trezor) and WalletConnect v2 as `ISigner` implementations.
+- [x] Ledger hardware wallets (Ethereum app; Speculos-verified in CI).
+- [ ] Trezor, Ledger apps for other chains, WalletConnect v2 (needs a Reown project ID).
 - [x] Gallery desktop (Photino native window) and WASM/PWA (also covers mobile browsers). A native MAUI mobile app is not built.
 - [ ] External security audit before 2.0.
 - [ ] Additional chains: TON, Sui/Aptos, NEAR, Cardano.
