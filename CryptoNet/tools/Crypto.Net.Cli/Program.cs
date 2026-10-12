@@ -4,6 +4,11 @@ using Crypto.Net.Bitcoin;
 using Crypto.Net.Cli;
 using Crypto.Net.Core;
 using Crypto.Net.Cosmos;
+using Crypto.Net.Aptos;
+using Crypto.Net.Cardano;
+using Crypto.Net.Near;
+using Crypto.Net.Sui;
+using Crypto.Net.Ton;
 using Crypto.Net.Evm;
 using Crypto.Net.Extensions;
 using Crypto.Net.Native;
@@ -183,7 +188,7 @@ validate.SetAction(r =>
     }
 
     var matches = ChainCatalog.DetectAddress(addr);
-    if (r.GetValue(json)) { Ui.Json(new { address = addr, valid = matches.Count > 0, matches }); return matches.Count > 0 ? 0 : 1; }
+    if (r.GetValue(json)) { Ui.Json(new { address = addr, valid = matches.Count > 0, matches = matches.Select(m => new { family = m.Family.ToString(), format = m.Format }) }); return matches.Count > 0 ? 0 : 1; }
     if (matches.Count == 0) { Ui.Error("Not recognised by any supported chain"); return 1; }
     var t = Ui.Table("Chain family", "Format");
     foreach (var m in matches) t.AddRow($"[#{Ui.Accent.ToHex()}]{m.Family}[/]", Markup.Escape(m.Format));
@@ -256,7 +261,7 @@ tx.SetAction(async (r, ct) =>
 root.Subcommands.Add(tx);
 
 // ------------------------------------------------------------------ new (dotnet new templates)
-string[] templateNames = ["console", "worker", "webapi", "lib", "test"];
+string[] templateNames = ["console", "worker", "webapi", "lib", "test", "contract-client"];
 var templateArg = new Argument<string>("template") { Description = string.Join(", ", templateNames) };
 var nameOpt = new Option<string?>("--name", "-n") { Description = "Project name (defaults to the folder name)" };
 var outputOpt = new Option<string?>("--output", "-o") { Description = "Output folder" };
@@ -275,6 +280,45 @@ newCmd.SetAction(async (r, ct) =>
     return code;
 });
 root.Subcommands.Add(newCmd);
+
+// ------------------------------------------------------------------ gen (contract clients)
+var genFileArg = new Argument<FileInfo>("file") { Description = "Solidity ABI / Hardhat or Foundry artifact (*.json) or Anchor IDL (*.idl.json)" };
+var genNameOpt = new Option<string?>("--name", "-n") { Description = "Class name (defaults to the file name)" };
+var genNsOpt = new Option<string?>("--namespace") { Description = "Namespace of the generated code" };
+var genOutOpt = new Option<string?>("--output", "-o") { Description = "Output .cs file (defaults to <Name>.g.cs next to the input; '-' prints it)" };
+var genKindOpt = new Option<string?>("--kind") { Description = "abi or anchor (detected from the file when omitted)" };
+var gen = new Command("gen", "Generate a typed C# client from a Solidity ABI or an Anchor IDL") { genFileArg, genNameOpt, genNsOpt, genOutOpt, genKindOpt };
+gen.SetAction(r =>
+{
+    var file = r.GetValue(genFileArg)!;
+    if (!file.Exists) { Ui.Error($"{file.FullName} not found"); return 1; }
+    string source = File.ReadAllText(file.FullName);
+    string baseName = file.Name;
+    foreach (string suffix in new[] { ".abi.json", ".idl.json", ".json" })
+        if (baseName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) { baseName = baseName[..^suffix.Length]; break; }
+    string name = r.GetValue(genNameOpt) ?? baseName;
+    string kind = r.GetValue(genKindOpt)
+        ?? (file.Name.EndsWith(".idl.json", StringComparison.OrdinalIgnoreCase) || source.Contains("\"instructions\"", StringComparison.Ordinal) ? "anchor" : "abi");
+    string code;
+    try
+    {
+        code = kind.Equals("anchor", StringComparison.OrdinalIgnoreCase)
+            ? Crypto.Net.Generators.AnchorClientGenerator.Generate(source, r.GetValue(genNsOpt) ?? "", name)
+            : Crypto.Net.Generators.EvmContractGenerator.Generate(source, r.GetValue(genNsOpt) ?? "", name);
+    }
+    catch (Exception ex) when (ex is FormatException or InvalidCastException or ArgumentException)
+    {
+        Ui.Error($"Could not generate: {ex.Message}");
+        return 1;
+    }
+    string output = r.GetValue(genOutOpt) ?? Path.Combine(file.DirectoryName!, name + ".g.cs");
+    if (output == "-") { Console.Write(code); return 0; }
+    File.WriteAllText(output, code);
+    if (r.GetValue(json)) { Ui.Json(new { input = file.FullName, output = Path.GetFullPath(output), kind, lines = code.Split('\n').Length }); return 0; }
+    AnsiConsole.MarkupLine($"[#{Ui.Accent.ToHex()}]✓[/] {Markup.Escape(kind)} client [bold]{Markup.Escape(name)}[/] → {Markup.Escape(Path.GetFullPath(output))}");
+    return 0;
+});
+root.Subcommands.Add(gen);
 
 // ------------------------------------------------------------------ sign / verify (EVM)
 var sign = new Command("sign", "Sign messages (EIP-191) and typed data (EIP-712)");
@@ -366,6 +410,11 @@ static int PrintWallet(HdWallet w, bool testnet, int count, bool showKeys, bool 
     var solNet = testnet ? SolanaChain.Devnet : SolanaChain.MainnetBeta;
     var dotNet = testnet ? PolkadotChain.Westend : PolkadotChain.Polkadot;
     var atomNet = testnet ? CosmosChain.CosmosHubTestnet : CosmosChain.CosmosHub;
+    var nearNet = testnet ? NearChain.Testnet : NearChain.Mainnet;
+    var aptNet = testnet ? AptosChain.Testnet : AptosChain.Mainnet;
+    var suiNet = testnet ? SuiChain.Testnet : SuiChain.Mainnet;
+    var tonNet = testnet ? TonChain.Testnet : TonChain.Mainnet;
+    var adaNet = testnet ? CardanoChain.Preprod : CardanoChain.Mainnet;
 
     var rows = new List<(string Chain, string Path, string Address, string? Key)>();
     for (uint i = 0; i < count; i++)
@@ -381,6 +430,16 @@ static int PrintWallet(HdWallet w, bool testnet, int count, bool showKeys, bool 
         rows.Add(("Solana", sol.DerivationPath!, sol.Address.Value, showKeys ? sol.ExportBase58SecretKey() : null));
         using var atom = w.GetCosmosAccount(i, atomNet);
         rows.Add(("Cosmos Hub", atom.DerivationPath!, atom.Address.Value, showKeys ? Key(w, atom.DerivationPath!) : null));
+        using var near = w.GetNearAccount(i, nearNet);
+        rows.Add(("NEAR", near.DerivationPath!, near.Address.Value, showKeys ? near.ExportSecretKey() : null));
+        using var apt = w.GetAptosAccount(i, aptNet);
+        rows.Add(("Aptos", apt.DerivationPath!, apt.Address.Value, showKeys ? apt.ExportPrivateKey() : null));
+        using var sui = w.GetSuiAccount(i, suiNet);
+        rows.Add(("Sui", sui.DerivationPath!, sui.Address.Value, showKeys ? sui.ExportPrivateKey() : null));
+        using var ton = w.GetTonAccount(i, tonNet);
+        rows.Add(("TON (W5)", ton.DerivationPath!, ton.Address.Value, null));
+        using var ada = w.GetCardanoAccount(0, i, adaNet);
+        rows.Add(("Cardano", ada.DerivationPath!, ada.Address.Value, null));
         if (NativeLoader.IsNativeAvailable)
         {
             string path = i == 0 ? "" : $"//{i}";

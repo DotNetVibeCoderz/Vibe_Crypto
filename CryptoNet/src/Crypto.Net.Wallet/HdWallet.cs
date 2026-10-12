@@ -15,9 +15,10 @@ public sealed class HdWallet : IDisposable
     private readonly HdKey _edRoot;
     private readonly SecureBuffer? _mnemonic;
     private readonly SecureBuffer? _substrateSeed;
+    private readonly SecureBuffer? _icarusRoot;
     private bool _disposed;
 
-    private HdWallet(ReadOnlySpan<byte> seed, string? normalizedMnemonic, byte[]? substrateSeed)
+    private HdWallet(ReadOnlySpan<byte> seed, string? normalizedMnemonic, byte[]? substrateSeed, byte[]? icarusRoot = null)
     {
         _secpRoot = HdKey.FromSeed(seed, HdCurve.Secp256k1);
         _edRoot = HdKey.FromSeed(seed, HdCurve.Ed25519);
@@ -25,6 +26,8 @@ public sealed class HdWallet : IDisposable
             _mnemonic = SecureBuffer.FromBytesAndClear(Encoding.UTF8.GetBytes(normalizedMnemonic));
         if (substrateSeed is not null)
             _substrateSeed = SecureBuffer.FromBytesAndClear(substrateSeed);
+        if (icarusRoot is not null)
+            _icarusRoot = SecureBuffer.FromBytesAndClear(icarusRoot);
     }
 
     /// <summary>Restores a wallet from a mnemonic phrase (validated, whitespace-normalized).</summary>
@@ -34,7 +37,7 @@ public sealed class HdWallet : IDisposable
         byte[] seed = Mnemonic.ToSeed(normalized, passphrase);
         try
         {
-            return new HdWallet(seed, normalized, Mnemonic.ToSubstrateSeed(normalized, passphrase));
+            return new HdWallet(seed, normalized, Mnemonic.ToSubstrateSeed(normalized, passphrase), Mnemonic.ToIcarusRootKey(normalized, passphrase));
         }
         finally
         {
@@ -116,6 +119,24 @@ public sealed class HdWallet : IDisposable
             : SecureBuffer.FromBytesAndClear(CryptoNative.SubstrateEd25519Derive(_substrateSeed.Span, path));
     }
 
+    /// <summary>
+    /// BIP32-Ed25519 extended key (<c>kL ‖ kR ‖ chainCode</c>, 96 bytes) from the Cardano Icarus root, for a path such as
+    /// <c>m/1852'/1815'/0'/0/0</c>; unhardened levels are allowed.
+    /// </summary>
+    public SecureBuffer DeriveBip32Ed25519(string path)
+    {
+        ThrowIfDisposed();
+        if (_icarusRoot is null) throw new InvalidOperationException("BIP32-Ed25519 derivation requires a wallet created from a mnemonic");
+        byte[] key = _icarusRoot.Span.ToArray();
+        foreach (uint index in DerivationPath.Parse(path))
+        {
+            byte[] child = CryptoNative.Bip32Ed25519DerivePrivate(key, index);
+            CryptographicOperations.ZeroMemory(key);
+            key = child;
+        }
+        return SecureBuffer.FromBytesAndClear(key);
+    }
+
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 
     public void Dispose()
@@ -125,6 +146,7 @@ public sealed class HdWallet : IDisposable
         _edRoot.Dispose();
         _mnemonic?.Dispose();
         _substrateSeed?.Dispose();
+        _icarusRoot?.Dispose();
         _disposed = true;
     }
 }

@@ -43,18 +43,21 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 
 ## Later — ecosystem (from solution-design.md)
 
-- [ ] `Crypto.Net.Indexer`: block crawler, log processor, checkpoints, EF Core/SQLite storage.
-- [ ] Source generators: Solidity ABI → typed services, Anchor IDL → clients; `cnet gen`.
+- [x] `Crypto.Net.Indexer`: block crawler, log processor, checkpoints, EF Core/SQLite storage.
+- [x] Source generators: Solidity ABI → typed services, Anchor IDL → clients; `cnet gen`.
 - [x] `Crypto.Net.Analyzers` (CNET001–005: hard-coded secrets, secrets as `string`, `Amount` from `double`…).
-- [x] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`); `cnet-contract-client` follows the source generators.
+- [x] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`), `cnet-contract-client`.
 - [x] Polyglot notebooks (EN/ID) — one per chain.
-- [ ] Notebooks for indexer, benchmarks and security practices.
-- [ ] VS Code extension "Crypto.Net Tools".
-- [ ] ERC-721/1155, ENS, EIP-4337; SPL Token-2022 extensions; CosmWasm; Polkadot staking/nomination helpers.
-- [ ] Hardware wallets (Ledger/Trezor) and WalletConnect v2 as `ISigner` implementations.
-- [ ] Gallery desktop/mobile (Avalonia or MAUI) and WASM.
+- [x] Notebooks for indexer, benchmarks and security practices.
+- [x] VS Code extension "Crypto.Net Tools" (.vsix on GitHub releases; Marketplace publishing needs a `VSCE_PAT` secret).
+- [x] ERC-721/1155, ENS, EIP-4337; SPL Token-2022 extensions; CosmWasm; Polkadot staking/nomination helpers.
+- [x] Ledger hardware wallets: Ethereum and Solana apps, both Speculos-verified in CI.
+- [x] Trezor (Ethereum; emulator-verified in CI).
+- [x] WalletConnect v2 (app and wallet sides; interop-tested with Reown's official SDK).
+- [ ] Ledger and Trezor apps for further chains.
+- [x] Gallery desktop (Photino native window) and WASM/PWA (also covers mobile browsers). A native MAUI mobile app is not built.
 - [ ] External security audit before 2.0.
-- [ ] Additional chains: TON, Sui/Aptos, NEAR, Cardano.
+- [x] Additional chains: NEAR, Aptos, Sui, TON, Cardano (cross-checked byte for byte with each chain's reference SDK).
 
 ## Decisions taken
 

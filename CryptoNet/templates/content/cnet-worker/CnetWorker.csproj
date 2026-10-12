@@ -9,5 +9,7 @@
     <PackageReference Include="Crypto.Net.Extensions" />
     <PackageReference Include="Crypto.Net.Analyzers" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Crypto.Net.Indexer.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
   </ItemGroup>
 </Project>

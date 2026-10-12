@@ -223,6 +223,16 @@ public sealed class SolanaTransaction
         return this;
     }
 
+    /// <summary>Attaches a signature made elsewhere (a hardware wallet, a remote signer) over <see cref="SerializeMessage"/>.</summary>
+    public SolanaTransaction AddSignature(string publicKey, byte[] signature)
+    {
+        if (signature is not { Length: 64 }) throw new ArgumentException("Ed25519 signatures are 64 bytes", nameof(signature));
+        if (!CryptoNative.Ed25519Verify(SolanaAddress.Decode(publicKey), SerializeMessage(), signature))
+            throw new ArgumentException($"The signature does not verify for {publicKey}", nameof(signature));
+        _signatures[publicKey] = signature;
+        return this;
+    }
+
     public async ValueTask<SolanaTransaction> SignAsync(IEnumerable<ISigner> signers, CancellationToken ct = default)
     {
         byte[] message = SerializeMessage();

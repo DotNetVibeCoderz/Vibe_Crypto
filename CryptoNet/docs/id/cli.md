@@ -29,7 +29,8 @@ riwayat shell.
 | `cnet sign typed-data <berkas.json> …` | Digest dan tanda tangan EIP-712 |
 | `cnet verify "<teks>" -s <tanda-tangan>` | Memulihkan alamat penanda tangan |
 | `cnet bench [--scale 1.0]` | Inti Rust vs C# managed di mesin ini |
-| `cnet new <console\|worker\|webapi\|lib\|test> [-n nama] [-o folder] [--network key]` | Project baru dari [template](template.md) (`dotnet new cnet-*`) |
+| `cnet new <console\|worker\|webapi\|lib\|test\|contract-client> [-n nama] [-o folder] [--network key]` | Project baru dari [template](template.md) (`dotnet new cnet-*`) |
+| `cnet gen <abi-atau-idl.json> [-n Nama] [--namespace NS] [-o file\|-] [--kind abi\|anchor]` | Client C# bertipe dari ABI Solidity atau IDL Anchor ([detail](codegen.md)) |
 
 ![cnet bench](../assets/screenshots/cli-bench.png)
 

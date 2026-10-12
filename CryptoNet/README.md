@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Multi-chain cryptography and blockchain clients for .NET 10, powered by a Rust core.</strong><br>
-  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos
+  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos · NEAR · Aptos · Sui · TON · Cardano
 </p>
 
 <p align="center">
@@ -54,21 +54,32 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Native` | Rust core + managed fallback: SHA-2, Keccak, BLAKE2b, RIPEMD-160, secp256k1 ECDSA/Schnorr/Taproot, Ed25519, sr25519, BIP-32, SLIP-10, PBKDF2, scrypt, Base58, Bech32/Bech32m |
 | `Crypto.Net.Core` | `Amount` (exact), `Address`, `TxHash`, `ISigner`, `IChainClient`, JSON-RPC transport, receipt polling |
 | `Crypto.Net.Wallet` | BIP-39 mnemonics, BIP-32/SLIP-10 HD keys, xprv/xpub/zpub, Web3 v3 keystores, `KeySigner` |
-| `Crypto.Net.Evm` | EIP-55, Legacy/EIP-2930/EIP-1559 transactions, ABI codec, EIP-191/712, ERC-20, JSON-RPC client |
+| `Crypto.Net.Evm` | EIP-55, Legacy/EIP-2930/EIP-1559 transactions, ABI codec, EIP-191/712, ERC-20, JSON-RPC client, ERC-721/1155, ENS, ERC-4337 |
 | `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, Taproot script trees, legacy/BIP-143/BIP-341 signing, PSBT (BIP-174/370), multisig, coin selection, Esplora |
-| `Crypto.Net.Solana` | Legacy and v0 transactions, address lookup tables, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC |
-| `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, event and storage decoding, RPC |
-| `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client |
+| `Crypto.Net.Solana` | Legacy and v0 transactions, address lookup tables, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC, Token-2022 extensions, Borsh/Anchor |
+| `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, event and storage decoding, RPC, metadata-driven SCALE encoder, staking & nomination pools |
+| `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client, CosmWasm and CW20 |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |
+| `Crypto.Net.Generators` | Source generator: Solidity ABI / Hardhat & Foundry artifacts and Anchor IDLs → typed clients (also `cnet gen`) |
+| `Crypto.Net.Ledger` | Ledger hardware wallets: USB HID / Speculos transports, Ethereum app (addresses, transactions, messages, EIP-712), Solana app (transactions, off-chain messages) |
+| `Crypto.Net.WalletConnect` | WalletConnect v2 (Reown): pair with mobile wallets, sessions, EIP-155 requests; also the wallet side |
+| `Crypto.Net.Trezor` | Trezor hardware wallets: Bridge and emulator transports, Ethereum (addresses, legacy/EIP-1559 transactions, messages, EIP-712 hashes) |
+| `Crypto.Net.Near` | NEAR Protocol: ed25519 accounts (implicit and named), Borsh transactions with every action, function calls, RPC |
+| `Crypto.Net.Aptos` | Aptos: AIP-40 addresses, Move type tags, BCS entry-function transactions, simulation, REST client |
+| `Crypto.Net.Sui` | Sui: programmable transactions (BCS build and parse), intent signing, personal messages, GraphQL client with gas selection |
+| `Crypto.Net.Ton` | TON: cells and BoC, TON mnemonics, wallets V4R2 and W5, comments, jettons, TON Center client |
+| `Crypto.Net.Cardano` | Cardano: CIP-1852 BIP32-Ed25519 accounts, Conway transactions with native assets and CIP-20, exact fees, Koios client |
+| `Crypto.Net.Indexer` | EVM log indexer with ABI event decoding, block crawler, checkpoints, hosted services |
+| `Crypto.Net.Indexer.EntityFrameworkCore` | EF Core storage (SQLite, PostgreSQL, SQL Server) for checkpoints, logs and ERC-20 transfers |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` and official test vectors |
 | `Crypto.Net.Analyzers` | Roslyn rules CNET001–005: hard-coded keys, secrets in strings, float amounts, mainnet in Debug, dropped cancellation tokens |
 | `Crypto.Net.Cli` | The `cnet` dotnet tool |
-| `Crypto.Net.Templates` | `dotnet new` templates: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
+| `Crypto.Net.Templates` | `dotnet new` templates: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test`, `cnet-contract-client` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # pulls in every chain
 dotnet tool install -g Crypto.Net.Cli      # the cnet command
-dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test | cnet-contract-client
 ```
 
 ## Quick start
@@ -143,8 +154,14 @@ user-secrets or environment variables, never in source control.
 
 ## Notebooks
 
-Six interactive .NET notebooks — wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos — in English
+Ten interactive .NET notebooks — wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot, Cosmos, NEAR/Aptos/Sui/TON/Cardano, indexing, benchmarks and security — in English
 and Bahasa Indonesia: [samples/notebooks](samples/notebooks/README.md). Open them in VS Code with Polyglot Notebooks.
+
+## VS Code
+
+**Crypto.Net Tools** (`crypto-net-tools.vsix` on each release): networks view, wallet/balance/address commands,
+contract client generation, unit and address hovers, EIP-55 typo warnings, snippets and local nodes. See
+[docs/en/vscode.md](docs/en/vscode.md).
 
 ## The `cnet` command line
 
@@ -169,7 +186,9 @@ heads and a Rust-vs-managed benchmark — each with the C# that produces it. Eng
 light and dark themes, testnet by default.
 
 ```bash
-dotnet run --project samples/Crypto.Net.Gallery   # http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery           # web, http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery.Desktop   # native window (Windows, macOS, Linux)
+dotnet publish samples/Crypto.Net.Gallery.Wasm -c Release # static WebAssembly site / PWA
 ```
 
 | | |
@@ -202,7 +221,7 @@ backend uses the platform for those and Rust for everything else. Force either e
 ```
  Apps:        cnet CLI · Gallery (ASP.NET Core) · your code
  DI:          Crypto.Net.Extensions   AddCryptoNet() · ChainCatalog · dRPC · resilience
- Chains:      .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos
+ Chains:      .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos  .Near  .Aptos  .Sui  .Ton  .Cardano
  Wallet/Core: .Wallet (BIP-39/32, SLIP-10, keystore)  ·  .Core (Amount, ISigner, IChainClient, JSON-RPC)
  Native:      Crypto.Net.Native  → CryptoNative (Auto | Native | Managed) → P/Invoke or managed fallback
  ─────────────────────────── C ABI (cn_*, i32 status codes, catch_unwind) ───────────────────────────

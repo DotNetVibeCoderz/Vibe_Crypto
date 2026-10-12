@@ -41,6 +41,178 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Near_TestnetReads()
+    {
+        await using var near = new Crypto.Net.Near.NearRpcClient(Crypto.Net.Near.NearChain.Testnet);
+        Assert.True(await near.GetBlockNumberAsync() > 0);
+        var state = await near.GetAccountAsync("wrap.testnet");
+        Assert.NotNull(state);
+        Assert.True(state!.HasContract);
+        var meta = await near.ViewFunctionAsync("wrap.testnet", "ft_metadata");
+        Assert.Equal("wNEAR", meta.GetProperty("symbol").GetString());
+        Assert.Null(await near.GetAccountAsync("this-account-should-not-exist-cryptonet-" + Guid.NewGuid().ToString("N")[..10] + ".testnet"));
+    }
+
+    [LiveFact]
+    public async Task Aptos_TestnetReadsAndSimulation()
+    {
+        await using var aptos = new Crypto.Net.Aptos.AptosRestClient(Crypto.Net.Aptos.AptosChain.Testnet);
+        var ledger = await aptos.GetLedgerInfoAsync();
+        Assert.Equal(2, ledger.ChainId);
+        Assert.True(ledger.BlockHeight > 0);
+        var chainId = await aptos.ViewAsync("0x1::chain_id::get");
+        Assert.Equal(2, chainId[0].GetInt32());
+        Assert.NotNull(await aptos.GetAccountResourceAsync("0x1", "0x1::account::Account"));
+
+        // Simulate (never submit) a transfer from an unfunded key: the node must decode and price it.
+        using var account = new Crypto.Net.Aptos.AptosAccount(Enumerable.Repeat((byte)7, 32).ToArray(), Crypto.Net.Aptos.AptosChain.Testnet);
+        Assert.Equal(0m, (await aptos.GetBalanceAsync(account.Address)).ToDecimal());
+        var tx = await aptos.BuildTransactionAsync(account.Address.Value, Crypto.Net.Aptos.AptosEntryFunction.Transfer("0x1", 1));
+        var sim = await aptos.SimulateAsync(tx, account.PublicKey);
+        Assert.False(sim.Success);
+        Assert.Contains("INSUFFICIENT_BALANCE", sim.VmStatus, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(await aptos.GetReceiptAsync(new Crypto.Net.Core.TxHash("0x" + new string('0', 64))));
+    }
+
+    [LiveFact]
+    public async Task Sui_TestnetReadsAndSimulation()
+    {
+        await using var sui = new Crypto.Net.Sui.SuiGraphQlClient(Crypto.Net.Sui.SuiChain.Testnet);
+        Assert.True(await sui.GetBlockNumberAsync() > 0);
+        Assert.True(await sui.GetReferenceGasPriceAsync() > 0);
+        Assert.NotNull(await sui.GetObjectRefAsync("0x6"));
+
+        // Borrow a funded owner from the chain and simulate (never sign or submit) a transfer from it.
+        var d = await sui.QueryAsync("{ objects(first: 1, filter: { type: \"0x2::coin::Coin<0x2::sui::SUI>\" }) { nodes { owner { ... on AddressOwner { address { address } } } } } }");
+        string owner = d.GetProperty("objects").GetProperty("nodes")[0].GetProperty("owner").GetProperty("address").GetProperty("address").GetString()!;
+        Assert.True((await sui.GetBalanceAsync(new Crypto.Net.Core.Address(owner, Crypto.Net.Sui.SuiChain.Testnet.Id))).BaseUnits > 0);
+        var builder = new Crypto.Net.Sui.SuiTransactionBuilder(owner).TransferSui("0x" + new string('a', 64), 1);
+        var data = await sui.BuildAsync(builder);
+        Assert.True(data.GasBudget >= 2_000_000);
+        var sim = await sui.SimulateAsync(data.Serialize());
+        Assert.True(sim.Success, sim.Error);
+        Assert.Equal(data.Digest, sim.Digest);
+    }
+
+    [LiveFact]
+    public async Task Ton_TestnetReadsAndEmulatedTransfer()
+    {
+        await using var ton = new Crypto.Net.Ton.TonCenterClient(Crypto.Net.Ton.TonChain.Testnet);
+        Assert.True(await ton.GetBlockNumberAsync() > 0);
+        foreach (var version in new[] { Crypto.Net.Ton.TonWalletVersion.V4R2, Crypto.Net.Ton.TonWalletVersion.V5R1 })
+        {
+            using var account = new Crypto.Net.Ton.TonAccount(Enumerable.Repeat((byte)7, 32).ToArray(), Crypto.Net.Ton.TonChain.Testnet, version);
+            // This well-known test key's wallets may have been deployed by others; handle both states.
+            var state = await ton.GetAccountStateAsync(account.Address.Value);
+            uint seqno = await ton.GetSeqnoAsync(account.Address.Value);
+            if (!state.IsActive) Assert.Equal(0u, seqno);
+
+            // The node parses our state init and body and runs the wallet code on them.
+            var body = account.CreateTransferBody(seqno, [Crypto.Net.Ton.TonMessage.WithComment(account.WalletAddress, 1, "cryptonet")]);
+            var fees = await ton.EstimateFeeAsync(account, body, includeStateInit: !state.IsActive);
+            Assert.True(fees.GasFee > 0 && fees.InForwardFee > 0);
+        }
+        Assert.Null(await ton.GetReceiptAsync(new Crypto.Net.Core.TxHash(new string('0', 64))));
+    }
+
+    [LiveFact]
+    public async Task Cardano_PreprodReadsAndBuildsTransfer()
+    {
+        await using var koios = new Crypto.Net.Cardano.KoiosClient(Crypto.Net.Cardano.CardanoChain.Preprod);
+        var tip = await koios.GetTipAsync();
+        Assert.True(tip.BlockHeight > 0 && tip.Slot > 0);
+        var pp = await koios.GetProtocolParametersAsync();
+        Assert.True(pp.MinFeeA > 0 && pp.MinFeeB > 0 && pp.CoinsPerUtxoByte > 0);
+
+        // The public test phrase's preprod account usually holds test ADA; build and sign (never submit) a transfer.
+        using var account = Crypto.Net.Cardano.CardanoAccount.FromMnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", network: Crypto.Net.Cardano.CardanoChain.Preprod);
+        var utxos = await koios.GetUtxosAsync(account.Address.Value);
+        if (utxos.Sum(u => (decimal)u.Lovelace) < 5_000_000) return;
+        var tx = await koios.BuildTransferAsync(account, [new Crypto.Net.Cardano.CardanoOutput(account.EnterpriseAddress, 2_000_000)], "Crypto.Net live test");
+        byte[] signed = tx.Sign(account);
+        Assert.Equal(pp.MinFee(signed.Length), tx.Fee);
+        Assert.Equal(tx.Id, Crypto.Net.Cardano.CardanoTransaction.IdOf(signed));
+        Assert.Null(await koios.GetReceiptAsync(new Crypto.Net.Core.TxHash(new string('0', 64))));
+    }
+
+    [LiveFact]
+    public async Task Staking_NominateIsAcceptedByAssetHub()
+    {
+        // Sign (never submit) a nominate extrinsic and ask the runtime to price it: decoding errors would fail here.
+        await using var client = new PolkadotRpcClient(PolkadotChain.PolkadotAssetHub);
+        var md = await client.GetMetadataAsync();
+        using var alice = PolkadotAccount.FromSuri("//Alice", chain: PolkadotChain.PolkadotAssetHub);
+        byte[] call = PolkadotStaking.Nominate(md, [alice.Address.Value]);
+        var ctx = await client.GetExtrinsicContextAsync(alice.Address.Value);
+        byte[] signed = Extrinsic.Sign(md, call, alice, ctx);
+        var fee = await client.EstimateFeeAsync(signed);
+        Assert.True(fee.BaseUnits > 0);
+    }
+
+    [LiveFact]
+    public async Task CosmWasm_ContractInfoOnOsmosis()
+    {
+        using var rest = new Crypto.Net.Cosmos.CosmosRestClient(Crypto.Net.Cosmos.CosmosChain.Osmosis);
+        string? contract = null;
+        for (ulong code = 1; code < 30 && contract is null; code++)
+            contract = (await rest.GetContractsByCodeAsync(code, 1)).FirstOrDefault();
+        Assert.NotNull(contract);
+        var info = await rest.GetContractInfoAsync(contract!);
+        Assert.Equal(contract, info.Address);
+        Assert.StartsWith("osmo1", info.Creator);
+    }
+
+    [LiveFact]
+    public async Task Token2022_PyusdMintOnMainnet()
+    {
+        await using var rpc = new SolanaRpcClient(SolanaChain.MainnetBeta);
+        var mint = await rpc.GetMintAsync("2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo"); // PayPal USD (Token-2022)
+        Assert.NotNull(mint);
+        Assert.Equal(6, mint!.Decimals);
+        Assert.NotNull(mint.TransferFeeConfig);
+        Assert.Equal("PYUSD", mint.Metadata?.Symbol);
+    }
+
+    [LiveFact]
+    public async Task Ens_And_Erc721_OnMainnet()
+    {
+        await using var rpc = new EvmRpcClient(EvmChain.Ethereum);
+        var ens = new EnsClient(rpc);
+        const string vitalik = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+        Assert.Equal(vitalik, await ens.ResolveAddressAsync("vitalik.eth"));
+        Assert.Equal("vitalik.eth", await ens.LookupAddressAsync(vitalik));
+        Assert.Null(await ens.ResolveAddressAsync("this-name-should-not-exist-cryptonet-" + Guid.NewGuid().ToString("N")[..8] + ".eth"));
+
+        // The ENS .eth registrar is an ERC-721: token id = uint256(keccak256(label)).
+        var registrar = new Erc721Client(rpc, "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85");
+        Assert.True(await registrar.SupportsInterfaceAsync(InterfaceIds.Erc721));
+        var tokenId = new System.Numerics.BigInteger(Crypto.Net.Native.CryptoNative.Keccak256("vitalik"u8), isUnsigned: true, isBigEndian: true);
+        Assert.True(EvmAddress.IsValid(await registrar.GetOwnerAsync(tokenId)));
+    }
+
+    [LiveFact]
+    public async Task Indexer_DecodesSepoliaUsdcTransfers()
+    {
+        await using var client = new EvmRpcClient(EvmChain.Sepolia);
+        ulong head = await client.GetBlockNumberAsync();
+        var events = new List<Crypto.Net.Evm.EvmDecodedEvent>();
+        var indexer = new Crypto.Net.Indexer.EvmLogIndexer(client, new Crypto.Net.Indexer.InMemoryCheckpointStore(),
+            new Crypto.Net.Indexer.DelegateLogHandler((b, _) => { events.AddRange(b.Events); return Task.CompletedTask; }),
+            new Crypto.Net.Indexer.EvmLogIndexerOptions
+            {
+                Addresses = ["0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"], // Circle USDC on Sepolia
+                Events = [Crypto.Net.Evm.EvmEvent.Erc20Transfer],
+                StartBlock = head - 300,
+                Confirmations = 5,
+                MaxBlockRange = 100,
+            });
+        Assert.Equal(head - 5, await indexer.RunOnceAsync());
+        Assert.NotEmpty(events);
+        Assert.All(events, e => Assert.IsType<System.Numerics.BigInteger>(e["value"]));
+    }
+
+    [LiveFact]
     public async Task WebSocketSubscriptions_ReceiveHeads()
     {
         static CancellationToken Budget() => new CancellationTokenSource(TimeSpan.FromSeconds(90)).Token;

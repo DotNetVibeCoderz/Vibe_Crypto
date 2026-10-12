@@ -5,7 +5,7 @@
 set -euo pipefail
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 work="${1:-$(mktemp -d)}"
-version="1.1.0-local.$(date +%s)"
+version="1.2.0-local.$(date +%s)"
 feed="$work/feed"
 hive="$work/hive"
 mkdir -p "$feed" "$hive"
@@ -27,7 +27,7 @@ cat > "$work/nuget.config" <<XML
 </configuration>
 XML
 
-for template in cnet-console cnet-worker cnet-webapi cnet-lib cnet-test ${EXTRA_TEMPLATES:-}; do
+for template in cnet-console cnet-worker cnet-webapi cnet-lib cnet-test cnet-contract-client ${EXTRA_TEMPLATES:-}; do
   out="$work/apps/$template"
   echo "== $template"
   dotnet new "$template" -n Sample -o "$out" --CryptoNetVersion "$version" --skipRestore --debug:custom-hive "$hive" > /dev/null

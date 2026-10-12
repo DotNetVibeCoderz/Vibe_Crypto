@@ -165,6 +165,20 @@ public static unsafe class CryptoNative
         Keccak.Hash256(data, destination);
     }
 
+    /// <summary>FIPS 202 SHA3-256 (Aptos). Unlike <see cref="Keccak256(ReadOnlySpan{byte})"/>, it uses the SHA-3 padding.</summary>
+    public static byte[] Sha3_256(ReadOnlySpan<byte> data) { var o = new byte[32]; Sha3_256(data, o); return o; }
+
+    public static void Sha3_256(ReadOnlySpan<byte> data, Span<byte> destination)
+    {
+        RequireDestination(destination, 32);
+        if (IsNativeActive)
+        {
+            fixed (byte* d = data) fixed (byte* o = destination) Check(NativeMethods.cn_sha3_256(d, (nuint)data.Length, o), "SHA3-256");
+            return;
+        }
+        Keccak.Hash256(data, destination, 0x06);
+    }
+
     public static byte[] Ripemd160(ReadOnlySpan<byte> data) { var o = new byte[20]; Ripemd160(data, o); return o; }
 
     public static void Ripemd160(ReadOnlySpan<byte> data, Span<byte> destination)
@@ -429,6 +443,71 @@ public static unsafe class CryptoNative
         var result = (i[..32], i[32..]);
         CryptographicOperations.ZeroMemory(i);
         return result;
+    }
+
+    /// <summary>X25519 (RFC 7748) Diffie-Hellman: <c>X25519(scalar, u)</c> with the scalar clamped.</summary>
+    public static byte[] X25519(ReadOnlySpan<byte> scalar, ReadOnlySpan<byte> u)
+    {
+        RequireLength(scalar, 32, nameof(scalar));
+        RequireLength(u, 32, nameof(u));
+        if (!IsNativeActive) return X25519Managed.ScalarMult(scalar, u);
+        byte[] o = new byte[32];
+        fixed (byte* s = scalar) fixed (byte* p = u) fixed (byte* r = o) Check(NativeMethods.cn_x25519(s, p, r), "X25519");
+        return o;
+    }
+
+    /// <summary>X25519 public key of a 32-byte secret.</summary>
+    public static byte[] X25519GetPublicKey(ReadOnlySpan<byte> scalar)
+    {
+        Span<byte> nine = stackalloc byte[32];
+        nine[0] = 9;
+        return X25519(scalar, nine);
+    }
+
+    /// <summary>Public key <c>kL·G</c> of a BIP32-Ed25519 extended secret (Cardano).</summary>
+    public static byte[] Ed25519ExtendedGetPublicKey(ReadOnlySpan<byte> kl)
+    {
+        RequireLength(kl, 32, nameof(kl));
+        if (!IsNativeActive) return Ed25519Managed.ExtendedPublicKey(kl);
+        byte[] pk = new byte[32];
+        fixed (byte* k = kl) fixed (byte* o = pk) Check(NativeMethods.cn_ed25519_extended_pubkey(k, o), "Ed25519 extended public key");
+        return pk;
+    }
+
+    /// <summary>Ed25519 signature with an extended key: <paramref name="kl"/> is the scalar, <paramref name="kr"/> the nonce prefix.</summary>
+    public static byte[] Ed25519SignExtended(ReadOnlySpan<byte> kl, ReadOnlySpan<byte> kr, ReadOnlySpan<byte> message)
+    {
+        RequireLength(kl, 32, nameof(kl));
+        RequireLength(kr, 32, nameof(kr));
+        if (!IsNativeActive) return Ed25519Managed.SignExtended(kl, kr, message);
+        byte[] sig = new byte[64];
+        fixed (byte* l = kl) fixed (byte* r = kr) fixed (byte* m = message) fixed (byte* o = sig)
+            Check(NativeMethods.cn_ed25519_sign_extended(l, r, m, (nuint)message.Length, o), "Ed25519 extended sign");
+        return sig;
+    }
+
+    /// <summary>
+    /// BIP32-Ed25519 child (Khovratovich–Law V2, as Cardano uses) of an extended private key
+    /// <c>kL ‖ kR ‖ chainCode</c> (96 bytes); hardened when <paramref name="index"/> ≥ 2^31.
+    /// </summary>
+    public static byte[] Bip32Ed25519DerivePrivate(ReadOnlySpan<byte> xprv, uint index)
+    {
+        RequireLength(xprv, 96, nameof(xprv));
+        if (!IsNativeActive) return Ed25519Managed.Bip32DerivePrivate(xprv, index);
+        byte[] o = new byte[96];
+        fixed (byte* k = xprv) fixed (byte* p = o) Check(NativeMethods.cn_bip32_ed25519_derive_priv(k, index, p), "BIP32-Ed25519 derivation");
+        return o;
+    }
+
+    /// <summary>Non-hardened BIP32-Ed25519 child of an extended public key <c>A ‖ chainCode</c> (64 bytes).</summary>
+    public static byte[] Bip32Ed25519DerivePublic(ReadOnlySpan<byte> xpub, uint index)
+    {
+        RequireLength(xpub, 64, nameof(xpub));
+        if (index >= 0x80000000) throw new ArgumentException("Hardened children cannot be derived from a public key", nameof(index));
+        if (!IsNativeActive) return Ed25519Managed.Bip32DerivePublic(xpub, index);
+        byte[] o = new byte[64];
+        fixed (byte* k = xpub) fixed (byte* p = o) Check(NativeMethods.cn_bip32_ed25519_derive_pub(k, index, p), "BIP32-Ed25519 public derivation");
+        return o;
     }
 
     /// <summary>Substrate ed25519 hard derivation of a 32-byte seed along a path such as <c>//Alice</c>.</summary>

@@ -43,7 +43,14 @@ public sealed class JsonRpcClient : IDisposable
     public IReadOnlyList<RpcEndpoint> Endpoints => _endpoints;
 
     /// <summary>Calls <paramref name="method"/> and returns the raw <c>result</c> element (cloned).</summary>
-    public async Task<JsonElement> CallAsync(string method, object?[]? parameters = null, CancellationToken ct = default)
+    public Task<JsonElement> CallAsync(string method, object?[]? parameters = null, CancellationToken ct = default) =>
+        CallCoreAsync(method, parameters ?? [], ct);
+
+    /// <summary>Calls a method whose <c>params</c> is a JSON object (by-name parameters, as NEAR's RPC uses).</summary>
+    public Task<JsonElement> CallWithObjectParamsAsync(string method, object parameters, CancellationToken ct = default) =>
+        CallCoreAsync(method, parameters ?? throw new ArgumentNullException(nameof(parameters)), ct);
+
+    private async Task<JsonElement> CallCoreAsync(string method, object parameters, CancellationToken ct)
     {
         long id = Interlocked.Increment(ref _id);
         byte[] body = JsonSerializer.SerializeToUtf8Bytes(new Dictionary<string, object?>
@@ -51,7 +58,7 @@ public sealed class JsonRpcClient : IDisposable
             ["jsonrpc"] = "2.0",
             ["id"] = id,
             ["method"] = method,
-            ["params"] = parameters ?? [],
+            ["params"] = parameters,
         });
 
         while (true)

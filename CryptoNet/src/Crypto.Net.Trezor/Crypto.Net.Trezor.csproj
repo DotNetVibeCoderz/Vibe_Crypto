@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Trezor hardware wallet support for Crypto.Net: protocol v1 framing, Trezor Bridge and emulator (UDP) transports, and Ethereum/EVM addresses, legacy and EIP-1559 transactions, personal messages and EIP-712 hashes. Keys never leave the device.</Description>
+    <PackageTags>$(PackageTags);trezor;hardware-wallet</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Evm\Crypto.Net.Evm.csproj" />
+  </ItemGroup>
+</Project>

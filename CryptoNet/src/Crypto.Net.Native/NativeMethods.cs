@@ -25,6 +25,7 @@ internal static unsafe partial class NativeMethods
     [LibraryImport(LibName)] internal static partial int cn_double_sha256(byte* data, nuint len, byte* out32);
     [LibraryImport(LibName)] internal static partial int cn_sha512(byte* data, nuint len, byte* out64);
     [LibraryImport(LibName)] internal static partial int cn_keccak256(byte* data, nuint len, byte* out32);
+    [LibraryImport(LibName)] internal static partial int cn_sha3_256(byte* data, nuint len, byte* out32);
     [LibraryImport(LibName)] internal static partial int cn_ripemd160(byte* data, nuint len, byte* out20);
     [LibraryImport(LibName)] internal static partial int cn_hash160(byte* data, nuint len, byte* out20);
     [LibraryImport(LibName)] internal static partial int cn_blake2b(byte* data, nuint len, byte* output, nuint outLen);
@@ -48,6 +49,11 @@ internal static unsafe partial class NativeMethods
     [LibraryImport(LibName)] internal static partial int cn_ed25519_sign(byte* secret32, byte* msg, nuint msgLen, byte* outSig64);
     [LibraryImport(LibName)] internal static partial int cn_ed25519_verify(byte* pk32, byte* msg, nuint msgLen, byte* sig64);
     [LibraryImport(LibName)] internal static partial int cn_slip10_ed25519_ckd_priv(byte* key32, byte* chainCode32, uint index, byte* outKey32, byte* outCc32);
+    [LibraryImport(LibName)] internal static partial int cn_ed25519_extended_pubkey(byte* kl32, byte* outPk32);
+    [LibraryImport(LibName)] internal static partial int cn_x25519(byte* scalar32, byte* point32, byte* out32);
+    [LibraryImport(LibName)] internal static partial int cn_ed25519_sign_extended(byte* kl32, byte* kr32, byte* msg, nuint msgLen, byte* outSig64);
+    [LibraryImport(LibName)] internal static partial int cn_bip32_ed25519_derive_priv(byte* xprv96, uint index, byte* outXprv96);
+    [LibraryImport(LibName)] internal static partial int cn_bip32_ed25519_derive_pub(byte* xpub64, uint index, byte* outXpub64);
     [LibraryImport(LibName)] internal static partial int cn_substrate_ed25519_derive(byte* seed32, byte* path, nuint pathLen, byte* outSeed32);
 
     // sr25519

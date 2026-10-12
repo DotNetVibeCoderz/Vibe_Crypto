@@ -6,7 +6,7 @@ using Crypto.Net.Core;
 namespace Crypto.Net.Cosmos;
 
 /// <summary>Cosmos SDK REST (gRPC-gateway / LCD) client.</summary>
-public sealed class CosmosRestClient : IChainClient
+public sealed partial class CosmosRestClient : IChainClient
 {
     private readonly HttpClient _http;
     private readonly bool _ownsHttp;

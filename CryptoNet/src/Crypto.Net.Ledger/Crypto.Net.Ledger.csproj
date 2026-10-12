@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Ledger hardware wallet support for Crypto.Net: APDU protocol, USB HID and Speculos (TCP) transports, the Ethereum app (addresses, transactions, personal messages, EIP-712) and the Solana app (addresses, transactions, off-chain messages). Keys never leave the device.</Description>
+    <PackageTags>$(PackageTags);ledger;hardware-wallet;apdu;hid</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Evm\Crypto.Net.Evm.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Solana\Crypto.Net.Solana.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="HidSharp" Version="2.6.4" />
+  </ItemGroup>
+</Project>

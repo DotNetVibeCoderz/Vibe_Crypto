@@ -10,6 +10,14 @@ public sealed class WatcherOptions
     public int PollSeconds { get; set; } = 6;
     /// <summary>Addresses whose balance is logged when it changes.</summary>
     public List<string> Addresses { get; set; } = [];
+
+    /// <summary>ERC-20 contracts whose transfers are indexed into SQLite (EVM networks only).</summary>
+    public List<string> Tokens { get; set; } = [];
+
+    public ulong Confirmations { get; set; } = 5;
+
+    /// <summary>First block to index; default is the current head.</summary>
+    public ulong? StartBlock { get; set; }
 }
 
 /// <summary>Follows the chain head and reports balance changes of the watched addresses.</summary>

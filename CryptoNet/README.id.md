@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Kriptografi multi-chain dan client blockchain untuk .NET 10, ditenagai inti Rust.</strong><br>
-  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos
+  Bitcoin · Ethereum &amp; EVM · Solana · Polkadot · Cosmos · NEAR · Aptos · Sui · TON · Cardano
 </p>
 
 <p align="center">
@@ -54,21 +54,32 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Native` | Inti Rust + fallback managed: SHA-2, Keccak, BLAKE2b, RIPEMD-160, secp256k1 ECDSA/Schnorr/Taproot, Ed25519, sr25519, BIP-32, SLIP-10, PBKDF2, scrypt, Base58, Bech32/Bech32m |
 | `Crypto.Net.Core` | `Amount` (pasti), `Address`, `TxHash`, `ISigner`, `IChainClient`, transport JSON-RPC, polling receipt |
 | `Crypto.Net.Wallet` | Mnemonic BIP-39, kunci HD BIP-32/SLIP-10, xprv/xpub/zpub, keystore Web3 v3, `KeySigner` |
-| `Crypto.Net.Evm` | EIP-55, transaksi Legacy/EIP-2930/EIP-1559, codec ABI, EIP-191/712, ERC-20, client JSON-RPC |
+| `Crypto.Net.Evm` | EIP-55, transaksi Legacy/EIP-2930/EIP-1559, codec ABI, EIP-191/712, ERC-20, client JSON-RPC, ERC-721/1155, ENS, ERC-4337 |
 | `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, script tree Taproot, signing legacy/BIP-143/BIP-341, PSBT (BIP-174/370), multisig, coin selection, Esplora |
-| `Crypto.Net.Solana` | Transaksi legacy dan v0, address lookup table, System/SPL Token/ATA/Compute Budget/Memo, PDA, kunci Phantom & solana-cli, RPC |
-| `Crypto.Net.Polkadot` | SS58, derivasi Substrate sr25519/ed25519, SCALE, extrinsic berbasis metadata runtime, decoding event dan storage, RPC |
-| `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST |
+| `Crypto.Net.Solana` | Transaksi legacy dan v0, address lookup table, System/SPL Token/ATA/Compute Budget/Memo, PDA, kunci Phantom & solana-cli, RPC, extension Token-2022, Borsh/Anchor |
+| `Crypto.Net.Polkadot` | SS58, derivasi Substrate sr25519/ed25519, SCALE, extrinsic berbasis metadata runtime, decoding event dan storage, RPC, encoder SCALE berbasis metadata, staking & nomination pool |
+| `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST, CosmWasm dan CW20 |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` dengan client ber-key, resilience, `ChainCatalog`, penyedia Ankr/dRPC, benchmark |
+| `Crypto.Net.Generators` | Source generator: ABI Solidity / artifact Hardhat & Foundry dan IDL Anchor → client bertipe (juga `cnet gen`) |
+| `Crypto.Net.Ledger` | Hardware wallet Ledger: transport USB HID / Speculos, aplikasi Ethereum (alamat, transaksi, pesan, EIP-712), aplikasi Solana (transaksi, pesan off-chain) |
+| `Crypto.Net.WalletConnect` | WalletConnect v2 (Reown): pairing dengan wallet mobile, sesi, permintaan EIP-155; juga sisi wallet |
+| `Crypto.Net.Trezor` | Hardware wallet Trezor: transport Bridge dan emulator, Ethereum (alamat, transaksi legacy/EIP-1559, pesan, hash EIP-712) |
+| `Crypto.Net.Near` | NEAR Protocol: akun ed25519 (implicit dan bernama), transaksi Borsh dengan semua action, function call, RPC |
+| `Crypto.Net.Aptos` | Aptos: alamat AIP-40, type tag Move, transaksi entry function BCS, simulasi, client REST |
+| `Crypto.Net.Sui` | Sui: programmable transaction (build dan parse BCS), tanda tangan intent, pesan personal, client GraphQL dengan pemilihan gas |
+| `Crypto.Net.Ton` | TON: cell dan BoC, mnemonic TON, wallet V4R2 dan W5, komentar, jetton, client TON Center |
+| `Crypto.Net.Cardano` | Cardano: akun CIP-1852 BIP32-Ed25519, transaksi Conway dengan native asset dan CIP-20, fee tepat, client Koios |
+| `Crypto.Net.Indexer` | Indexer log EVM dengan decoding event ABI, block crawler, checkpoint, hosted service |
+| `Crypto.Net.Indexer.EntityFrameworkCore` | Penyimpanan EF Core (SQLite, PostgreSQL, SQL Server) untuk checkpoint, log dan transfer ERC-20 |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` dan test vector resmi |
 | `Crypto.Net.Analyzers` | Aturan Roslyn CNET001–005: kunci hard-coded, rahasia dalam string, amount dari float, mainnet di Debug, cancellation token yang terlewat |
 | `Crypto.Net.Cli` | Tool dotnet `cnet` |
-| `Crypto.Net.Templates` | Template `dotnet new`: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
+| `Crypto.Net.Templates` | Template `dotnet new`: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test`, `cnet-contract-client` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # menarik semua chain
 dotnet tool install -g Crypto.Net.Cli      # perintah cnet
-dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test | cnet-contract-client
 ```
 
 ## Mulai cepat
@@ -136,8 +147,14 @@ lingkungan, jangan pernah di source control.
 
 ## Notebook
 
-Enam notebook .NET interaktif — dompet, Bitcoin, Ethereum/EVM, Solana, Polkadot dan Cosmos — dalam bahasa
+Sepuluh notebook .NET interaktif — dompet, Bitcoin, Ethereum/EVM, Solana, Polkadot, Cosmos, NEAR/Aptos/Sui/TON/Cardano, indexing, benchmark dan keamanan — dalam bahasa
 Inggris dan Indonesia: [samples/notebooks](samples/notebooks/README.md). Buka di VS Code dengan Polyglot Notebooks.
+
+## VS Code
+
+**Crypto.Net Tools** (`crypto-net-tools.vsix` di setiap rilis): view jaringan, perintah dompet/saldo/alamat, pembuatan
+client kontrak, hover unit dan alamat, peringatan salah ketik EIP-55, snippet dan node lokal. Lihat
+[docs/id/vscode.md](docs/id/vscode.md).
 
 ## Perintah `cnet`
 
@@ -162,7 +179,9 @@ live, dan benchmark Rust vs managed — masing-masing lengkap dengan kode C#-nya
 tema terang dan gelap, testnet secara default.
 
 ```bash
-dotnet run --project samples/Crypto.Net.Gallery   # http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery           # web, http://localhost:5080
+dotnet run --project samples/Crypto.Net.Gallery.Desktop   # jendela native (Windows, macOS, Linux)
+dotnet publish samples/Crypto.Net.Gallery.Wasm -c Release # situs WebAssembly statis / PWA
 ```
 
 | | |
@@ -195,7 +214,7 @@ atau `CRYPTONET_BACKEND=native|managed`.
 ```
  Aplikasi:    CLI cnet · Gallery (ASP.NET Core) · kode Anda
  DI:          Crypto.Net.Extensions   AddCryptoNet() · ChainCatalog · Ankr/dRPC · resilience
- Chain:       .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos
+ Chain:       .Evm  .Bitcoin  .Solana  .Polkadot  .Cosmos  .Near  .Aptos  .Sui  .Ton  .Cardano
  Wallet/Core: .Wallet (BIP-39/32, SLIP-10, keystore)  ·  .Core (Amount, ISigner, IChainClient, JSON-RPC)
  Native:      Crypto.Net.Native  → CryptoNative (Auto | Native | Managed) → P/Invoke atau fallback managed
  ─────────────────────────── C ABI (cn_*, kode status i32, catch_unwind) ───────────────────────────

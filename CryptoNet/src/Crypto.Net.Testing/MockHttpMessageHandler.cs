@@ -57,7 +57,7 @@ public sealed class MockHttpMessageHandler : HttpMessageHandler
     /// <summary>Answers JSON-RPC <paramref name="method"/> with an error object.</summary>
     public MockHttpMessageHandler OnRpcError(string method, int code, string message)
     {
-        _rpc[method] = _ => throw new RpcErrorSignal(code, message);
+        _rpc[method] = _ => throw new MockRpcError(code, message);
         return this;
     }
 
@@ -68,10 +68,6 @@ public sealed class MockHttpMessageHandler : HttpMessageHandler
         return this;
     }
 
-    private sealed class RpcErrorSignal(int code, string message) : Exception(message)
-    {
-        public int Code { get; } = code;
-    }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
@@ -91,7 +87,7 @@ public sealed class MockHttpMessageHandler : HttpMessageHandler
             {
                 json = $"{{\"jsonrpc\":\"2.0\",\"id\":{id},\"result\":{factory(p)}}}";
             }
-            catch (RpcErrorSignal e)
+            catch (MockRpcError e)
             {
                 json = $"{{\"jsonrpc\":\"2.0\",\"id\":{id},\"error\":{{\"code\":{e.Code},\"message\":{JsonSerializer.Serialize(e.Message)}}}}}";
             }
@@ -114,4 +110,10 @@ public sealed class MockHttpMessageHandler : HttpMessageHandler
 
     /// <summary>Creates an <see cref="HttpClient"/> that uses this handler.</summary>
     public HttpClient CreateClient() => new(this, disposeHandler: false);
+}
+
+/// <summary>Throw from an <see cref="MockHttpMessageHandler.OnRpc(string, Func{JsonElement, string})"/> factory to answer with a JSON-RPC error.</summary>
+public sealed class MockRpcError(int code, string message) : Exception(message)
+{
+    public int Code { get; } = code;
 }

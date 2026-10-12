@@ -44,6 +44,7 @@ CI: `.github/workflows/cryptonet-ci.yml` (repo root) runs on push and PR when `C
 - Runs the .NET tests on Windows, Linux, macOS and Alpine.
 - Supply chain: `cargo audit`, `cargo deny` (`rust/deny.toml`), the NuGet vulnerable-package scan, and a syft CycloneDX SBOM.
 - Fuzz: `cargo fuzz` targets in `rust/fuzz` (a separate workspace, nightly) plus `DecoderFuzzTests` (`CRYPTONET_FUZZ_ITERATIONS`, `CRYPTONET_FUZZ_SEED`).
+- Hardware E2E: Speculos with Ledger's Ethereum app (release ELF) and Solana app (built from a pinned commit with Ledger's builder), and Trezor's core emulator 2.11.0 started by `scripts/trezor-emulator.py` (tests gated by `CRYPTONET_SPECULOS` / `CRYPTONET_TREZOR`).
 - Packs packages containing all 7 native binaries.
 - Windows DLLs link the CRT statically (`rust/.cargo/config.toml`).
 
@@ -55,7 +56,8 @@ Known gotchas:
 ## Architecture
 
 **Dependency order:**
-- `Native` → `Core` → `Wallet` → chain packages (`Evm`, `Bitcoin`, `Solana`, `Polkadot`, `Cosmos`) → `Extensions`.
+- `Native` → `Core` → `Wallet` → chain packages (`Evm`, `Bitcoin`, `Solana`, `Polkadot`, `Cosmos`, `Near`, `Aptos`, `Sui`, `Ton`, `Cardano`) → `Extensions`.
+- Hardware wallets: `Ledger` (Ethereum and Solana apps) and `Trezor` (Ethereum) depend on the chain packages, not on `Extensions`. So does `WalletConnect`; its live test needs `CRYPTONET_WALLETCONNECT_PROJECT_ID`, which is never committed.
 - `Extensions` is referenced by the CLI, the Gallery, QuickStart and the tests.
 - `Testing` (mocks plus official `TestVectors`) depends on Core only.
 
@@ -65,7 +67,7 @@ Known gotchas:
   - Variable-size outputs use `(out, cap, *written)` and return `CN_ERR_BUFFER_TOO_SMALL` with the required size.
   - Every entry point runs inside `catch_unwind`. The release profile must keep `panic = "unwind"`.
 - `src/Crypto.Net.Native/NativeMethods.cs` mirrors those exports by hand. Keep the two in sync.
-- `NativeLoader` checks the ABI version (`RequiredAbiVersion` = 0x00010100, same major).
+- `NativeLoader` checks the ABI version (`RequiredAbiVersion` = 0x00010200, same major).
 - `CryptoNative` routes each call by `CryptoBackend`:
   - `Auto` uses Rust, except SHA-2/HMAC/PBKDF2, which go to the hardware-accelerated platform crypto.
   - `Native` forces Rust; `Managed` forces C#.
@@ -85,7 +87,11 @@ Known gotchas:
 - Polkadot extrinsics are built from live runtime metadata (`RuntimeMetadata` parses V14/V15).
   - Signed extensions are encoded by identifier.
   - Unknown extensions are allowed only when they're zero-sized.
-- Substrate keys come from mnemonic entropy (`Mnemonic.ToSubstrateSeed`), not the BIP-39 seed.
+- Substrate keys come from mnemonic entropy (`Mnemonic.ToSubstrateSeed`), not the BIP-39 seed. So do Cardano keys
+  (`Mnemonic.ToIcarusRootKey`, then BIP32-Ed25519 via `HdWallet.DeriveBip32Ed25519`).
+- NEAR (JSON-RPC), Aptos (REST), Sui (GraphQL; public JSON-RPC is gone), TON (TON Center v2/v3) and Cardano (Koios)
+  were each cross-checked byte for byte against the chain's reference SDK. Aptos and Sui share `Core/Move.cs` and
+  `Core/Bcs.cs`; NEAR and Solana share `Core/Borsh.cs`.
 
 **Extensions:**
 - `AddCryptoNet()` registers keyed singletons with named HttpClients.

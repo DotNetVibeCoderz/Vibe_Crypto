@@ -39,7 +39,7 @@ Aturan ABI (lihat komentar di awal `rust/crates/cryptonet-ffi/src/lib.rs`):
   Rust menjadi `CN_ERR_PANIC`, bukan mematikan proses .NET.
 - Nilai rahasia sementara di-nol-kan (`zeroize`).
 - `cn_abi_version()` mengembalikan `0xMMmmpppp`. .NET mensyaratkan major yang sama dan minimal
-  `NativeLoader.RequiredAbiVersion` (saat ini `0x00010100`); jika tidak, kembali ke kode managed.
+  `NativeLoader.RequiredAbiVersion` (saat ini `0x00010200`); jika tidak, kembali ke kode managed.
 
 ## Memuat library native
 

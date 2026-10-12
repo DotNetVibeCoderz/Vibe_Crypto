@@ -1,0 +1,22 @@
+{
+  "name": "Crypto.Net Gallery",
+  "short_name": "Crypto.Net",
+  "description": "Multi-chain crypto studio for .NET. Built by Gravicode Studios, led by Kang Fadhil.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b1d2a",
+  "theme_color": "#0b1d2a",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

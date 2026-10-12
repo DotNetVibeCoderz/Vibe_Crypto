@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Crypto.Net.Extensions\Crypto.Net.Extensions.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Gallery.Core\Crypto.Net.Gallery.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <!-- Dogfood the Crypto.Net analyzers. -->

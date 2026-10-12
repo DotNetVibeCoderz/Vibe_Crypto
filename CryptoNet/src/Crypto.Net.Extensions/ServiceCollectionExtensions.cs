@@ -4,6 +4,11 @@ using Crypto.Net.Cosmos;
 using Crypto.Net.Evm;
 using Crypto.Net.Polkadot;
 using Crypto.Net.Solana;
+using Crypto.Net.Aptos;
+using Crypto.Net.Cardano;
+using Crypto.Net.Near;
+using Crypto.Net.Sui;
+using Crypto.Net.Ton;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -135,6 +140,41 @@ public sealed class CryptoNetBuilder
         var o = new CosmosOptions();
         configure?.Invoke(o);
         return Register(name, o.Network, http => new CosmosRestClient(o.Network, o.RestUrl, http));
+    }
+
+    public CryptoNetBuilder AddNear(string name, Action<NearOptions>? configure = null)
+    {
+        var o = new NearOptions();
+        configure?.Invoke(o);
+        return Register(name, o.Network, http => new NearRpcClient(o.Network, Endpoints(o.Network, o.RpcUrl, o.Network.DefaultRpcUrl), http));
+    }
+
+    public CryptoNetBuilder AddAptos(string name, Action<AptosOptions>? configure = null)
+    {
+        var o = new AptosOptions();
+        configure?.Invoke(o);
+        return Register(name, o.Network, http => new AptosRestClient(o.Network, o.RestUrl, http, o.ApiKey));
+    }
+
+    public CryptoNetBuilder AddSui(string name, Action<SuiOptions>? configure = null)
+    {
+        var o = new SuiOptions();
+        configure?.Invoke(o);
+        return Register(name, o.Network, http => new SuiGraphQlClient(o.Network, o.GraphQlUrl, http));
+    }
+
+    public CryptoNetBuilder AddTon(string name, Action<TonOptions>? configure = null)
+    {
+        var o = new TonOptions();
+        configure?.Invoke(o);
+        return Register(name, o.Network, http => new TonCenterClient(o.Network, o.ApiUrl, http, o.ApiKey));
+    }
+
+    public CryptoNetBuilder AddCardano(string name, Action<CardanoOptions>? configure = null)
+    {
+        var o = new CardanoOptions();
+        configure?.Invoke(o);
+        return Register(name, o.Network, http => new KoiosClient(o.Network, o.KoiosUrl, http, o.ApiToken));
     }
 }
 

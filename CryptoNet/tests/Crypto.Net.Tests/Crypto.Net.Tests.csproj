@@ -12,14 +12,30 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Crypto.Net.Extensions\Crypto.Net.Extensions.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Testing\Crypto.Net.Testing.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Analyzers\Crypto.Net.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Ledger\Crypto.Net.Ledger.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Near\Crypto.Net.Near.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Aptos\Crypto.Net.Aptos.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Sui\Crypto.Net.Sui.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Ton\Crypto.Net.Ton.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Cardano\Crypto.Net.Cardano.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Trezor\Crypto.Net.Trezor.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.WalletConnect\Crypto.Net.WalletConnect.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Indexer.EntityFrameworkCore\Crypto.Net.Indexer.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <!-- Consume the source generator exactly like a package user: ABI / IDL files as AdditionalFiles. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Crypto.Net.Generators\Crypto.Net.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <AdditionalFiles Include="Contracts\*.abi.json;Contracts\*.idl.json" />
   </ItemGroup>
 
   <ItemGroup>

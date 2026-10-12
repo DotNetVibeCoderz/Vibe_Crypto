@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+  <PropertyGroup>
+    <Description>Crypto.Net Gallery running entirely in the browser on .NET WebAssembly (managed crypto engine). Installable as a PWA.</Description>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- The Gallery serializes anonymous types with reflection; keep all metadata. -->
+    <PublishTrimmed>false</PublishTrimmed>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- The Rust core is not available in the browser; the managed fallback runs instead. -->
+    <NoWarn>$(NoWarn);WASM0001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Gallery.Core\Crypto.Net.Gallery.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Same UI as the web Gallery, except host.js, which boots .NET in the page. -->
+    <Content Include="..\Crypto.Net.Gallery\wwwroot\**\*" Exclude="..\Crypto.Net.Gallery\wwwroot\host.js"
+             LinkBase="wwwroot" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,180 @@
+{
+  "name": "crypto-net-tools",
+  "displayName": "Crypto.Net Tools",
+  "description": "%description%",
+  "version": "1.2.0",
+  "publisher": "gravicode",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DotNetVibeCoderz/Vibe_Crypto",
+    "directory": "CryptoNet/tools/vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "blockchain",
+    "web3",
+    "ethereum",
+    "solana",
+    "bitcoin",
+    "polkadot",
+    "cosmos",
+    "dotnet"
+  ],
+  "l10n": "./l10n",
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:csharp",
+    "workspaceContains:**/*.abi.json",
+    "workspaceContains:**/*.idl.json"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "cryptonet.newWallet",
+        "title": "%cmd.newWallet%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.checkBalance",
+        "title": "%cmd.checkBalance%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.validateAddress",
+        "title": "%cmd.validateAddress%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.convertUnits",
+        "title": "%cmd.convertUnits%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.generateClient",
+        "title": "%cmd.generateClient%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.newProject",
+        "title": "%cmd.newProject%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.doctor",
+        "title": "%cmd.doctor%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.startNode",
+        "title": "%cmd.startNode%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.openNotebook",
+        "title": "%cmd.openNotebook%",
+        "category": "Crypto.Net"
+      },
+      {
+        "command": "cryptonet.refreshNetworks",
+        "title": "%cmd.refresh%",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "cryptonet.generateClient",
+          "when": "resourceFilename =~ /\\.(abi|idl)\\.json$/",
+          "group": "navigation@90"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "cryptonet.refreshNetworks",
+          "when": "view == cryptonet.networks",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cryptonet",
+          "title": "Crypto.Net",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "cryptonet": [
+        {
+          "id": "cryptonet.networks",
+          "name": "%view.networks%"
+        },
+        {
+          "id": "cryptonet.actions",
+          "name": "%view.actions%"
+        }
+      ]
+    },
+    "snippets": [
+      {
+        "language": "csharp",
+        "path": "./snippets/csharp.json"
+      }
+    ],
+    "configuration": {
+      "title": "Crypto.Net",
+      "properties": {
+        "cryptonet.cliPath": {
+          "type": "string",
+          "default": "cnet",
+          "description": "%config.cliPath%"
+        },
+        "cryptonet.defaultNetwork": {
+          "type": "string",
+          "default": "sepolia",
+          "description": "%config.defaultNetwork%"
+        },
+        "cryptonet.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.hover%"
+        },
+        "cryptonet.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.diagnostics%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "node build.mjs && node --test test/*.test.mjs",
+    "package": "node build.mjs --production && vsce package --no-dependencies -o crypto-net-tools.vsix",
+    "test:integration": "node build.mjs && node test/integration/run.mjs"
+  },
+  "dependencies": {
+    "@noble/hashes": "1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.16.10",
+    "@types/vscode": "1.90.0",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "3.2.1",
+    "esbuild": "0.24.0",
+    "typescript": "5.6.3"
+  }
+}

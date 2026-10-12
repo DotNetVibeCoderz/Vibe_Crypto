@@ -58,6 +58,44 @@ public class BackendParityTests
     }
 
     [Fact]
+    public void X25519_MatchesRfc7748OnBothBackends()
+    {
+        byte[] alice = Convert.FromHexString("77076d0a7318a57d3c16c17251b26645df4c2f87ebc0992ab177fba51db92c2a");
+        byte[] bob = Convert.FromHexString("5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb");
+        Backends.AssertSame(() => Backends.Hex(CryptoNative.X25519GetPublicKey(alice)));
+        Backends.AssertSame(() => Backends.Hex(CryptoNative.X25519(alice, CryptoNative.X25519GetPublicKey(bob))));
+        Assert.Equal("8520f0098930a754748b7ddcb43ef75a0dbf3a0d26381af4eba4a98eaa9b4e6a", Convert.ToHexStringLower(CryptoNative.X25519GetPublicKey(alice)));
+        Assert.Equal("4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742", Convert.ToHexStringLower(CryptoNative.X25519(bob, CryptoNative.X25519GetPublicKey(alice))));
+        foreach (int len in new[] { 1, 7, 99 })
+        {
+            byte[] k = CryptoNative.Sha256(Data(len));
+            Backends.AssertSame(() => Backends.Hex(CryptoNative.X25519(k, CryptoNative.Sha256(Data(len, 2)))));
+        }
+    }
+
+    [Fact]
+    public void Bip32Ed25519_MatchesAcrossBackends()
+    {
+        // Icarus root of "abandon … about" (cardano-serialization-lib), then hardened and soft children.
+        byte[] root = Convert.FromHexString("60ce7dbec3616e9fc17e0c32578b3f380337b1b61a1f3cb9651aee30670e6f53970419a23a2e4e4082d12bf78faa8645dfc882cee2ae7179e2b07fe88098abb2072310084784c7308182dbbdb1449b2706586f1ff5cbf13d15e9b6e78c15f067");
+        foreach (uint index in new uint[] { 0, 1, 2, 0x7fffffff, 0x80000000, 0x8000073c, 0xffffffff })
+        {
+            Backends.AssertSame(() => Backends.Hex(CryptoNative.Bip32Ed25519DerivePrivate(root, index)));
+            byte[] child = CryptoNative.Bip32Ed25519DerivePrivate(root, index);
+            Backends.AssertSame(() => Backends.Hex(CryptoNative.Ed25519ExtendedGetPublicKey(child.AsSpan(0, 32))));
+            Backends.AssertSame(() => Backends.Hex(CryptoNative.Ed25519SignExtended(child.AsSpan(0, 32), child.AsSpan(32, 32), Data((int)(index % 200)))));
+            byte[] xpub = [.. CryptoNative.Ed25519ExtendedGetPublicKey(child.AsSpan(0, 32)), .. child.AsSpan(64)];
+            if (index < 0x80000000)
+            {
+                Backends.AssertSame(() => Backends.Hex(CryptoNative.Bip32Ed25519DerivePublic(xpub, index)));
+                // Public derivation agrees with private derivation.
+                Assert.Equal(Convert.ToHexStringLower(CryptoNative.Bip32Ed25519DerivePublic(xpub, index).AsSpan(0, 32)),
+                    Convert.ToHexStringLower(CryptoNative.Ed25519ExtendedGetPublicKey(CryptoNative.Bip32Ed25519DerivePrivate(child, index).AsSpan(0, 32))));
+            }
+        }
+    }
+
+    [Fact]
     public void Hashes_MatchAcrossBackends()
     {
         foreach (int len in Lengths)
@@ -67,6 +105,7 @@ public class BackendParityTests
             Backends.AssertSame(() => Backends.Hex(CryptoNative.DoubleSha256(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Sha512(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Keccak256(d)));
+            Backends.AssertSame(() => Backends.Hex(CryptoNative.Sha3_256(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Ripemd160(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Hash160(d)));
             Backends.AssertSame(() => Backends.Hex(CryptoNative.Blake2b256(d)));

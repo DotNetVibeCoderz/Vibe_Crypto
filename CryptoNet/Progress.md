@@ -29,6 +29,19 @@
 | Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
 | 1.1 Taproot trees, PSBT v0/v2, multisig | ✅ Done | BIP-341, BIP-174/370 and Bitcoin Core sighash vectors |
 | 1.1 Solana v0 + lookup tables | ✅ Done | Byte-identical to @solana/web3.js 1.98.0 |
+| Crypto.Net.Ledger (Ethereum app) | ✅ Done | Replayed hw-app-eth sessions; CI E2E with the real app in Speculos |
+| Crypto.Net.Near | ✅ Done | Byte-identical to near-api-js; live testnet reads |
+| Crypto.Net.WalletConnect | ✅ Done | Relay session tests; interop both ways with @walletconnect/sign-client |
+| Crypto.Net.Aptos | ✅ Done | Matches @aptos-labs/ts-sdk; live testnet simulation |
+| Crypto.Net.Sui | ✅ Done | Matches @mysten/sui; GraphQL dry run returns the same digest |
+| Crypto.Net.Ton | ✅ Done | Matches @ton/core and @ton/ton; TON Center fee emulation |
+| Crypto.Net.Cardano | ✅ Done | Matches cardano-serialization-lib; builds from live preprod UTxOs |
+| Gallery desktop + WebAssembly/PWA | ✅ Done | Desktop window verified on Windows; WASM verified in headless Chrome (wallet derived in-page) |
+| VS Code extension Crypto.Net Tools | ✅ Done | Unit tests + integration test in an isolated VS Code; .vsix packaged in CI |
+| Notebooks 07–09 (indexer, benchmarks, security) | ✅ Done | All 9 × 2 executed with dotnet-repl against locally packed 1.2 packages |
+| Standards: ERC-721/1155, ENS, ERC-4337, Token-2022, CosmWasm, staking | ✅ Done | Cross-checked with viem, spl-token, cosmjs-types; live mainnet reads |
+| Crypto.Net.Generators + `cnet gen` + cnet-contract-client | ✅ Done | Generated clients compiled and exercised in tests; live Sepolia USDC via template |
+| Crypto.Net.Indexer (+ EF Core storage) | ✅ Done | Mock + SQLite tests; live Sepolia USDC; cnet-worker indexes into SQLite |
 | Crypto.Net.Templates (5 templates) + `cnet new` | ✅ Done | `scripts/test-templates.sh` in CI: instantiate, build, test |
 | Crypto.Net.Analyzers (CNET001–005) | ✅ Done | Roslyn tests incl. code fix; dogfooded on CLI, QuickStart, Gallery |
 | 1.1 musl build, audit/deny/SBOM, fuzzing | ✅ Done | CI jobs `native-musl`, `test-musl`, `security`, `fuzz`; fuzzing found and fixed 3 decoder crashes |
@@ -68,3 +81,15 @@
 - **2026-10-12** — Hardening: decoder fuzzing found and fixed 3 crash classes (metadata compact overflow, EVM decode overflow and nulls, RLP length/nesting). CI gains Alpine/musl, cargo audit/deny, the NuGet vulnerability scan, a CycloneDX SBOM and fuzz jobs.
 - **2026-10-12** — Crypto.Net.Analyzers package (CNET001–005, CNET005 code fix), documented in EN/ID.
 - **2026-10-12** — dotnet new templates and `cnet new`. Released 1.1.0.
+- **2026-10-12** — Crypto.Net.Indexer and its EF Core storage. `EvmEvent` decoding. The worker template now indexes real Sepolia USDC transfers into SQLite.
+- **2026-10-13** — Source generators for Solidity ABI and Anchor IDL, `cnet gen`, and the `cnet-contract-client` template (works live against Sepolia USDC).
+- **2026-10-13** — Standards: ERC-721/1155, ENS, ERC-4337 (v0.6–0.8), Token-2022, CosmWasm/CW20, SCALE encoder plus staking and pools. Live checks: vitalik.eth, PYUSD, Osmosis contracts, and an Asset Hub fee quote.
+- **2026-10-13** — Notebooks 07–09 (EN/ID). Every notebook was executed against freshly packed 1.2 packages.
+- **2026-10-13** — VS Code extension: an integration test in a real VS Code checks activation, commands, the wei→ETH hover and the EIP-55 diagnostic.
+- **2026-10-13** — Gallery refactored onto a host-neutral core. New desktop app (Photino) and WebAssembly/PWA build, with screenshots of both.
+- **2026-10-13** — Ledger support, verified end to end against the real Ethereum app in Speculos. NEAR package, cross-checked with near-api-js.
+- **2026-10-13** — Aptos, Sui, TON and Cardano packages. New native primitives: SHA3-256, BIP32-Ed25519 and extended-key signing (ABI 0x00010200). Fuzzing found an OverflowException in the CIP-20 reader, now fixed. All five new chains are in the catalog, the CLI and the Gallery.
+- **2026-10-13** — Ledger Solana app: replayed hw-app-solana sessions; a CI job builds app-solana with Ledger's builder and runs the end-to-end test in Speculos.
+- **2026-10-13** — Crypto.Net.Trezor: messages match trezorlib, and a CI job signs on Trezor's real firmware in the core emulator. The Ledger Solana app now uses the current off-chain message header (the end-to-end run showed the app rejects the legacy one).
+- **2026-10-13** — Added Crypto.Net.WalletConnect and the X25519 primitive. Verified through Reown's relay using the owner's project id (kept out of the repo): a .NET app paired with the official sign-client wallet, and the official app paired with a .NET wallet.
+- **2026-10-13** — Released 1.2.0.

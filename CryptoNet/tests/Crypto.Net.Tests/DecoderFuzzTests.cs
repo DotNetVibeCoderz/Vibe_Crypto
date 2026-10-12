@@ -195,6 +195,60 @@ public class DecoderFuzzTests
     }
 
     [Fact]
+    public void Sui_TransactionData_And_MoveTypeTags()
+    {
+        var gas = new Crypto.Net.Sui.SuiObjectRef("0x" + new string('1', 64), 5, CryptoNative.Base58Encode(new byte[32]));
+        var tx = new Crypto.Net.Sui.SuiTransactionBuilder("0x" + new string('a', 64));
+        var v = tx.MakeMoveVec(Crypto.Net.Core.MoveTypeTag.U64, tx.PureU64(1));
+        tx.MoveCall("0x2::m::f", [Crypto.Net.Core.MoveTypeTag.Parse("0x2::coin::Coin<vector<0x2::sui::SUI>>")], v, tx.SharedObject("0x6", 1, false), tx.Receiving(gas));
+        tx.TransferSui("0x5", 9);
+        byte[] data = tx.Build([gas], 1000, 5_000_000, expirationEpoch: 3).Serialize();
+        Fuzz("sui-tx", [data], b => Crypto.Net.Sui.SuiTransactionData.Parse(b));
+        Fuzz("sui-signed", [Crypto.Net.Sui.SuiSignedTransaction.Encode(data, [new byte[97]])], b => Crypto.Net.Sui.SuiSignedTransaction.Decode(b));
+        Fuzz("move-type-tag", [Crypto.Net.Core.MoveTypeTag.Parse("vector<0x1::option::Option<0x2::coin::Coin<u256>>>").ToBcs()], b =>
+        {
+            var r = new Crypto.Net.Core.BcsReader(b);
+            Crypto.Net.Core.MoveTypeTag.Read(ref r);
+        });
+    }
+
+    [Fact]
+    public void Ton_BagOfCells()
+    {
+        using var account = new Crypto.Net.Ton.TonAccount(Enumerable.Repeat((byte)7, 32).ToArray());
+        var dest = Crypto.Net.Ton.TonAddress.Parse("0:" + new string('a', 64));
+        var external = account.CreateTransfer(0, [Crypto.Net.Ton.TonMessage.WithComment(dest, 5, new string('x', 150))]);
+        byte[][] seeds = [external.ToBoc(), external.ToBoc(withIndex: true, withCrc: false), Crypto.Net.Ton.TonWalletContract.Code(Crypto.Net.Ton.TonWalletVersion.V4R2).ToBoc(withCrc: false)];
+        Fuzz("ton-boc", seeds, b =>
+        {
+            foreach (var root in Crypto.Net.Ton.TonBoc.Deserialize(b))
+            {
+                if (!root.IsExotic) root.Hash();
+            }
+        });
+        Fuzz("ton-ext-msg", [external.ToBoc(withCrc: false)], b => Crypto.Net.Ton.TonMessage.NormalizedHash(Crypto.Net.Ton.TonCell.FromBoc(b)));
+    }
+
+    [Fact]
+    public void Cardano_TransactionsMetadataAndAddresses()
+    {
+        using var account = Crypto.Net.Cardano.CardanoAccount.FromMnemonic(
+            "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about", network: Crypto.Net.Cardano.CardanoChain.Preprod);
+        var tx = new Crypto.Net.Cardano.CardanoTransaction
+        {
+            Inputs = [new(new string('1', 64), 1)],
+            Outputs = [new(account.Address.Value, 2_000_000, [new(new string('2', 56), "41", 5)])],
+            Fee = 170_000,
+            Ttl = 5,
+            AuxiliaryData = Crypto.Net.Cardano.CardanoMetadata.Message("fuzz me " + new string('z', 90)),
+        };
+        Fuzz("cardano-tx", [tx.Sign(account)], b => Crypto.Net.Cardano.CardanoTransaction.IdOf(b));
+        Fuzz("cardano-cip20", [tx.AuxiliaryData], b => Crypto.Net.Cardano.CardanoMetadata.ReadMessage(b));
+        Fuzz("cardano-byron", [CryptoNative.Base58Decode("Ae2tdPwUPEZFRbyhz3cpfC2CumGzNkFBN2L42rcUc2yjQpEkxDbkPodpMAi")],
+            b => Crypto.Net.Cardano.CardanoAddress.IsValid(CryptoNative.Base58Encode(b)));
+    }
+
+    [Fact]
     public void Text_Codecs()
     {
         var rng = new Random(Seed);

@@ -1,0 +1,19 @@
+{
+  "address": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+  "metadata": { "name": "counter", "version": "0.1.0", "spec": "0.1.0" },
+  "instructions": [
+    {
+      "name": "increment",
+      "discriminator": [11, 18, 104, 9, 104, 174, 59, 33],
+      "accounts": [
+        { "name": "counter", "writable": true },
+        { "name": "authority", "signer": true }
+      ],
+      "args": [ { "name": "by", "type": "u64" } ]
+    }
+  ],
+  "accounts": [ { "name": "Counter", "discriminator": [255, 176, 4, 245, 188, 253, 124, 25] } ],
+  "types": [
+    { "name": "Counter", "type": { "kind": "struct", "fields": [ { "name": "authority", "type": "pubkey" }, { "name": "count", "type": "u64" } ] } }
+  ]
+}

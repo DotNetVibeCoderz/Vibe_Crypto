@@ -1,0 +1,19 @@
+{
+  "description": "Crypto.Net for VS Code: wallets, balances, address checks, unit hovers, contract client generation, templates and local nodes for Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos. Built by Gravicode Studios, led by Kang Fadhil.",
+  "cmd.newWallet": "New Testnet Wallet",
+  "cmd.checkBalance": "Check Balance",
+  "cmd.validateAddress": "Validate Address",
+  "cmd.convertUnits": "Convert Units",
+  "cmd.generateClient": "Generate Contract Client (C#)",
+  "cmd.newProject": "New Project from Template",
+  "cmd.doctor": "Run cnet doctor",
+  "cmd.startNode": "Start Local Node",
+  "cmd.openNotebook": "Open Notebook",
+  "cmd.refresh": "Refresh",
+  "view.networks": "Networks",
+  "view.actions": "Actions",
+  "config.cliPath": "Path or name of the cnet CLI (dotnet tool install -g Crypto.Net.Cli).",
+  "config.defaultNetwork": "Network key offered first (see `cnet networks`).",
+  "config.hover": "Show unit conversions and address checks when hovering C# code.",
+  "config.diagnostics": "Warn about EVM addresses whose EIP-55 checksum is wrong."
+}

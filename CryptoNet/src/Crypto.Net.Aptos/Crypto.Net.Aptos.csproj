@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Aptos adapter for Crypto.Net: ed25519 accounts (SLIP-10 m/44'/637'), AIP-40 addresses, Move type tags, BCS entry-function transactions, simulation and a REST client.</Description>
+    <PackageTags>$(PackageTags);aptos;move;bcs</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+  </ItemGroup>
+</Project>

@@ -4,6 +4,109 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-13
+
+### Added
+- **Crypto.Net.Indexer**:
+  - `EvmLogIndexer` pages from a checkpoint to the confirmed head with adaptive ranges and at-least-once delivery.
+  - `BlockCrawler` works on any chain.
+  - Checkpoint stores: in-memory and file.
+  - Hosted-service registration: `AddEvmLogIndexer`, `AddBlockCrawler`.
+- **Crypto.Net.Indexer.EntityFrameworkCore**:
+  - `CryptoNetIndexerDbContext` / `ApplyCryptoNetIndexer`.
+  - `EfCheckpointStore`.
+  - `EfEvmLogStore`: idempotent raw logs and ERC-20 transfers.
+- **EVM**:
+  - `EvmEvent`: event signatures with `indexed` and anonymous events, plus log decoding (ERC-20/721 ready-made).
+  - `EvmLogFilter` for multi-address / OR-topic `eth_getLogs`.
+- **Crypto.Net.Generators**: an incremental source generator that turns build inputs into typed clients.
+  - Solidity ABI / Hardhat & Foundry artifacts (`*.abi.json`) become `EvmContract` clients with views, sends,
+    calldata encoders, struct records and typed events.
+  - Anchor IDLs (`*.idl.json`, 0.30+ and older formats) become instruction builders, Borsh account decoders, fetchers
+    and error tables.
+  - `cnet gen` writes the same code to a file.
+  - New `cnet-contract-client` template.
+- **Solana**: `BorshWriter`/`BorshReader`, `Anchor` discriminator helpers, `SolanaRpcClient.GetAccountDataAsync`.
+- **EVM**: `EvmContract` base class for typed contract clients.
+- **EVM standards**:
+  - `Erc721Client` / `Erc1155Client` with ERC-165 detection and EIP-2981 royalties.
+  - `EnsClient`: EIP-137 namehash, forward/reverse resolution with verification, text and contenthash records.
+  - ERC-4337: `UserOperation` hashing for EntryPoint v0.6/v0.7/v0.8 (matches viem), `BundlerClient`, and
+    `SimpleAccount` helpers.
+- **Solana Token-2022**:
+  - `TokenMint` / `TokenAccountData` with TLV extensions: transfer fee, metadata, pointers, hook, interest,
+    delegate.
+  - Fee calculation.
+  - Extension instructions identical to @solana/spl-token.
+  - `GetMintAsync`.
+- **CosmWasm**:
+  - Execute/instantiate/migrate/update-admin messages (identical to cosmjs-types).
+  - Smart/raw queries, contract info, and a `Cw20Client`.
+- **Polkadot**:
+  - `ScaleEncoder`: a metadata-driven encoder with `EncodeCall(pallet, call, args)` and nested calls.
+  - `PolkadotStaking`: staking and nomination-pool calls. Verified by a fee quote from Polkadot Asset Hub.
+- **Crypto.Net.Aptos**: AIP-40 addresses, AIP-80 keys, `m/44'/637'` accounts, BCS entry-function transactions,
+  simulation, view functions and a REST client. Byte-identical to @aptos-labs/ts-sdk.
+- **Crypto.Net.Sui**: `suiprivkey` keys, `m/44'/784'` accounts, programmable transactions (BCS build and parse),
+  intent signing, personal messages, and a GraphQL client with gas selection and dry runs. Byte-identical to @mysten/sui.
+- **Crypto.Net.Ton**:
+  - Cells and bags of cells (same order as @ton/core), raw and user-friendly addresses, and TON mnemonics.
+  - Wallets V4R2 and W5, with automatic deployment on the first transfer.
+  - Comments, jetton transfers, TEP-467 normalized hashes, and a TON Center client.
+- **Crypto.Net.Cardano**:
+  - CIP-1852 accounts with BIP32-Ed25519 (Icarus) keys, account xpubs, and base/enterprise/reward/Byron addresses.
+  - Conway transactions with native assets and CIP-20 messages, UTxO selection with exact fees, and a Koios client.
+  - Byte-identical to cardano-serialization-lib.
+- **Native core (ABI 0x00010200)**: SHA3-256, BIP32-Ed25519 derivation (private and public), and extended-key
+  signing, each in Rust and in the managed fallback.
+- **Core**: `BcsWriter`/`BcsReader`, `MoveAddress`, `MoveTypeTag` and `MoveArg`.
+- **Wallet**: `Mnemonic.ToIcarusRootKey` and `HdWallet.DeriveBip32Ed25519`.
+- `ChainCatalog`, `AddNear`/`AddAptos`/`AddSui`/`AddTon`/`AddCardano`, address detection, `cnet wallet derive` and
+  the Gallery wallet all cover the five new chains.
+- **Crypto.Net.WalletConnect**:
+  - WalletConnect v2 Sign API on Reown's relay, for both apps and wallets.
+  - Pairing URIs, session proposal and settlement, requests and events, ping and disconnect.
+  - `WalletConnectEthereum` provides `personal_sign`, `eth_signTypedData_v4` and `eth_sendTransaction`.
+  - Crypto matches @walletconnect/utils byte for byte. Interop was verified both ways with the official sign-client.
+- **Native core**: X25519 (RFC 7748) in Rust and managed C#.
+- **Crypto.Net.Trezor**:
+  - Protocol v1 with Trezor Bridge, UDP (emulator) and replay transports.
+  - Ethereum: addresses, legacy and EIP-1559 transactions with chunked data, personal messages, EIP-712 hashes.
+  - Handles PIN and passphrase prompts. Byte-identical to trezorlib, and verified in CI on Trezor's core emulator.
+- **Ledger Solana app** (`LedgerSolanaApp`): addresses, chunked legacy/v0 transactions, off-chain messages. Verified
+  with hw-app-solana's recorded sessions and, in CI, against the Solana app built from source and run in Speculos.
+  `SolanaTransaction.AddSignature` attaches signatures made elsewhere.
+- **Crypto.Net.Ledger**:
+  - APDU protocol, HID framing, and USB HID, Speculos and replay transports.
+  - Ethereum app: addresses, chunked transactions, personal messages, EIP-712.
+  - Verified against Ledger's recorded sessions and, in CI, against the real Ethereum app in Speculos.
+- **Crypto.Net.Near**:
+  - Keys (`m/44'/397'`), implicit and named accounts.
+  - Borsh transactions with all eight actions (identical to near-api-js).
+  - Function calls, access keys, and an RPC client.
+- Borsh moved from Crypto.Net.Solana to Crypto.Net.Core (`Crypto.Net.Core.BorshWriter`/`BorshReader`), since NEAR uses
+  it too. `JsonRpcClient.CallWithObjectParamsAsync` sends by-name parameters.
+- **Gallery desktop and WebAssembly**:
+  - `Crypto.Net.Gallery.Core` makes the Gallery API host-neutral.
+  - `Crypto.Net.Gallery.Desktop` is a native window (Photino) with the server in-process on loopback.
+  - `Crypto.Net.Gallery.Wasm` runs the whole Gallery in the browser on .NET WebAssembly, installable as a PWA.
+    CI checks it in headless Chrome.
+- **VS Code extension "Crypto.Net Tools"**:
+  - Networks view.
+  - Commands for wallet, balance, address, units, client generation, templates, notebooks and doctor.
+  - C# hovers for units and addresses, and EIP-55 typo diagnostics.
+  - Snippets and local-node launcher.
+  - EN/ID localization.
+  - Tested in a real VS Code in CI; the `.vsix` is attached to releases.
+- Notebooks 07 (indexer to SQLite), 08 (Rust vs managed benchmarks), 09 (security practices) and 10 (NEAR, Aptos,
+  Sui, TON and Cardano, with live dry runs) in EN/ID. All ten notebooks target 1.2.0 and were executed against the
+  packed packages.
+- `MockRpcError` in Crypto.Net.Testing lets an `OnRpc` factory answer with an error.
+
+### Changed
+- `cnet address validate --json` reports chain families by name.
+- The `cnet-worker` template indexes ERC-20 transfers of `Watcher:Tokens` into SQLite.
+
 ## [1.1.0] — 2026-10-12
 
 ### Security

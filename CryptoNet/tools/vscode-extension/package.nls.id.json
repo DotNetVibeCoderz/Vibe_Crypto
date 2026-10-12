@@ -1,0 +1,19 @@
+{
+  "description": "Crypto.Net untuk VS Code: dompet, saldo, pemeriksaan alamat, hover konversi unit, pembuatan client kontrak, template dan node lokal untuk Bitcoin, Ethereum/EVM, Solana, Polkadot dan Cosmos. Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil.",
+  "cmd.newWallet": "Dompet Testnet Baru",
+  "cmd.checkBalance": "Cek Saldo",
+  "cmd.validateAddress": "Validasi Alamat",
+  "cmd.convertUnits": "Konversi Unit",
+  "cmd.generateClient": "Buat Client Kontrak (C#)",
+  "cmd.newProject": "Project Baru dari Template",
+  "cmd.doctor": "Jalankan cnet doctor",
+  "cmd.startNode": "Jalankan Node Lokal",
+  "cmd.openNotebook": "Buka Notebook",
+  "cmd.refresh": "Muat ulang",
+  "view.networks": "Jaringan",
+  "view.actions": "Aksi",
+  "config.cliPath": "Path atau nama CLI cnet (dotnet tool install -g Crypto.Net.Cli).",
+  "config.defaultNetwork": "Key jaringan yang ditawarkan pertama (lihat `cnet networks`).",
+  "config.hover": "Tampilkan konversi unit dan pemeriksaan alamat saat hover di kode C#.",
+  "config.diagnostics": "Peringatkan alamat EVM yang checksum EIP-55-nya salah."
+}

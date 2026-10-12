@@ -244,6 +244,189 @@ jobs:
           name: test-results-${{ matrix.rid }}
           path: CryptoNet/tests/Crypto.Net.Tests/TestResults/*.trx
 
+  vscode:
+    name: VS Code extension
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: CryptoNet/tools/vscode-extension
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install, typecheck, unit tests
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm test
+
+      - name: Integration test in a real VS Code
+        run: xvfb-run -a npm run test:integration
+
+      - name: Package .vsix
+        shell: bash
+        run: |
+          # Marketplace versions must be plain x.y.z, so a prerelease suffix is dropped for the extension.
+          v="${{ inputs.version }}"; if [ -n "$v" ]; then npm version "${v%%-*}" --no-git-tag-version --allow-same-version; fi
+          npm run package
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: crypto-net-tools-vsix
+          path: CryptoNet/tools/vscode-extension/crypto-net-tools.vsix
+          if-no-files-found: error
+
+  ledger:
+    name: Ledger (Speculos + Ethereum app)
+    needs: native
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-linux-x64
+          path: CryptoNet/runtimes/linux-x64/native
+
+      - name: Start Speculos with Ledger's Ethereum app (public test seed)
+        run: |
+          mkdir -p speculos-apps
+          curl -sSfL -o speculos-apps/eth.elf https://github.com/LedgerHQ/app-ethereum/releases/download/1.22.3/app-1.22.3-nanox.elf
+          docker run -d --name speculos -p 9999:9999 -p 5000:5000 -v "$PWD/speculos-apps:/apps" ghcr.io/ledgerhq/speculos:latest             --model nanox /apps/eth.elf --display headless --apdu-port 9999 --api-port 5000             --seed "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:5000/events > /dev/null && break; sleep 2; done
+          curl -s http://127.0.0.1:5000/events | head -c 400
+
+      - name: Ledger end-to-end tests
+        env:
+          CRYPTONET_SPECULOS: "1"
+        run: dotnet test tests/Crypto.Net.Tests -c Release --filter "FullyQualifiedName~LedgerSpeculosTests" --logger "console;verbosity=normal"
+
+      - name: Speculos log
+        if: failure()
+        run: docker logs speculos | tail -100
+
+  ledger-solana:
+    name: Ledger (Speculos + Solana app)
+    needs: native
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-linux-x64
+          path: CryptoNet/runtimes/linux-x64/native
+
+      - name: Build Ledger's Solana app (pinned commit) with Ledger's app builder
+        run: |
+          git clone --quiet https://github.com/LedgerHQ/app-solana.git app-solana
+          git -C app-solana checkout --quiet 22d6c9b78d6721acdc6d0ce49788a2fd9ea409a0
+          git -C app-solana submodule update --init --recursive --quiet
+          docker run --rm -v "$PWD/app-solana:/app" -w /app ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder-lite:latest             bash -c 'make BOLOS_SDK=$NANOX_SDK -j4'
+          ls -l app-solana/build/nanox/bin/app.elf
+
+      - name: Start Speculos with the Solana app (public test seed)
+        run: |
+          docker run -d --name speculos -p 9999:9999 -p 5000:5000 -v "$PWD/app-solana/build/nanox/bin:/apps" ghcr.io/ledgerhq/speculos:latest             --model nanox /apps/app.elf --display headless --apdu-port 9999 --api-port 5000             --seed "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:5000/events > /dev/null && break; sleep 2; done
+          curl -s http://127.0.0.1:5000/events | head -c 400
+
+      - name: Ledger Solana end-to-end tests
+        env:
+          CRYPTONET_SPECULOS: "1"
+        run: dotnet test tests/Crypto.Net.Tests -c Release --filter "FullyQualifiedName~LedgerSolanaSpeculosTests" --logger "console;verbosity=normal"
+
+      - name: Speculos log
+        if: failure()
+        run: docker logs speculos | tail -100
+
+  trezor:
+    name: Trezor (core emulator)
+    needs: native
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-linux-x64
+          path: CryptoNet/runtimes/linux-x64/native
+
+      - name: Start Trezor's Model T emulator with the public test seed
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq patchelf libjpeg62 libsdl2-2.0-0 libsdl2-image-2.0-0 > /dev/null
+          pip install --quiet trezor==0.13.10
+          mkdir -p "$RUNNER_TEMP/trezor"
+          curl -sSfL -o "$RUNNER_TEMP/trezor/emu" https://data.trezor.io/dev/firmware/releases/emulators-new/T2T1/trezor-emu-core-T2T1-v2.11.0
+          chmod +x "$RUNNER_TEMP/trezor/emu"
+          patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 "$RUNNER_TEMP/trezor/emu"
+          nohup python scripts/trezor-emulator.py "$RUNNER_TEMP/trezor/emu" "$RUNNER_TEMP/trezor/profile" > "$RUNNER_TEMP/trezor/runner.log" 2>&1 &
+          for i in $(seq 1 90); do [ -f "$RUNNER_TEMP/trezor/profile/ready" ] && break; sleep 2; done
+          cat "$RUNNER_TEMP/trezor/runner.log"
+          test -f "$RUNNER_TEMP/trezor/profile/ready"
+
+      - name: Trezor end-to-end tests
+        env:
+          CRYPTONET_TREZOR: "1"
+        run: dotnet test tests/Crypto.Net.Tests -c Release --filter "FullyQualifiedName~TrezorEmulatorTests" --logger "console;verbosity=normal"
+
+      - name: Emulator log
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/trezor/runner.log" || true
+          tail -150 "$RUNNER_TEMP/trezor/profile/emulator.log" || true
+
+  gallery:
+    name: Gallery (desktop build + WebAssembly in Chrome)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the desktop Gallery
+        run: dotnet build samples/Crypto.Net.Gallery.Desktop -c Release
+
+      - name: Publish the WebAssembly Gallery
+        run: dotnet publish samples/Crypto.Net.Gallery.Wasm -c Release -o gallery-wasm
+
+      - name: Boot it in headless Chrome and derive a wallet in the page
+        shell: bash
+        run: |
+          cd gallery-wasm/wwwroot
+          python3 -m http.server 8765 --bind 127.0.0.1 &
+          sleep 2
+          google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=90000             --dump-dom "http://127.0.0.1:8765/?still=1&autorun=1" > ../dom.html
+          grep -q "WebAssembly" ../dom.html
+          grep -Eq "0x[0-9a-fA-F]{40}" ../dom.html
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: gallery-wasm
+          path: CryptoNet/gallery-wasm/wwwroot
+          if-no-files-found: error
+
   templates:
     name: dotnet new templates
     needs: native

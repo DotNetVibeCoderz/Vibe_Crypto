@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/samples/">
+    <Project Path="samples/Crypto.Net.Gallery.Core/Crypto.Net.Gallery.Core.csproj" />
+    <Project Path="samples/Crypto.Net.Gallery.Desktop/Crypto.Net.Gallery.Desktop.csproj" />
+    <Project Path="samples/Crypto.Net.Gallery.Wasm/Crypto.Net.Gallery.Wasm.csproj" />
     <Project Path="samples/Crypto.Net.Gallery/Crypto.Net.Gallery.csproj" />
     <Project Path="samples/Crypto.Net.QuickStart/Crypto.Net.QuickStart.csproj" />
   </Folder>
@@ -10,7 +13,18 @@
     <Project Path="src/Crypto.Net.Cosmos/Crypto.Net.Cosmos.csproj" />
     <Project Path="src/Crypto.Net.Evm/Crypto.Net.Evm.csproj" />
     <Project Path="src/Crypto.Net.Extensions/Crypto.Net.Extensions.csproj" />
+    <Project Path="src/Crypto.Net.Generators/Crypto.Net.Generators.csproj" />
+    <Project Path="src/Crypto.Net.Indexer.EntityFrameworkCore/Crypto.Net.Indexer.EntityFrameworkCore.csproj" />
+    <Project Path="src/Crypto.Net.Indexer/Crypto.Net.Indexer.csproj" />
+    <Project Path="src/Crypto.Net.Ledger/Crypto.Net.Ledger.csproj" />
     <Project Path="src/Crypto.Net.Native/Crypto.Net.Native.csproj" />
+    <Project Path="src/Crypto.Net.Near/Crypto.Net.Near.csproj" />
+    <Project Path="src/Crypto.Net.Aptos/Crypto.Net.Aptos.csproj" />
+    <Project Path="src/Crypto.Net.Sui/Crypto.Net.Sui.csproj" />
+    <Project Path="src/Crypto.Net.Ton/Crypto.Net.Ton.csproj" />
+    <Project Path="src/Crypto.Net.Cardano/Crypto.Net.Cardano.csproj" />
+    <Project Path="src/Crypto.Net.Trezor/Crypto.Net.Trezor.csproj" />
+    <Project Path="src/Crypto.Net.WalletConnect/Crypto.Net.WalletConnect.csproj" />
     <Project Path="src/Crypto.Net.Polkadot/Crypto.Net.Polkadot.csproj" />
     <Project Path="src/Crypto.Net.Solana/Crypto.Net.Solana.csproj" />
     <Project Path="src/Crypto.Net.Testing/Crypto.Net.Testing.csproj" />

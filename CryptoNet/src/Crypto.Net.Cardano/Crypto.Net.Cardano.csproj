@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Cardano adapter for Crypto.Net: CIP-1852 accounts with BIP32-Ed25519 (Icarus) keys, base/enterprise/reward addresses, Conway transactions with native assets and CIP-20 messages, exact fees and UTxO selection, and a Koios client.</Description>
+    <PackageTags>$(PackageTags);cardano;ada;cbor</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Formats.Cbor" Version="10.0.12" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,65 @@
+{
+  "Crypto.Net transfer (EVM)": {
+    "prefix": "cnet-transfer",
+    "body": [
+      "await using var client = new EvmRpcClient(EvmChain.${1:Sepolia});",
+      "await using var signer = account.CreateSigner();",
+      "TxHash hash = await client.TransferAsync(signer, \"${2:0xRecipient}\", Amount.Parse(\"${3:0.01}\", 18), ct);",
+      "var receipt = await client.WaitForReceiptAsync(hash, ct: ct);$0"
+    ],
+    "description": "Send the native asset on an EVM chain and wait for the receipt"
+  },
+  "Crypto.Net contract call": {
+    "prefix": "cnet-contract",
+    "body": [
+      "object?[] result = await client.CallFunctionAsync(\"${1:0xContract}\", \"${2:balanceOf(address)}\", \"${3:uint256}\", [${4:owner}], ct);",
+      "var ${5:value} = (System.Numerics.BigInteger)result[0]!;$0"
+    ],
+    "description": "Call a view function by signature"
+  },
+  "Crypto.Net event decode": {
+    "prefix": "cnet-event",
+    "body": [
+      "var ${1:transfer} = EvmEvent.Parse(\"${2:Transfer(address indexed from, address indexed to, uint256 value)}\");",
+      "foreach (var log in await client.GetLogsAsync(${3:contract}, ${4:fromBlock}, ct: ct))",
+      "    if (${1:transfer}.TryDecode(log, out var e)) Console.WriteLine($\"{e![\"from\"]} -> {e[\"to\"]}: {e[\"value\"]}\");$0"
+    ],
+    "description": "Decode Solidity events from logs"
+  },
+  "Crypto.Net PSBT": {
+    "prefix": "cnet-psbt",
+    "body": [
+      "var psbt = Psbt.Parse(${1:base64});",
+      "psbt.Sign(${2:wallet.MasterKey});",
+      "if (psbt.Finalize()) await esplora.SendRawTransactionAsync(psbt.ExtractTransaction().Serialize(), ct);",
+      "else Console.WriteLine(psbt.ToBase64()); // pass on to the next cosigner$0"
+    ],
+    "description": "Sign, finalize and broadcast a PSBT"
+  },
+  "Crypto.Net wallet": {
+    "prefix": "cnet-wallet",
+    "body": [
+      "using var wallet = HdWallet.FromMnemonic(${1:configuration[\"Mnemonic\"]!});",
+      "using var ${2:account} = wallet.Get${3|Evm,Bitcoin,Solana,Polkadot,Cosmos|}Account();$0"
+    ],
+    "description": "Restore an HD wallet and derive an account"
+  },
+  "Crypto.Net Solana transfer": {
+    "prefix": "cnet-sol",
+    "body": [
+      "await using var rpc = new SolanaRpcClient(SolanaChain.${1:Devnet});",
+      "TxHash sig = await rpc.TransferAsync(${2:sol}, \"${3:Recipient}\", Amount.FromSol(${4:0.1m}), ct: ct);$0"
+    ],
+    "description": "Send SOL"
+  },
+  "Crypto.Net DI": {
+    "prefix": "cnet-di",
+    "body": [
+      "builder.Services.AddCryptoNet(b => b",
+      "    .AddEvm(\"${1:sepolia}\", o => o.Network = EvmChain.Sepolia)",
+      "    .AddSolana(\"${2:devnet}\", o => o.Cluster = SolanaChain.Devnet)",
+      "    .WithResilience());$0"
+    ],
+    "description": "Register Crypto.Net clients in DI"
+  }
+}

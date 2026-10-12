@@ -5,6 +5,11 @@ using Crypto.Net.Cosmos;
 using Crypto.Net.Evm;
 using Crypto.Net.Polkadot;
 using Crypto.Net.Solana;
+using Crypto.Net.Aptos;
+using Crypto.Net.Cardano;
+using Crypto.Net.Near;
+using Crypto.Net.Sui;
+using Crypto.Net.Ton;
 
 namespace Crypto.Net.Extensions;
 
@@ -16,6 +21,11 @@ public enum ChainFamily
     Solana,
     Polkadot,
     Cosmos,
+    Near,
+    Aptos,
+    Sui,
+    Ton,
+    Cardano,
 }
 
 /// <summary>A network known to the catalog.</summary>
@@ -44,6 +54,11 @@ public static class ChainCatalog
         list.AddRange(SolanaChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Solana, c)));
         list.AddRange(PolkadotChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Polkadot, c)));
         list.AddRange(CosmosChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Cosmos, c)));
+        list.AddRange(NearChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Near, c)));
+        list.AddRange(AptosChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Aptos, c)));
+        list.AddRange(SuiChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Sui, c)));
+        list.AddRange(TonChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Ton, c)));
+        list.AddRange(CardanoChain.All.Select(c => new CatalogEntry(c.Id.Value, ChainFamily.Cardano, c)));
         return list;
     }
 
@@ -54,13 +69,14 @@ public static class ChainCatalog
         ["sol"] = "solana", ["devnet"] = "solana-devnet",
         ["dot"] = "polkadot", ["ksm"] = "kusama", ["wnd"] = "westend",
         ["atom"] = "cosmoshub", ["cosmos"] = "cosmoshub", ["osmo"] = "osmosis",
+        ["apt"] = "aptos", ["ada"] = "cardano", ["preprod"] = "cardano-preprod",
         ["matic"] = "polygon", ["pol"] = "polygon", ["arb"] = "arbitrum", ["op"] = "optimism", ["bsc"] = "bnb", ["avax"] = "avalanche",
     };
 
     /// <summary>
     /// Derives the standard account for <paramref name="entry"/> from <paramref name="wallet"/>: BIP-44 for EVM and Cosmos,
-    /// BIP-84 (native SegWit) for Bitcoin, Phantom's path for Solana, and the root sr25519 key (or <c>//index</c>) for
-    /// Substrate. Dispose the returned account to wipe its private key.
+    /// BIP-84 (native SegWit) for Bitcoin, Phantom's path for Solana, the root sr25519 key (or <c>//index</c>) for
+    /// Substrate, SLIP-10 ed25519 paths for NEAR, Aptos, Sui and TON (a W5 wallet), and CIP-1852 for Cardano. Dispose the returned account to wipe its private key.
     /// </summary>
     public static IAccount DeriveAccount(HdWallet wallet, CatalogEntry entry, uint index = 0)
     {
@@ -73,6 +89,11 @@ public static class ChainCatalog
             SolanaChain sol => wallet.GetSolanaAccount(index, sol),
             PolkadotChain dot => wallet.GetPolkadotAccount(index == 0 ? "" : $"//{index}", dot),
             CosmosChain cosmos => wallet.GetCosmosAccount(index, cosmos),
+            NearChain near => wallet.GetNearAccount(index, near),
+            AptosChain aptos => wallet.GetAptosAccount(index, aptos),
+            SuiChain sui => wallet.GetSuiAccount(index, sui),
+            TonChain ton => wallet.GetTonAccount(index, ton),
+            CardanoChain ada => wallet.GetCardanoAccount(0, index, ada),
             _ => throw new NotSupportedException($"Unsupported chain {entry.Chain.Name}"),
         };
     }
@@ -101,6 +122,11 @@ public static class ChainCatalog
         PolkadotChain c => new PolkadotRpcClient(c, Endpoints(c, endpoint, c.DefaultRpcUrl), http),
         BitcoinNetwork c => new EsploraClient(c, endpoint, http),
         CosmosChain c => new CosmosRestClient(c, endpoint, http),
+        NearChain c => new NearRpcClient(c, Endpoints(c, endpoint, c.DefaultRpcUrl), http),
+        AptosChain c => new AptosRestClient(c, endpoint, http),
+        SuiChain c => new SuiGraphQlClient(c, endpoint, http),
+        TonChain c => new TonCenterClient(c, endpoint, http),
+        CardanoChain c => new KoiosClient(c, endpoint, http),
         _ => throw new NotSupportedException(entry.Chain.GetType().Name),
     };
 
@@ -115,6 +141,11 @@ public static class ChainCatalog
         SolanaChain => SolanaAddress.IsValid(address),
         PolkadotChain p => Ss58Address.IsValid(address, p.Ss58Prefix),
         CosmosChain c => CosmosAddress.IsValid(address, c.Bech32Prefix),
+        NearChain => NearAddress.IsValidAccountId(address),
+        AptosChain => AptosAddress.IsValid(address),
+        SuiChain => SuiAddress.IsValid(address),
+        TonChain t => IsValidTon(address, t),
+        CardanoChain c => IsValidCardano(address, c),
         _ => false,
     };
 
@@ -147,10 +178,43 @@ public static class ChainCatalog
             matches.Add(new(ChainFamily.Polkadot, $"SS58 prefix {prefix}" + (known is null ? "" : $" ({known.Name})")));
         }
 
-        if (!address.StartsWith("bc1", StringComparison.OrdinalIgnoreCase) && !address.StartsWith("tb1", StringComparison.OrdinalIgnoreCase)
+        bool cardano = address.StartsWith("addr", StringComparison.Ordinal) || address.StartsWith("stake", StringComparison.Ordinal);
+        if (!cardano && !address.StartsWith("bc1", StringComparison.OrdinalIgnoreCase) && !address.StartsWith("tb1", StringComparison.OrdinalIgnoreCase)
             && CosmosAddress.IsValid(address, hrp: null))
             matches.Add(new(ChainFamily.Cosmos, $"Bech32 '{CosmosAddress.Decode(address).Hrp}'"));
 
+        if (address.Length == 66 && address.StartsWith("0x", StringComparison.Ordinal) && address[2..].All(Uri.IsHexDigit))
+        {
+            matches.Add(new(ChainFamily.Aptos, "32-byte account address"));
+            matches.Add(new(ChainFamily.Sui, "32-byte account address"));
+        }
+
+        if (NearAddress.IsValidAccountId(address) && (NearAddress.IsImplicit(address) || address.EndsWith(".near", StringComparison.Ordinal) || address.EndsWith(".testnet", StringComparison.Ordinal)))
+            matches.Add(new(ChainFamily.Near, NearAddress.IsImplicit(address) ? "implicit account" : "named account"));
+
+        if (TonAddress.IsValid(address))
+        {
+            var (_, bounceable, testOnly) = TonAddress.ParseWithFlags(address);
+            matches.Add(new(ChainFamily.Ton, bounceable is null ? "raw address" : $"{(bounceable.Value ? "bounceable" : "non-bounceable")}{(testOnly == true ? ", test-only" : "")}"));
+        }
+
+        if (CardanoAddress.IsValid(address))
+            matches.Add(new(ChainFamily.Cardano, cardano ? (address.StartsWith("stake", StringComparison.Ordinal) ? "reward (stake) address" : "Shelley address") : "Byron address"));
+
         return matches;
+    }
+
+    private static bool IsValidTon(string address, TonChain network)
+    {
+        if (!TonAddress.IsValid(address)) return false;
+        var (_, _, testOnly) = TonAddress.ParseWithFlags(address);
+        return testOnly is null || testOnly == network.IsTestnet;
+    }
+
+    private static bool IsValidCardano(string address, CardanoChain network)
+    {
+        if (!CardanoAddress.IsValid(address)) return false;
+        byte[] raw = CardanoAddress.ToBytes(address);
+        return (raw[0] >> 4) == 8 || (raw[0] & 0x0f) == network.NetworkId;
     }
 }

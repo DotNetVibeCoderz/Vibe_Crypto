@@ -10,7 +10,7 @@
     <Deterministic>true</Deterministic>
 
     <!-- Package metadata -->
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>Gravicode Studios, Kang Fadhil</Authors>
     <Company>Gravicode Studios</Company>
     <Product>Crypto.Net</Product>

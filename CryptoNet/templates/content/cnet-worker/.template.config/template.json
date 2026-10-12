@@ -12,7 +12,7 @@
   "groupIdentity": "Crypto.Net.Templates.cnet-worker",
   "name": "Crypto.Net Worker Service",
   "shortName": "cnet-worker",
-  "description": "Worker Service that follows new blocks and watches account balances on a network. Built by Gravicode Studios, led by Kang Fadhil.",
+  "description": "Worker Service that follows new blocks, watches balances and indexes ERC-20 transfers into SQLite. Built by Gravicode Studios, led by Kang Fadhil.",
   "tags": {
     "language": "C#",
     "type": "project"
@@ -23,7 +23,7 @@
     "CryptoNetVersion": {
       "type": "parameter",
       "datatype": "string",
-      "defaultValue": "1.1.0",
+      "defaultValue": "1.2.0",
       "replaces": "CRYPTONET_VERSION",
       "description": "Version of the Crypto.Net packages to reference."
     },

@@ -6,6 +6,9 @@
     <PackageVersion Include="Crypto.Net.Extensions" Version="CRYPTONET_VERSION" />
     <PackageVersion Include="Crypto.Net.Testing" Version="CRYPTONET_VERSION" />
     <PackageVersion Include="Crypto.Net.Analyzers" Version="CRYPTONET_VERSION" />
+    <PackageVersion Include="Crypto.Net.Generators" Version="CRYPTONET_VERSION" />
+    <PackageVersion Include="Crypto.Net.Indexer.EntityFrameworkCore" Version="CRYPTONET_VERSION" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.12" />

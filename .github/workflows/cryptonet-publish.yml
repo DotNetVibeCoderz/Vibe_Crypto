@@ -62,6 +62,19 @@ jobs:
             dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
           done
 
+      - uses: actions/download-artifact@v8
+        with:
+          name: crypto-net-tools-vsix
+          path: artifacts
+
+      - name: VS Code Marketplace (only when the VSCE_PAT secret is set)
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        shell: bash
+        run: |
+          if [ -z "$VSCE_PAT" ]; then echo "VSCE_PAT not set; the .vsix is attached to the GitHub release only"; exit 0; fi
+          npx --yes @vscode/vsce@3.2.1 publish --packagePath artifacts/crypto-net-tools.vsix --pat "$VSCE_PAT"
+
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,5 +82,5 @@ jobs:
         run: |
           tag="CryptoNet-v${{ needs.version.outputs.value }}"
           gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
-            gh release create "$tag" artifacts/*.nupkg -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            gh release create "$tag" artifacts/*.nupkg artifacts/*.vsix -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
               --title "Crypto.Net $tag" --notes "See [CHANGELOG.md](https://github.com/DotNetVibeCoderz/Vibe_Crypto/blob/main/CryptoNet/CHANGELOG.md). Built by Gravicode Studios, led by Kang Fadhil."

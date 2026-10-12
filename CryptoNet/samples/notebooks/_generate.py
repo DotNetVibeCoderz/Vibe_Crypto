@@ -10,7 +10,7 @@ Built by Gravicode Studios, led by Kang Fadhil.
 import json
 from pathlib import Path
 
-VERSION = "1.0.0"
+VERSION = "1.2.0"
 HERE = Path(__file__).parent
 
 ATTR = {
@@ -615,7 +615,421 @@ account.Dispose(); rest.Dispose(); wallet.Dispose();
 '''),
 ]))
 
+# ============================================================================== 07 indexer
+NOTEBOOKS.append(("07-indexer", {"en": "Crypto.Net · 07 — Indexing events into a database", "id": "Crypto.Net · 07 — Mengindeks event ke database"}, [
+    md("What you will do: decode ERC-20 `Transfer` logs from Sepolia, run the `EvmLogIndexer` from a checkpoint into "
+       "SQLite with Entity Framework Core, query the result with LINQ, and crawl Polkadot Asset Hub blocks with "
+       "`BlockCrawler`. Everything is read-only.",
+       "Yang akan Anda lakukan: men-decode log `Transfer` ERC-20 dari Sepolia, menjalankan `EvmLogIndexer` dari checkpoint "
+       "ke SQLite dengan Entity Framework Core, meng-query hasilnya dengan LINQ, dan menelusuri blok Polkadot Asset Hub "
+       "dengan `BlockCrawler`. Semuanya hanya membaca."),
+    code(INSTALL + "\n" + f'#r "nuget: Crypto.Net.Indexer.EntityFrameworkCore, {VERSION}"\n#r "nuget: Microsoft.EntityFrameworkCore.Sqlite, 10.0.12"'),
+    code(r'''
+using System.Numerics;
+using Crypto.Net.Core;
+using Crypto.Net.Evm;
+using Crypto.Net.Indexer;
+using Crypto.Net.Indexer.EntityFrameworkCore;
+using Crypto.Net.Polkadot;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+
+const string Usdc = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";   // Circle USDC on Sepolia
+var sepolia = new EvmRpcClient(EvmChain.Sepolia);
+ulong head = await sepolia.GetBlockNumberAsync();
+$"Sepolia head {head:N0}"
+'''),
+    md("## Decoding events\n\n`EvmEvent.Parse` reads a human-readable Solidity event. `Decode` turns a log into named "
+       "values: indexed parameters come from the topics, the rest from the data.",
+       "## Men-decode event\n\n`EvmEvent.Parse` membaca event Solidity yang ditulis manusia. `Decode` mengubah log menjadi nilai "
+       "bernama: parameter indexed diambil dari topic, sisanya dari data."),
+    code(r'''
+var transfer = EvmEvent.Parse("event Transfer(address indexed from, address indexed to, uint256 value)");
+Console.WriteLine($"{transfer.Signature} → topic0 {transfer.Topic0[..18]}…");
+
+var logs = await sepolia.GetLogsAsync(new EvmLogFilter(head - 100, head) { Addresses = [Usdc], Topics = [[transfer.Topic0]] });
+foreach (var log in logs.Take(5))
+{
+    var e = transfer.Decode(log);
+    Console.WriteLine($"block {log.BlockNumber}: {e["from"]} → {e["to"]}  {(decimal)(BigInteger)e["value"]! / 1_000_000m} USDC");
+}
+$"{logs.Count} transfers in the last 100 blocks"
+'''),
+    md("## Indexing into SQLite\n\nThe indexer pages `eth_getLogs` from its checkpoint to the head minus `Confirmations`. When a "
+       "provider refuses a range, it halves the range and retries. After each batch it writes a checkpoint, so a restart resumes where "
+       "it stopped. `EfEvmLogStore` writes raw logs and ERC-20 transfers. Its inserts are idempotent, so a redelivered batch "
+       "does no harm.",
+       "## Mengindeks ke SQLite\n\nIndexer membaca `eth_getLogs` per halaman dari checkpoint sampai head dikurangi `Confirmations`. "
+       "Jika provider menolak sebuah rentang, indexer membagi dua rentangnya lalu mencoba lagi. Setelah setiap batch ia menulis "
+       "checkpoint, sehingga restart melanjutkan dari titik terakhir. `EfEvmLogStore` menyimpan log mentah dan transfer ERC-20. "
+       "Insert-nya idempoten, sehingga batch yang dikirim ulang tidak menimbulkan masalah."),
+    code(r'''
+var connection = new SqliteConnection("Data Source=:memory:");
+await connection.OpenAsync();
+var factory = new PooledDbContextFactory<CryptoNetIndexerDbContext>(
+    new DbContextOptionsBuilder<CryptoNetIndexerDbContext>().UseSqlite(connection).Options);
+await using (var db = await factory.CreateDbContextAsync()) await db.Database.EnsureCreatedAsync();
+
+var checkpoints = new EfCheckpointStore<CryptoNetIndexerDbContext>(factory);
+var store = new EfEvmLogStore<CryptoNetIndexerDbContext>(factory, new EvmLogStoreOptions { ChainId = "sepolia" });
+var indexer = new EvmLogIndexer(sepolia, checkpoints, store, new EvmLogIndexerOptions
+{
+    Name = "usdc",
+    Addresses = [Usdc],
+    Events = [EvmEvent.Erc20Transfer],
+    StartBlock = head - 500,
+    Confirmations = 5,
+    MaxBlockRange = 100,
+});
+ulong? last = await indexer.RunOnceAsync();
+$"indexed up to block {last:N0}; checkpoint = {await checkpoints.GetAsync("usdc"):N0}"
+'''),
+    code(r'''
+var query = await factory.CreateDbContextAsync();
+var top = (await query.TokenTransfers.Where(t => t.ChainId == "sepolia").ToListAsync())
+    .GroupBy(t => t.To)
+    .Select(g => new { Recipient = g.Key, Transfers = g.Count(), Usdc = g.Sum(t => (decimal)t.RawValue) / 1_000_000m })
+    .OrderByDescending(x => x.Usdc)
+    .Take(5)
+    .ToList();
+await query.DisposeAsync();
+top
+'''),
+    md("Running `RunOnceAsync` again only processes new blocks, because the checkpoint remembers where it stopped. In an app, "
+       "register the same pipeline with `AddEvmLogIndexerToDatabase` and it runs as a hosted service. The `cnet-worker` "
+       "template does exactly that.",
+       "Menjalankan `RunOnceAsync` lagi hanya memproses blok baru, karena checkpoint mengingat titik terakhirnya. Di aplikasi, daftarkan "
+       "pipeline yang sama dengan `AddEvmLogIndexerToDatabase` dan ia berjalan sebagai hosted service. Template "
+       "`cnet-worker` melakukan persis hal itu."),
+    md("## Any chain: `BlockCrawler`\n\nThe crawler calls your handler once for every height, in order, with checkpoints. "
+       "Here it counts the events in Polkadot Asset Hub blocks.",
+       "## Chain apa pun: `BlockCrawler`\n\nCrawler memanggil handler Anda sekali untuk setiap tinggi blok, berurutan, dengan "
+       "checkpoint. Di sini ia menghitung event di blok Polkadot Asset Hub."),
+    code(r'''
+var dot = new PolkadotRpcClient(PolkadotChain.PolkadotAssetHub);
+ulong dotHead = await dot.GetBlockNumberAsync();
+var counts = new List<string>();
+var crawler = new BlockCrawler(dot, new InMemoryCheckpointStore(), async (height, ct) =>
+{
+    var events = await dot.GetEventsAsync(await dot.GetBlockHashAsync(height, ct), ct);
+    counts.Add($"#{height}: {events.Count} events, {events.Count(e => e.Is("Balances", "Transfer"))} transfers");
+}, new BlockCrawlerOptions { StartBlock = dotHead - 4, Confirmations = 0, MaxBlocksPerPoll = 5 });
+await crawler.RunOnceAsync();
+string.Join("\n", counts)
+'''),
+    code(r'''
+sepolia.Dispose(); dot.Dispose(); connection.Dispose();
+"disposed"
+'''),
+]))
+
+# ============================================================================== 08 benchmarks
+NOTEBOOKS.append(("08-benchmarks", {"en": "Crypto.Net · 08 — Rust core vs managed C#", "id": "Crypto.Net · 08 — Inti Rust vs C# managed"}, [
+    md("What you will do: run the built-in benchmark that times every primitive on both engines. You will also time your "
+       "own workload with `CryptoNative.UseBackend`, check that both engines produce identical bytes, and see why `Auto` "
+       "keeps SHA-2 on the platform's hardware-accelerated implementation.",
+       "Yang akan Anda lakukan: menjalankan benchmark bawaan yang mengukur setiap primitif di kedua mesin. Anda juga akan "
+       "mengukur beban kerja sendiri dengan `CryptoNative.UseBackend`, memastikan kedua mesin menghasilkan byte yang identik, "
+       "dan melihat mengapa `Auto` mempertahankan SHA-2 di implementasi platform yang dipercepat hardware."),
+    code(INSTALL),
+    code(r'''
+using System.Diagnostics;
+using Crypto.Net.Native;
+using Crypto.Net.Extensions;
+
+$"Rust core: {NativeLoader.IsNativeAvailable} ({NativeLoader.RuntimeIdentifier}), default backend {CryptoNative.Backend}"
+'''),
+    md("## The built-in benchmark\n\n`CryptoBenchmark.Run` measures operations per second on each engine. `cnet bench` and the "
+       "Gallery chart use the same benchmark. `scale` shortens or lengthens each measurement.",
+       "## Benchmark bawaan\n\n`CryptoBenchmark.Run` mengukur operasi per detik di setiap mesin. `cnet bench` dan grafik Gallery "
+       "memakai benchmark yang sama. `scale` memperpendek atau memperpanjang setiap pengukuran."),
+    code(r'''
+var results = CryptoBenchmark.Run(scale: 0.3);
+results.Select(r => new
+{
+    r.Category,
+    r.Name,
+    Rust = $"{r.NativeOpsPerSec:N0}/s",
+    Managed = $"{r.ManagedOpsPerSec:N0}/s",
+    Speedup = r.Speedup > 0 ? $"{r.Speedup:0.0}×" : "n/a",
+})
+'''),
+    md("## Your own workload\n\n`CryptoNative.UseBackend` switches engines for the current async flow only, so you can compare "
+       "inside one process, or pin a request to the managed engine.",
+       "## Beban kerja Anda sendiri\n\n`CryptoNative.UseBackend` mengganti mesin hanya untuk alur async saat ini, sehingga Anda "
+       "bisa membandingkan di dalam satu proses, atau mengunci sebuah request ke mesin managed."),
+    code(r'''
+byte[] key = Convert.FromHexString("4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318");
+byte[] digest = CryptoNative.Keccak256("hello"u8);
+
+double Time(CryptoBackend backend, int n)
+{
+    using var _ = CryptoNative.UseBackend(backend);
+    var sw = Stopwatch.StartNew();
+    for (int i = 0; i < n; i++) CryptoNative.Secp256k1SignRecoverable(key, digest);
+    return n / sw.Elapsed.TotalSeconds;
+}
+Time(CryptoBackend.Native, 50); Time(CryptoBackend.Managed, 50);   // warm up
+double native = Time(CryptoBackend.Native, 2000), managed = Time(CryptoBackend.Managed, 2000);
+$"ECDSA sign: Rust {native:N0}/s · managed {managed:N0}/s · {native / managed:0.0}× faster"
+'''),
+    md("## Same answer either way\n\nThe managed engine is a fallback, not an approximation: CI runs a parity test for every "
+       "primitive. You can spot-check that here.",
+       "## Hasil yang sama\n\nMesin managed adalah fallback, bukan pendekatan: CI menjalankan test kesetaraan untuk setiap "
+       "primitif. Anda bisa memeriksanya sendiri di sini."),
+    code(r'''
+(byte[] Sig, byte Rec) Sign(CryptoBackend b) { using var _ = CryptoNative.UseBackend(b); return CryptoNative.Secp256k1SignRecoverable(key, digest); }
+byte[] Blake(CryptoBackend b) { using var _ = CryptoNative.UseBackend(b); return CryptoNative.Blake2b256("hello"u8); }
+new
+{
+    EcdsaIdentical = Sign(CryptoBackend.Native).Sig.SequenceEqual(Sign(CryptoBackend.Managed).Sig),
+    Blake2bIdentical = Blake(CryptoBackend.Native).SequenceEqual(Blake(CryptoBackend.Managed)),
+}
+'''),
+    md("## Why `Auto` keeps SHA-2 on the platform\n\nSHA-256 and HMAC-SHA512 in .NET use the CPU's SHA extensions through "
+       "the OS. For small inputs, the cost of calling across the FFI boundary into Rust outweighs what Rust saves. So "
+       "`Auto` uses Rust for everything except SHA-2, HMAC and PBKDF2.",
+       "## Mengapa `Auto` mempertahankan SHA-2 di platform\n\nSHA-256 dan HMAC-SHA512 di .NET memakai ekstensi SHA CPU lewat "
+       "OS. Untuk input kecil, biaya memanggil Rust lewat batas FFI lebih besar daripada yang dihemat Rust. Karena itu `Auto` "
+       "memakai Rust untuk semuanya kecuali SHA-2, HMAC dan PBKDF2."),
+    code(r'''
+double Sha(CryptoBackend b)
+{
+    using var _ = CryptoNative.UseBackend(b);
+    var sw = Stopwatch.StartNew();
+    for (int i = 0; i < 200_000; i++) CryptoNative.Sha256(digest);
+    return 200_000 / sw.Elapsed.TotalSeconds;
+}
+Sha(CryptoBackend.Auto);
+$"SHA-256 (32 bytes): Auto/platform {Sha(CryptoBackend.Auto):N0}/s · Rust {Sha(CryptoBackend.Native):N0}/s"
+'''),
+]))
+
+# ============================================================================== 09 security
+NOTEBOOKS.append(("09-security", {"en": "Crypto.Net · 09 — Security practices", "id": "Crypto.Net · 09 — Praktik keamanan"}, [
+    md("What you will do: work through the mistakes that lose funds, and see how Crypto.Net helps avoid each one. Covered: "
+       "secrets kept in memory, keystores, exact amounts, checksummed addresses, replay protection, verifying before you "
+       "trust, decoding hostile input, and keeping API keys out of logs.",
+       "Yang akan Anda lakukan: menelusuri kesalahan yang membuat dana hilang, dan melihat bagaimana Crypto.Net membantu "
+       "menghindari masing-masing. Topiknya: rahasia di memori, keystore, jumlah yang presisi, alamat dengan checksum, "
+       "perlindungan replay, verifikasi sebelum percaya, decoding input berbahaya, dan menjaga API key tetap di luar log."),
+    code(INSTALL),
+    code(r'''
+using System.Numerics;
+using Crypto.Net.Core;
+using Crypto.Net.Native;
+using Crypto.Net.Wallet;
+using Crypto.Net.Evm;
+using Crypto.Net.Bitcoin;
+using Crypto.Net.Extensions;
+"ready"
+'''),
+    md("## 1. Secrets live in `SecureBuffer`, not `string`\n\nA `SecureBuffer` is pinned (the GC never copies it) and zeroed on "
+       "`Dispose`. Strings are immutable, so they linger in memory and show up in crash dumps. Analyzer rule CNET002 flags "
+       "secret-looking `string` fields and properties.",
+       "## 1. Rahasia disimpan di `SecureBuffer`, bukan `string`\n\n`SecureBuffer` di-pin (GC tidak pernah menyalinnya) dan dinolkan "
+       "saat `Dispose`. String tidak bisa diubah, sehingga tertinggal di memori dan muncul di crash dump. Aturan analyzer CNET002 "
+       "menandai field dan property `string` yang tampak seperti rahasia."),
+    code(r'''
+var secret = SecureBuffer.FromHex("4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318");
+Console.WriteLine(secret);                         // never prints the bytes
+var address = EvmAddress.FromPrivateKey(secret.Span);
+secret.Dispose();
+Console.WriteLine($"{address} · disposed: {secret.IsDisposed}");
+try { _ = secret.Span.Length; } catch (ObjectDisposedException) { Console.WriteLine("reading a disposed secret throws"); }
+'''),
+    md("## 2. Keys at rest go in a keystore\n\nWeb3 Secret Storage v3 (scrypt plus AES-128-CTR plus a MAC) is the format "
+       "geth and MetaMask use. A wrong password fails the MAC; it never yields a wrong key.",
+       "## 2. Kunci yang disimpan masuk keystore\n\nWeb3 Secret Storage v3 (scrypt plus AES-128-CTR plus MAC) adalah format yang "
+       "dipakai geth dan MetaMask. Password yang salah menggagalkan MAC; tidak pernah menghasilkan kunci yang salah."),
+    code(r'''
+byte[] demoKey = CryptoNative.Keccak256("notebook demo key — never fund it"u8);
+string json = KeyStore.Encrypt(demoKey, "correct horse battery staple", kdf: KeyStoreKdf.Light);
+var restored = KeyStore.Decrypt(json, "correct horse battery staple");
+Console.WriteLine($"round trip ok: {restored.ContentEquals(demoKey)}");
+restored.Dispose();
+try { KeyStore.Decrypt(json, "wrong"); } catch (System.Security.Cryptography.CryptographicException e) { Console.WriteLine($"wrong password: {e.Message}"); }
+'''),
+    md("## 3. Amounts are exact\n\n`0.1 + 0.2 != 0.3` in binary floating point. `Amount` stores integer base units. It "
+       "refuses any conversion that would lose precision. Analyzer rule CNET003 flags amounts built from `double`.",
+       "## 3. Jumlah selalu presisi\n\n`0.1 + 0.2 != 0.3` pada floating point biner. `Amount` menyimpan base unit berupa "
+       "bilangan bulat. Ia menolak konversi apa pun yang akan kehilangan presisi. Aturan analyzer CNET003 menandai amount yang "
+       "dibuat dari `double`."),
+    code(r'''
+Console.WriteLine($"double: 0.1 + 0.2 = {0.1 + 0.2:R}");
+var a = Amount.Parse("0.1", 18) + Amount.Parse("0.2", 18);
+Console.WriteLine($"Amount: {a} ({a.BaseUnits} wei)");
+try { Amount.Parse("1.0000001", 6); } catch (FormatException e) { Console.WriteLine($"too many decimals for USDC: {e.Message}"); }
+'''),
+    md("## 4. Checksums catch typos\n\nEIP-55 mixed case, Bech32 and Base58Check all detect most single-character mistakes. "
+       "Validate addresses before you send anything.",
+       "## 4. Checksum menangkap salah ketik\n\nHuruf besar-kecil EIP-55, Bech32 dan Base58Check mendeteksi sebagian besar "
+       "kesalahan satu karakter. Validasi alamat sebelum mengirim apa pun."),
+    code(r'''
+string good = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
+string typo = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeD";
+string btcTypo = "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyv";
+new { EvmGood = EvmAddress.IsValid(good), EvmTypo = EvmAddress.IsValid(typo), BitcoinTypo = BitcoinAddress.IsValid(btcTypo) }
+'''),
+    md("## 5. Replay protection and verification\n\nEIP-155 binds a signature to one chain id, so a Sepolia transaction cannot "
+       "be replayed on mainnet. When someone hands you a signed message, recover the signer and compare addresses. Never "
+       "trust the address the sender claims.",
+       "## 5. Perlindungan replay dan verifikasi\n\nEIP-155 mengikat tanda tangan ke satu chain id, sehingga transaksi Sepolia "
+       "tidak bisa diputar ulang di mainnet. Jika seseorang memberi Anda pesan bertanda tangan, pulihkan penandatangannya lalu "
+       "bandingkan alamatnya. Jangan pernah percaya alamat yang diklaim pengirim."),
+    code(r'''
+var tx = new EvmTransaction { ChainId = EvmChain.Sepolia.NumericChainId, Nonce = 0, To = good, Value = 1, MaxFeePerGas = 1, MaxPriorityFeePerGas = 1 };
+var signed = tx.Sign(demoKey);
+var decoded = EvmTransaction.DecodeSigned(signed.RawBytes);
+Console.WriteLine($"signed for chain {decoded.Transaction.ChainId} (Sepolia), not 1 (mainnet)");
+
+byte[] signature = EvmMessageSigner.SignPersonalMessage(demoKey, "I own this address");
+string signer = EvmMessageSigner.RecoverPersonalMessageSigner("I own this address", HexUtil.Encode(signature));
+Console.WriteLine($"claimed {EvmAddress.FromPrivateKey(demoKey)} · recovered {signer}");
+Console.WriteLine($"tampered message recovers someone else: {EvmMessageSigner.RecoverPersonalMessageSigner("I own this addresS", HexUtil.Encode(signature))}");
+'''),
+    md("## 6. Hostile input fails cleanly\n\nPSBTs, transactions, RLP, SCALE and Solana messages come from untrusted sources. "
+       "CI fuzzes every decoder; malformed input raises `FormatException`, never a crash. The PSBT signer also refuses "
+       "inputs whose UTXO data does not match the transaction it spends.",
+       "## 6. Input berbahaya gagal dengan rapi\n\nPSBT, transaksi, RLP, SCALE dan pesan Solana datang dari sumber yang tidak "
+       "tepercaya. CI melakukan fuzzing pada setiap decoder; input rusak memunculkan `FormatException`, tidak pernah crash. "
+       "Signer PSBT juga menolak input yang data UTXO-nya tidak cocok dengan transaksi yang dibelanjakannya."),
+    code(r'''
+foreach (string bad in new[] { "cHNidP8BAA==", "70736274ff0100ffffffff", "deadbeef" })
+    Console.WriteLine($"{bad,-24} → valid PSBT: {Psbt.TryParse(bad, out _)}");
+try { EvmTransaction.DecodeSigned(Convert.FromHexString("f8ff00")); }
+catch (FormatException e) { Console.WriteLine($"RLP: {e.Message}"); }
+'''),
+    md("## 7. API keys stay out of logs\n\nAnkr puts the key in the URL path. `RpcEndpoint.ToString()` redacts it, and "
+       "`AddCryptoNet` removes the HTTP loggers whenever keyed providers are configured.",
+       "## 7. API key tetap di luar log\n\nAnkr menaruh key di path URL. `RpcEndpoint.ToString()` menyamarkannya, dan "
+       "`AddCryptoNet` menghapus logger HTTP setiap kali provider ber-key dikonfigurasi."),
+    code(r'''
+var endpoint = RpcProviders.Ankr.GetEndpoint(EvmChain.Sepolia, "my-secret-api-key")!;
+$"logged as: {endpoint}"
+'''),
+    md("## Checklist\n\n- Develop on testnets. CNET004 flags mainnet clients in Debug builds.\n- Keep phrases and keys in "
+       "user secrets, a KMS or a hardware signer. CNET001 flags hard-coded ones.\n- Simulate before you sign: "
+       "`PrepareTransactionAsync`, `SimulateTransactionAsync` and `SimulateAsync` all do this.\n- Pass `CancellationToken`s, "
+       "so a stuck RPC call cannot hang your service (CNET005).\n- See the [security guide](../../docs/en/security.md).",
+       "## Daftar periksa\n\n- Kembangkan di testnet. CNET004 menandai client mainnet di build Debug.\n- Simpan frasa dan kunci di "
+       "user secrets, KMS atau hardware signer. CNET001 menandai yang ditulis langsung di kode.\n- Simulasikan sebelum "
+       "menandatangani: `PrepareTransactionAsync`, `SimulateTransactionAsync` dan `SimulateAsync` semuanya melakukannya.\n- Teruskan "
+       "`CancellationToken`, agar panggilan RPC yang macet tidak menggantung layanan Anda (CNET005).\n- Lihat "
+       "[panduan keamanan](../../docs/id/keamanan.md)."),
+]))
+
 # ----------------------------------------------------------------------------------------------- writer
+
+
+# ============================================================================== 10 more chains
+NOTEBOOKS.append(("10-more-chains", {"en": "Crypto.Net · 10 — NEAR, Aptos, Sui, TON and Cardano", "id": "Crypto.Net · 10 — NEAR, Aptos, Sui, TON dan Cardano"}, [
+    md("One recovery phrase, five more chains. Each section derives the account its wallets show, reads the live "
+       "network, signs offline and asks a real node to dry-run the result.",
+       "Satu frasa pemulihan, lima chain lagi. Setiap bagian menurunkan akun yang ditampilkan wallet-nya, membaca jaringan "
+       "live, menandatangani secara offline, lalu meminta node sungguhan melakukan dry run atas hasilnya."),
+    code(INSTALL),
+    code(r'''
+using Crypto.Net.Core;
+using Crypto.Net.Wallet;
+using Crypto.Net.Extensions;
+using Crypto.Net.Near;
+using Crypto.Net.Aptos;
+using Crypto.Net.Sui;
+using Crypto.Net.Ton;
+using Crypto.Net.Cardano;
+
+const string TestPhrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+var wallet = HdWallet.FromMnemonic(TestPhrase);
+new[] { "near-testnet", "aptos-testnet", "sui-testnet", "ton-testnet", "cardano-preprod" }
+    .Select(key => ChainCatalog.Get(key))
+    .Select(e => { var a = ChainCatalog.DeriveAccount(wallet, e); var r = new { Network = e.Name, Address = a.Address.Value }; (a as IDisposable)?.Dispose(); return r; })
+'''),
+    md("## NEAR\n\nAccounts are implicit (the hex public key) or named (`alice.testnet`). Transactions are Borsh-encoded "
+       "and signed as ed25519(sha256(bytes)).",
+       "## NEAR\n\nAkun bisa implicit (public key dalam hex) atau bernama (`alice.testnet`). Transaksi di-encode dengan "
+       "Borsh dan ditandatangani sebagai ed25519(sha256(bytes))."),
+    code(r'''
+var near = wallet.GetNearAccount(0, NearChain.Testnet);
+var nearRpc = new NearRpcClient(NearChain.Testnet);
+var meta = await nearRpc.ViewFunctionAsync("wrap.testnet", "ft_metadata");
+var nearTx = new NearTransaction
+{
+    SignerId = near.AccountId, PublicKey = near.PublicKey.ToArray(), Nonce = 1, ReceiverId = "wrap.testnet",
+    BlockHash = Crypto.Net.Native.CryptoNative.Base58Decode(await nearRpc.GetLatestBlockHashAsync()),
+    Actions = [NearAction.FunctionCall.Json("ft_transfer", new { receiver_id = "bob.testnet", amount = "1" }, deposit: 1)],
+};
+Console.WriteLine($"wNEAR symbol {meta.GetProperty("symbol")}, block {await nearRpc.GetBlockNumberAsync():N0}");
+Console.WriteLine($"signed {nearTx.Sign(near).Length} bytes, hash {nearTx.HashBase58}");
+'''),
+    md("## Aptos\n\nA BCS `RawTransaction` calling `0x1::aptos_account::transfer`. Simulation runs the Move VM without a "
+       "signature; this key holds no APT, so the VM reports the missing balance, which proves it decoded the transaction.",
+       "## Aptos\n\n`RawTransaction` BCS yang memanggil `0x1::aptos_account::transfer`. Simulasi menjalankan Move VM tanpa "
+       "tanda tangan; kunci ini tidak memiliki APT, jadi VM melaporkan saldo yang kurang, yang membuktikan transaksinya "
+       "berhasil di-decode."),
+    code(r'''
+var apt = wallet.GetAptosAccount(0, AptosChain.Testnet);
+var aptos = new AptosRestClient(AptosChain.Testnet);
+var aptTx = await aptos.BuildTransactionAsync(apt.Address.Value, AptosEntryFunction.Transfer("0x1", 1));
+var sim = await aptos.SimulateAsync(aptTx, apt.PublicKey);
+Console.WriteLine($"ledger {(await aptos.GetLedgerInfoAsync()).BlockHeight:N0}, sequence {aptTx.SequenceNumber}");
+Console.WriteLine($"simulation: {sim.VmStatus}, gas {sim.GasUsed}");
+Console.WriteLine($"signed hash {AptosRawTransaction.HashOf(aptTx.Sign(apt))}");
+'''),
+    md("## Sui\n\nA programmable transaction splits the gas coin and transfers the piece. To dry-run with real coins we "
+       "borrow a funded address from the chain; nothing is signed for it.",
+       "## Sui\n\nProgrammable transaction memecah gas coin lalu mentransfer potongannya. Untuk dry run dengan coin "
+       "sungguhan kita meminjam alamat yang memiliki saldo dari chain; tidak ada yang ditandatangani untuk alamat itu."),
+    code(r'''
+var sui = wallet.GetSuiAccount(0, SuiChain.Testnet);
+var suiClient = new SuiGraphQlClient(SuiChain.Testnet);
+var found = await suiClient.QueryAsync("{ objects(first: 1, filter: { type: \"0x2::coin::Coin<0x2::sui::SUI>\" }) { nodes { owner { ... on AddressOwner { address { address } } } } } }");
+string funded = found.GetProperty("objects").GetProperty("nodes")[0].GetProperty("owner").GetProperty("address").GetProperty("address").GetString()!;
+var data = await suiClient.BuildAsync(new SuiTransactionBuilder(funded).TransferSui(sui.Address.Value, 1));
+var effects = await suiClient.SimulateAsync(data.Serialize());
+Console.WriteLine($"dry run {(effects.Success ? "succeeded" : effects.Error)}, gas {effects.NetGas:N0} MIST");
+Console.WriteLine($"node digest {effects.Digest} = ours {data.Digest}: {effects.Digest == data.Digest}");
+'''),
+    md("## TON\n\nTON wallets are contracts: the address is the hash of the wallet's code and data. W5 is the default; the "
+       "first transfer deploys it. TON Center emulates the wallet code on our signed body to price it.",
+       "## TON\n\nWallet TON adalah kontrak: alamatnya adalah hash dari kode dan data wallet. W5 adalah default; transfer "
+       "pertama sekaligus men-deploy-nya. TON Center mengemulasikan kode wallet atas body yang kita tanda tangani untuk "
+       "menghitung biayanya."),
+    code(r'''
+var ton = wallet.GetTonAccount(0, TonChain.Testnet);
+var center = new TonCenterClient(TonChain.Testnet);
+var state = await center.GetAccountStateAsync(ton.Address.Value);
+uint seqno = await center.GetSeqnoAsync(ton.Address.Value);
+var body = ton.CreateTransferBody(seqno, [TonMessage.WithComment(ton.WalletAddress, 1, "Crypto.Net notebook")]);
+var fees = await center.EstimateFeeAsync(ton, body, includeStateInit: !state.IsActive);
+Console.WriteLine($"{ton.Address.Value} is {state.State}, seqno {seqno}");
+Console.WriteLine($"estimated fees {TonUnits.Nano(fees.Total)} TON; message hash {Convert.ToHexStringLower(TonMessage.NormalizedHash(ton.CreateTransfer(seqno, [])))}");
+'''),
+    md("## Cardano\n\nCardano keys come from the mnemonic entropy (Icarus) through BIP32-Ed25519. The test phrase holds test "
+       "ADA on preprod, so we can select real UTxOs, return change and pay the exact fee, then stop before submitting.",
+       "## Cardano\n\nKunci Cardano berasal dari entropi mnemonic (Icarus) lewat BIP32-Ed25519. Frasa uji ini memiliki "
+       "test ADA di preprod, jadi kita bisa memilih UTxO sungguhan, mengembalikan kembalian dan membayar fee yang tepat, "
+       "lalu berhenti sebelum submit."),
+    code(r'''
+var ada = wallet.GetCardanoAccount(0, 0, CardanoChain.Preprod);
+var koios = new KoiosClient(CardanoChain.Preprod);
+Console.WriteLine($"balance {await koios.GetBalanceAsync(ada.Address)} tADA");
+try
+{
+    var adaTx = await koios.BuildTransferAsync(ada, [new CardanoOutput(ada.EnterpriseAddress, 2_000_000)], message: "Crypto.Net notebook");
+    byte[] signedAda = adaTx.Sign(ada);
+    Console.WriteLine($"{adaTx.Inputs.Count} input(s), {adaTx.Outputs.Count} outputs, fee {adaTx.Fee:N0} lovelace, {signedAda.Length} bytes");
+    Console.WriteLine($"tx id {adaTx.Id}");
+}
+catch (InvalidOperationException e) { Console.WriteLine(e.Message); }
+'''),
+    code(r'''
+near.Dispose(); apt.Dispose(); sui.Dispose(); ton.Dispose(); ada.Dispose();
+nearRpc.Dispose(); aptos.Dispose(); suiClient.Dispose(); center.Dispose(); koios.Dispose(); wallet.Dispose();
+"disposed"
+'''),
+]))
 
 
 def lines(text):

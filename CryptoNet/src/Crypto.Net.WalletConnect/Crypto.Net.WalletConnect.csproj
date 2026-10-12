@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>WalletConnect v2 (Reown) for Crypto.Net: pair with mobile wallets through the relay, propose and approve sessions, send EIP-155 requests (personal_sign, eth_signTypedData_v4, eth_sendTransaction), and build wallets that answer them.</Description>
+    <PackageTags>$(PackageTags);walletconnect;reown;wallet</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Evm\Crypto.Net.Evm.csproj" />
+  </ItemGroup>
+</Project>
