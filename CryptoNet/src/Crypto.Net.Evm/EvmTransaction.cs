@@ -140,29 +140,37 @@ public sealed class EvmTransaction
         {
             tx.Type = EvmTransactionType.Legacy;
             list = EvmRlp.Decode(raw);
-            if (list.Items!.Count != 9) throw new FormatException("Legacy transaction must have 9 fields");
+            if (list.AsList().Count != 9) throw new FormatException("Legacy transaction must have 9 fields");
             tx.Nonce = list[0].ToUInt64();
             tx.GasPrice = list[1].ToBigInteger();
             tx.GasLimit = list[2].ToUInt64();
             tx.To = ReadTo(list[3]);
             tx.Value = list[4].ToBigInteger();
-            tx.Data = list[5].Bytes!;
+            tx.Data = list[5].AsBytes();
             BigInteger v = list[6].ToBigInteger();
             byte rec;
             if (v >= 35)
             {
-                tx.ChainId = (ulong)((v - 35) / 2);
+                var chainId = (v - 35) / 2;
+                if (chainId > ulong.MaxValue) throw new FormatException("EIP-155 chain id does not fit in 64 bits");
+                tx.ChainId = (ulong)chainId;
                 rec = (byte)((v - 35) % 2);
             }
-            else
+            else if (v == 27 || v == 28)
             {
                 tx.ChainId = 0;
                 rec = (byte)(v - 27);
+            }
+            else
+            {
+                throw new FormatException($"Invalid legacy signature v = {v}");
             }
             return new SignedEvmTransaction(tx, raw.ToArray(), list[7].ToBigInteger(), list[8].ToBigInteger(), v, rec);
         }
 
         tx.Type = (EvmTransactionType)raw[0];
+        if (tx.Type is not (EvmTransactionType.AccessList or EvmTransactionType.DynamicFee))
+            throw new NotSupportedException($"Transaction type 0x{raw[0]:x2} is not supported");
         list = EvmRlp.Decode(raw[1..]);
         int i = 0;
         tx.ChainId = list[i++].ToUInt64();
@@ -183,12 +191,15 @@ public sealed class EvmTransaction
         tx.GasLimit = list[i++].ToUInt64();
         tx.To = ReadTo(list[i++]);
         tx.Value = list[i++].ToBigInteger();
-        tx.Data = list[i++].Bytes!;
-        tx.AccessList = list[i++].Items!.Select(e => new AccessListEntry(
-            EvmAddress.ToChecksumAddress(e[0].Bytes!),
-            e[1].Items!.Select(k => k.Bytes!).ToList())).ToList();
+        tx.Data = list[i++].AsBytes();
+        tx.AccessList = list[i++].AsList().Select(e => new AccessListEntry(
+            e[0].AsBytes() is { Length: 20 } address ? EvmAddress.ToChecksumAddress(address) : throw new FormatException("Access list address must be 20 bytes"),
+            e[1].AsList().Select(k => k.AsBytes()).ToList())).ToList();
         BigInteger yParity = list[i++].ToBigInteger();
-        return new SignedEvmTransaction(tx, raw.ToArray(), list[i++].ToBigInteger(), list[i].ToBigInteger(), yParity, (byte)yParity);
+        if (yParity > 1) throw new FormatException("y-parity must be 0 or 1");
+        var signed = new SignedEvmTransaction(tx, raw.ToArray(), list[i++].ToBigInteger(), list[i++].ToBigInteger(), yParity, (byte)yParity);
+        if (list.AsList().Count != i) throw new FormatException("Unexpected number of transaction fields");
+        return signed;
     }
 
     private static string? ReadTo(RlpItem item) => item.Bytes is { Length: 20 } b ? EvmAddress.ToChecksumAddress(b) : null;

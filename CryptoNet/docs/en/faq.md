@@ -18,7 +18,8 @@ Ethereum — derive it with `wallet.DerivePath(...)`. Also check that both sides
 more than it saves for small inputs. `Auto` mode therefore keeps SHA-2, HMAC and PBKDF2 on the platform.
 
 **Is a Polkadot receipt proof that the transfer succeeded?**
-It proves inclusion in a block. Dispatch errors are reported through `System.Events`; check an explorer.
+Yes. `GetReceiptAsync` decodes `System.Events` for the block. `IsSuccess` is false when the extrinsic was included
+but failed, and `ErrorMessage` holds the decoded dispatch error, such as `Balances.InsufficientBalance`.
 
 **Public endpoints keep rate-limiting me.**
 Add an Ankr or dRPC key (see [Dependency injection and RPC providers](dependency-injection.md)) or point the

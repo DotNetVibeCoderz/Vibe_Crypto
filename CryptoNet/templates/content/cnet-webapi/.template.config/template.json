@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Gravicode Studios",
+  "classifications": [
+    "Crypto.Net",
+    "Blockchain",
+    "Web3",
+    "Web",
+    "WebAPI"
+  ],
+  "identity": "Crypto.Net.Templates.cnet-webapi",
+  "groupIdentity": "Crypto.Net.Templates.cnet-webapi",
+  "name": "Crypto.Net Web API",
+  "shortName": "cnet-webapi",
+  "description": "ASP.NET Core Minimal API exposing networks, balances, chain heads and address validation with OpenAPI. Built by Gravicode Studios, led by Kang Fadhil.",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "CnetWebApi",
+  "preferNameDirectory": true,
+  "symbols": {
+    "CryptoNetVersion": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "1.1.0",
+      "replaces": "CRYPTONET_VERSION",
+      "description": "Version of the Crypto.Net packages to reference."
+    },
+    "Network": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "sepolia",
+      "replaces": "CNET_DEFAULT_NETWORK",
+      "description": "Default network key (sepolia, bitcoin-testnet, solana-devnet, westend, cosmoshub-testnet, ...)."
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Skip dotnet restore after creation."
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            ".template.config/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": [
+    {
+      "condition": "(!skipRestore)",
+      "description": "Restore NuGet packages required by this project.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}

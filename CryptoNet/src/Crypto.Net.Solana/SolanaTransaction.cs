@@ -15,9 +15,17 @@ public sealed record AccountMeta(string PublicKey, bool IsSigner, bool IsWritabl
 /// <summary>A program invocation.</summary>
 public sealed record SolanaInstruction(string ProgramId, IReadOnlyList<AccountMeta> Accounts, byte[] Data);
 
+/// <summary>Solana message format.</summary>
+public enum SolanaMessageVersion
+{
+    Legacy,
+    V0,
+}
+
 /// <summary>
-/// Builds, signs and serializes legacy Solana transactions. Accounts are de-duplicated and ordered
-/// (writable signers, read-only signers, writable, read-only) with the fee payer first.
+/// Builds, signs and serializes Solana transactions: legacy messages, or versioned v0 messages that load accounts from
+/// address lookup tables. Accounts are de-duplicated and ordered (writable signers, read-only signers, writable,
+/// read-only) with the fee payer first.
 /// </summary>
 public sealed class SolanaTransaction
 {
@@ -30,6 +38,21 @@ public sealed class SolanaTransaction
     public string FeePayer { get; }
     public string RecentBlockhash { get; set; }
     public List<SolanaInstruction> Instructions { get; } = [];
+
+    /// <summary>Message format; <see cref="WithLookupTables"/> switches to v0.</summary>
+    public SolanaMessageVersion Version { get; set; } = SolanaMessageVersion.Legacy;
+
+    /// <summary>Address lookup tables a v0 message may load non-signer accounts from.</summary>
+    public List<AddressLookupTableAccount> AddressLookupTables { get; } = [];
+
+    /// <summary>Uses a v0 message and loads accounts from <paramref name="tables"/> where possible.</summary>
+    public SolanaTransaction WithLookupTables(params AddressLookupTableAccount[] tables)
+    {
+        Version = SolanaMessageVersion.V0;
+        AddressLookupTables.AddRange(tables);
+        return this;
+    }
+
     private readonly Dictionary<string, byte[]> _signatures = new(StringComparer.Ordinal);
 
     public SolanaTransaction Add(SolanaInstruction instruction)
@@ -67,6 +90,7 @@ public sealed class SolanaTransaction
     public byte[] SerializeMessage()
     {
         if (Instructions.Count == 0) throw new InvalidOperationException("Transaction has no instructions");
+        if (Version == SolanaMessageVersion.V0) return SerializeMessageV0();
         var accounts = CompileAccounts();
         var index = accounts.Select((a, i) => (a.PublicKey, i)).ToDictionary(x => x.PublicKey, x => (byte)x.i, StringComparer.Ordinal);
 
@@ -88,6 +112,104 @@ public sealed class SolanaTransaction
         }
         return ms.ToArray();
     }
+
+    /// <summary>
+    /// Static accounts and lookup-table loads of a v0 message. Program ids and signers always stay static; other accounts
+    /// found in a lookup table are loaded from it (writable first, then read-only), as @solana/web3.js does.
+    /// </summary>
+    public (IReadOnlyList<AccountMeta> StaticAccounts, IReadOnlyList<MessageAddressTableLookup> Lookups, IReadOnlyList<string> AccountKeys) CompileV0()
+    {
+        // Insertion order: payer, then per instruction the program id followed by its accounts.
+        var map = new Dictionary<string, (bool Signer, bool Writable, bool Invoked, int Order)>(StringComparer.Ordinal);
+        int order = 0;
+        void Merge(string key, bool signer, bool writable, bool invoked)
+        {
+            map[key] = map.TryGetValue(key, out var e)
+                ? (e.Signer || signer, e.Writable || writable, e.Invoked || invoked, e.Order)
+                : (signer, writable, invoked, order++);
+        }
+        Merge(FeePayer, true, true, false);
+        foreach (var ix in Instructions)
+        {
+            Merge(ix.ProgramId, false, false, true);
+            foreach (var a in ix.Accounts) Merge(a.PublicKey, a.IsSigner, a.IsWritable, false);
+        }
+
+        var remaining = map.OrderBy(kv => kv.Value.Order).ToList();
+        var lookups = new List<MessageAddressTableLookup>();
+        var loadedWritable = new List<string>();
+        var loadedReadonly = new List<string>();
+        foreach (var table in AddressLookupTables)
+        {
+            var writable = new List<byte>();
+            var readOnly = new List<byte>();
+            foreach (bool wantWritable in new[] { true, false })
+            {
+                foreach (var kv in remaining.Where(kv => !kv.Value.Signer && !kv.Value.Invoked && kv.Value.Writable == wantWritable).ToList())
+                {
+                    int idx = IndexOf(table.Addresses, kv.Key);
+                    if (idx is < 0 or > 255) continue;
+                    (wantWritable ? writable : readOnly).Add((byte)idx);
+                    (wantWritable ? loadedWritable : loadedReadonly).Add(kv.Key);
+                    remaining.Remove(kv);
+                }
+            }
+            if (writable.Count + readOnly.Count > 0) lookups.Add(new MessageAddressTableLookup(table.Key, writable, readOnly));
+        }
+
+        var statics = remaining
+            .OrderBy(kv => kv.Key == FeePayer ? 0 : 1)
+            .ThenBy(kv => (kv.Value.Signer, kv.Value.Writable) switch { (true, true) => 0, (true, false) => 1, (false, true) => 2, _ => 3 })
+            .ThenBy(kv => kv.Value.Order)
+            .Select(kv => new AccountMeta(kv.Key, kv.Value.Signer, kv.Value.Writable))
+            .ToList();
+        if (statics.Count + loadedWritable.Count + loadedReadonly.Count > 256) throw new InvalidOperationException("A message can reference at most 256 accounts");
+        return (statics, lookups, [.. statics.Select(a => a.PublicKey), .. loadedWritable, .. loadedReadonly]);
+
+        static int IndexOf(IReadOnlyList<string> list, string key)
+        {
+            for (int i = 0; i < list.Count; i++)
+                if (string.Equals(list[i], key, StringComparison.Ordinal)) return i;
+            return -1;
+        }
+    }
+
+    private byte[] SerializeMessageV0()
+    {
+        var (statics, lookups, keys) = CompileV0();
+        var index = keys.Select((k, i) => (k, i)).ToDictionary(x => x.k, x => (byte)x.i, StringComparer.Ordinal);
+
+        using var ms = new MemoryStream();
+        ms.WriteByte(0x80);
+        ms.WriteByte((byte)statics.Count(a => a.IsSigner));
+        ms.WriteByte((byte)statics.Count(a => a.IsSigner && !a.IsWritable));
+        ms.WriteByte((byte)statics.Count(a => !a.IsSigner && !a.IsWritable));
+        WriteCompactU16(ms, statics.Count);
+        foreach (var a in statics) ms.Write(SolanaAddress.Decode(a.PublicKey));
+        ms.Write(SolanaAddress.Decode(RecentBlockhash));
+        WriteCompactU16(ms, Instructions.Count);
+        foreach (var ix in Instructions)
+        {
+            ms.WriteByte(index[ix.ProgramId]);
+            WriteCompactU16(ms, ix.Accounts.Count);
+            foreach (var a in ix.Accounts) ms.WriteByte(index[a.PublicKey]);
+            WriteCompactU16(ms, ix.Data.Length);
+            ms.Write(ix.Data);
+        }
+        WriteCompactU16(ms, lookups.Count);
+        foreach (var l in lookups)
+        {
+            ms.Write(SolanaAddress.Decode(l.TableKey));
+            WriteCompactU16(ms, l.WritableIndexes.Count);
+            foreach (byte b in l.WritableIndexes) ms.WriteByte(b);
+            WriteCompactU16(ms, l.ReadonlyIndexes.Count);
+            foreach (byte b in l.ReadonlyIndexes) ms.WriteByte(b);
+        }
+        return ms.ToArray();
+    }
+
+    private IReadOnlyList<AccountMeta> Signers() =>
+        Version == SolanaMessageVersion.V0 ? [.. CompileV0().StaticAccounts.Where(a => a.IsSigner)] : [.. CompileAccounts().Where(a => a.IsSigner)];
 
     /// <summary>Signs with raw 32-byte ed25519 seeds (Solana secret keys' first half).</summary>
     public SolanaTransaction Sign(params byte[][] privateKeys)
@@ -116,7 +238,7 @@ public sealed class SolanaTransaction
     public byte[] Serialize()
     {
         byte[] message = SerializeMessage();
-        var signers = CompileAccounts().Where(a => a.IsSigner).ToList();
+        var signers = Signers();
         using var ms = new MemoryStream();
         WriteCompactU16(ms, signers.Count);
         foreach (var s in signers)

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/CnetLib/CnetLib.csproj" />
+  <Project Path="tests/CnetLib.Tests/CnetLib.Tests.csproj" />
+</Solution>

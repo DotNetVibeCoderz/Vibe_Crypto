@@ -29,6 +29,7 @@ riwayat shell.
 | `cnet sign typed-data <berkas.json> …` | Digest dan tanda tangan EIP-712 |
 | `cnet verify "<teks>" -s <tanda-tangan>` | Memulihkan alamat penanda tangan |
 | `cnet bench [--scale 1.0]` | Inti Rust vs C# managed di mesin ini |
+| `cnet new <console\|worker\|webapi\|lib\|test> [-n nama] [-o folder] [--network key]` | Project baru dari [template](template.md) (`dotnet new cnet-*`) |
 
 ![cnet bench](../assets/screenshots/cli-bench.png)
 

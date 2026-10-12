@@ -55,17 +55,20 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Core` | `Amount` (pasti), `Address`, `TxHash`, `ISigner`, `IChainClient`, transport JSON-RPC, polling receipt |
 | `Crypto.Net.Wallet` | Mnemonic BIP-39, kunci HD BIP-32/SLIP-10, xprv/xpub/zpub, keystore Web3 v3, `KeySigner` |
 | `Crypto.Net.Evm` | EIP-55, transaksi Legacy/EIP-2930/EIP-1559, codec ABI, EIP-191/712, ERC-20, client JSON-RPC |
-| `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, serialisasi SegWit, signing legacy/BIP-143/BIP-341, coin selection, Esplora |
-| `Crypto.Net.Solana` | Transaksi, System/SPL Token/ATA/Compute Budget/Memo, PDA, kunci Phantom & solana-cli, RPC |
-| `Crypto.Net.Polkadot` | SS58, derivasi Substrate sr25519/ed25519, SCALE, extrinsic berbasis metadata runtime, RPC |
+| `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, script tree Taproot, signing legacy/BIP-143/BIP-341, PSBT (BIP-174/370), multisig, coin selection, Esplora |
+| `Crypto.Net.Solana` | Transaksi legacy dan v0, address lookup table, System/SPL Token/ATA/Compute Budget/Memo, PDA, kunci Phantom & solana-cli, RPC |
+| `Crypto.Net.Polkadot` | SS58, derivasi Substrate sr25519/ed25519, SCALE, extrinsic berbasis metadata runtime, decoding event dan storage, RPC |
 | `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` dengan client ber-key, resilience, `ChainCatalog`, penyedia Ankr/dRPC, benchmark |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` dan test vector resmi |
+| `Crypto.Net.Analyzers` | Aturan Roslyn CNET001–005: kunci hard-coded, rahasia dalam string, amount dari float, mainnet di Debug, cancellation token yang terlewat |
 | `Crypto.Net.Cli` | Tool dotnet `cnet` |
+| `Crypto.Net.Templates` | Template `dotnet new`: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # menarik semua chain
 dotnet tool install -g Crypto.Net.Cli      # perintah cnet
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
 ```
 
 ## Mulai cepat

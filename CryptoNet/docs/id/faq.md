@@ -18,7 +18,9 @@ turunkan dengan `wallet.DerivePath(...)`. Pastikan juga kedua sisi memakai passp
 penghematannya untuk input kecil. Karena itu mode `Auto` tetap memakai platform untuk SHA-2, HMAC dan PBKDF2.
 
 **Apakah receipt Polkadot membuktikan transfer berhasil?**
-Receipt membuktikan inklusi dalam blok. Error dispatch dilaporkan lewat `System.Events`; periksa di explorer.
+Ya. `GetReceiptAsync` men-decode `System.Events` untuk blok tersebut. `IsSuccess` bernilai false jika extrinsic
+masuk blok tetapi gagal, dan `ErrorMessage` berisi error dispatch yang sudah di-decode, misalnya
+`Balances.InsufficientBalance`.
 
 **Endpoint publik terus membatasi laju permintaan saya.**
 Tambahkan API key Ankr atau dRPC (lihat [Dependency injection dan penyedia RPC](dependency-injection.md)) atau arahkan

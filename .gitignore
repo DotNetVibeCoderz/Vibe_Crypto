@@ -440,3 +440,9 @@ appsettings.*.local.json
 drpc.txt
 ankr.txt
 PackageCredentials.txt
+
+# cargo-fuzz
+**/rust/fuzz/target/
+**/rust/fuzz/corpus/
+**/rust/fuzz/artifacts/
+**/rust/fuzz/coverage/

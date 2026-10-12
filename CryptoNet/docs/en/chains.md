@@ -111,6 +111,47 @@ Inputs spending P2PKH (legacy sighash), P2WPKH (BIP-143) and P2TR key-path (BIP-
 are signed automatically according to the spent output's script. Inputs use sequence `0xFFFFFFFD` (RBF).
 `EsploraClient.GetFeeRateAsync(targetBlocks)` reads `/fee-estimates`.
 
+### Taproot script trees
+
+```csharp
+var tree = new TaprootNode.Branch(new TaprootNode.Leaf(scriptA), new TaprootNode.Leaf(scriptB));
+string address = Taproot.Address(internalXOnlyKey, tree, BitcoinNetwork.Testnet);
+var spends = Taproot.LeafSpends(internalXOnlyKey, tree);      // leaf hash + control block per leaf
+byte[] msg = tx.GetTaprootSigMessage(0, utxos, SigHashType.SingleAnyoneCanPay, leafHash: spends[0].LeafHash);
+```
+
+`GetTaprootSigHash` covers every BIP-341 variant (ANYONECANPAY, NONE, SINGLE, script path, annex), and
+`GetLegacySigHash`/`GetSegwitV0SigHash` accept every sighash type. They are checked against the official BIP-341
+wallet vectors and Bitcoin Core's 500 `sighash.json` cases. `BitcoinTransaction.Parse` reads raw transactions.
+
+### PSBT and multisig
+
+`Psbt` implements BIP-174 (v0) and BIP-370 (v2) with the BIP-371 Taproot fields, covering every role.
+Unknown and proprietary records are preserved, and an unmodified PSBT re-serializes byte for byte.
+
+```csharp
+byte[] script = BitcoinScript.Multisig(2, [pubA, pubB, pubC]);              // sortedmulti (BIP-67)
+string addr = BitcoinAddress.FromScript(script, BitcoinAddressType.SegWitP2WSH, BitcoinNetwork.Testnet).Value;
+
+var psbt = Psbt.Create(unsignedTx)                                          // creator
+    .Update(witnessScripts: [script], previousTransactions: [fundingTx],     // updater
+            keyOrigins: [PsbtKeyOrigin.Create(pubA, fingerprint, "m/48'/1'/0'/2'/0/0"), ...]);
+string forCosigner = psbt.ToBase64();
+
+var mine = Psbt.Parse(forCosigner);
+mine.Sign(wallet.MasterKey);                     // signs every input whose BIP-32 origin matches this wallet
+var all = Psbt.Combine(mine, Psbt.Parse(theirs)); // combiner
+all.Finalize();                                  // finalizer
+BitcoinTransaction signed = all.ExtractTransaction();
+```
+
+The signer handles P2PKH, P2WPKH, P2SH-P2WPKH, bare/P2SH/P2WSH/P2SH-P2WSH multisig, and Taproot key and script
+paths. It enforces the BIP-174 signer checks: the UTXO must match the txid, scripts must hash to the spent output,
+and a witness UTXO is refused on a non-witness input. `Psbt.CreateV2()` with `AddInput`/`AddOutput` builds v2
+PSBTs, including the BIP-370 locktime rules. `ConvertTo(0|2)` converts between versions.
+`BitcoinAddress.FromScriptNestedSegwit` produces `sh(wsh(...))` addresses.
+All official BIP-174 and BIP-370 vectors pass.
+
 ---
 
 ## Solana
@@ -140,6 +181,27 @@ var (error, logs) = await rpc.SimulateTransactionAsync(tx.Serialize());
 Accounts are de-duplicated and ordered (fee payer, writable signers, read-only signers, writable, read-only).
 `SolanaAddress.FindProgramAddress(seeds, programId)` and `GetAssociatedTokenAddress(owner, mint)` derive PDAs.
 Keys import/export in Phantom (Base58, 64 bytes) and solana-cli (JSON array) formats.
+
+### Versioned transactions and lookup tables
+
+```csharp
+// Create a table, then extend it with the accounts you reuse
+ulong slot = await rpc.GetBlockNumberAsync();
+var (create, tableAddress) = AddressLookupTableProgram.Create(sol.Address.Value, sol.Address.Value, slot);
+var extend = AddressLookupTableProgram.Extend(tableAddress, sol.Address.Value, recipients, sol.Address.Value);
+
+// Use it: non-signer accounts found in the table are loaded by index (v0 message)
+var table = await rpc.GetAddressLookupTableAsync(tableAddress);
+var tx = new SolanaTransaction(sol.Address.Value, blockhash).WithLookupTables(table!);
+foreach (var r in recipients) tx.Add(SystemProgram.Transfer(sol.Address.Value, r, 1_000));
+sol.Sign(tx);
+
+var (signatures, message) = SolanaMessage.ParseTransaction(tx.Serialize());   // decode legacy or v0
+IReadOnlyList<string> keys = message.ResolveAccountKeys([table!]);
+```
+
+v0 messages compile exactly as `@solana/web3.js` `compileToV0Message` does. Signers and program ids stay static.
+`Freeze`, `Deactivate` and `Close` complete the lookup table program.
 
 ---
 
@@ -176,8 +238,23 @@ TxHash r = await rpc.SubmitCallAsync(root, call);
 Pallet and call indices and the signed-extension list come from the live runtime metadata (V14/V15), so
 transfers keep working across runtime upgrades. Extrinsics are mortal (64 blocks) by default. Extensions that carry
 data Crypto.Net cannot fill raise `NotSupportedException` instead of producing an invalid extrinsic.
-`GetReceiptAsync` reports *inclusion* (found in one of the last 50 blocks); dispatch success requires reading
-`System.Events` — check an explorer such as Subscan.
+`GetReceiptAsync` searches the last 50 blocks. It decodes `System.Events` at that block, so `IsSuccess` reflects
+dispatch, and `ErrorMessage` names the error (`Balances.InsufficientBalance`, `Token.Frozen`, ...).
+
+### Events and storage
+
+```csharp
+var events = await client.GetEventsAsync(blockHash);              // every event in the block
+foreach (var e in events.Where(e => e.Is("Balances", "Transfer")))
+    Console.WriteLine($"{e["from"]} -> {e["to"]}: {e["amount"]}");
+
+object? now = await client.GetStorageAsync("Timestamp", "Now");   // any storage item, decoded from metadata
+byte[] key = metadata.StorageKey("System", "Account", accountId); // twox/blake2 hashers applied per key
+```
+
+`RuntimeMetadata` keeps the full type registry, storage entries and each pallet's event/error enums.
+`ScaleDecoder.Decode(metadata, typeId, bytes)` turns any SCALE value into dictionaries, `ScaleVariant`s, arrays and
+numbers. Metadata is fetched per block and cached per spec version, so historical blocks decode with their own runtime.
 
 ---
 

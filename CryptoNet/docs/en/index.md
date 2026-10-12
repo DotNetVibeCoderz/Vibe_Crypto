@@ -18,6 +18,8 @@
 | [The Gallery](gallery.md) | explore every feature interactively |
 | [Architecture](architecture.md) | see how the Rust core, the C ABI and the managed fallback fit together |
 | [Security](security.md) | deploy safely |
+| [Project templates](templates.md) | start a console app, worker, Web API, library or test project with `dotnet new` |
+| [Analyzers](analyzers.md) | catch hard-coded keys, float amounts and other mistakes at compile time |
 | [Building and contributing](contributing.md) | build from source, run tests, release packages |
 | [FAQ](faq.md) | find quick answers |
 | [Notebooks](../../samples/notebooks/README.md) | learn each chain interactively in Polyglot Notebooks |
@@ -29,7 +31,7 @@
 | Curve / scheme | secp256k1 ECDSA, BIP-340 Schnorr | secp256k1 ECDSA | Ed25519 | sr25519, Ed25519 | secp256k1 ECDSA |
 | Addresses | P2PKH, P2SH, P2WPKH, P2WSH, P2TR | EIP-55 | Base58, PDA, ATA | SS58 (any prefix) | Bech32 (any HRP) |
 | HD paths | BIP-44/84/86, xpub/zpub | BIP-44 (MetaMask) | SLIP-10 (Phantom) | substrate-bip39 `//hard/soft` | BIP-44 coin 118 |
-| Transactions | Legacy, SegWit v0, Taproot key-path; coin selection | Legacy (EIP-155), EIP-2930, EIP-1559 | Legacy messages: System, SPL Token, ATA, Compute Budget, Memo | Extrinsic v4 built from live runtime metadata | `SIGN_MODE_DIRECT`: bank, staking, distribution |
+| Transactions | Legacy, SegWit v0, Taproot key/script path; PSBT v0/v2; multisig; coin selection | Legacy (EIP-155), EIP-2930, EIP-1559 | Legacy and v0 messages with lookup tables: System, SPL Token, ATA, Compute Budget, Memo, ALT | Extrinsic v4 built from live runtime metadata | `SIGN_MODE_DIRECT`: bank, staking, distribution |
 | Off-chain signing | — | EIP-191, EIP-712 | Ed25519 messages | Polkadot.js `signRaw` | — |
 | RPC | Esplora REST | JSON-RPC | JSON-RPC | JSON-RPC | REST (LCD) |
 | Tokens | — | ERC-20 | SPL Token | native balance | bank balances |

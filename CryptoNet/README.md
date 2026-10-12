@@ -55,17 +55,20 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Core` | `Amount` (exact), `Address`, `TxHash`, `ISigner`, `IChainClient`, JSON-RPC transport, receipt polling |
 | `Crypto.Net.Wallet` | BIP-39 mnemonics, BIP-32/SLIP-10 HD keys, xprv/xpub/zpub, Web3 v3 keystores, `KeySigner` |
 | `Crypto.Net.Evm` | EIP-55, Legacy/EIP-2930/EIP-1559 transactions, ABI codec, EIP-191/712, ERC-20, JSON-RPC client |
-| `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, SegWit serialization, legacy/BIP-143/BIP-341 signing, coin selection, Esplora |
-| `Crypto.Net.Solana` | Transactions, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC |
-| `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, RPC |
+| `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, Taproot script trees, legacy/BIP-143/BIP-341 signing, PSBT (BIP-174/370), multisig, coin selection, Esplora |
+| `Crypto.Net.Solana` | Legacy and v0 transactions, address lookup tables, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC |
+| `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, event and storage decoding, RPC |
 | `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` and official test vectors |
+| `Crypto.Net.Analyzers` | Roslyn rules CNET001–005: hard-coded keys, secrets in strings, float amounts, mainnet in Debug, dropped cancellation tokens |
 | `Crypto.Net.Cli` | The `cnet` dotnet tool |
+| `Crypto.Net.Templates` | `dotnet new` templates: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # pulls in every chain
 dotnet tool install -g Crypto.Net.Cli      # the cnet command
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
 ```
 
 ## Quick start

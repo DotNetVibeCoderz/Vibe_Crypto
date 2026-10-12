@@ -89,6 +89,10 @@ pub fn recover_public_key(
 
 /// Returns the 32-byte x-only public key for a secret key.
 pub fn xonly_public_key(secret_key_bytes: &[u8]) -> Result<[u8; 32], Error> {
+    // k256 panics on slices of the wrong length, so check before converting.
+    if secret_key_bytes.len() != 32 {
+        return Err("Invalid secp256k1 secret key");
+    }
     let sk = schnorr::SigningKey::from_bytes(secret_key_bytes)
         .map_err(|_| "Invalid secp256k1 secret key")?;
     Ok(sk.verifying_key().to_bytes().into())
@@ -99,6 +103,10 @@ pub fn schnorr_sign(
     msg: &[u8],
     aux_rand: &[u8; 32],
 ) -> Result<[u8; 64], Error> {
+    // k256 panics on slices of the wrong length, so check before converting.
+    if secret_key_bytes.len() != 32 {
+        return Err("Invalid secp256k1 secret key");
+    }
     let sk = schnorr::SigningKey::from_bytes(secret_key_bytes)
         .map_err(|_| "Invalid secp256k1 secret key")?;
     let sig = sk
@@ -108,6 +116,10 @@ pub fn schnorr_sign(
 }
 
 pub fn schnorr_verify(xonly_pubkey: &[u8], msg: &[u8], signature: &[u8]) -> bool {
+    // k256 panics on slices of the wrong length (found by cargo-fuzz), so check before converting.
+    if xonly_pubkey.len() != 32 || signature.len() != 64 {
+        return false;
+    }
     let Ok(vk) = schnorr::VerifyingKey::from_bytes(xonly_pubkey) else {
         return false;
     };

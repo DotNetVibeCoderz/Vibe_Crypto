@@ -46,6 +46,10 @@ public static class BitcoinAddress
         return new Address(address, network.Id);
     }
 
+    /// <summary>P2SH-wrapped P2WSH address (<c>sh(wsh(script))</c>) for <paramref name="witnessScript"/>.</summary>
+    public static Address FromScriptNestedSegwit(ReadOnlySpan<byte> witnessScript, BitcoinNetwork? network = null) =>
+        FromScript(BitcoinScript.P2WSH(CryptoNative.Sha256(witnessScript)), BitcoinAddressType.P2SH, network);
+
     /// <summary>BIP-86 output key for a key-path-only Taproot output (no script tree).</summary>
     public static byte[] TaprootOutputKey(ReadOnlySpan<byte> internalXOnlyKey) => CryptoNative.TaprootTweakPublicKey(internalXOnlyKey).OutputKey;
 

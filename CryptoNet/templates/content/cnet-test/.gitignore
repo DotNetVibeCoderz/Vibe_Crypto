@@ -1,0 +1,8 @@
+bin/
+obj/
+*.user
+.vs/
+.idea/
+# Never commit keys
+*.keystore.json
+secrets.json

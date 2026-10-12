@@ -27,6 +27,13 @@
 | CI (6 native RIDs, tests on 3 OSes) | ✅ Done | `cryptonet-ci.yml` green on PR and `main` |
 | NuGet publish 1.0.0 | ✅ Done | 11 packages on nuget.org via `cryptonet-publish.yml`; GitHub release `CryptoNet-v1.0.0` |
 | Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
+| 1.1 Taproot trees, PSBT v0/v2, multisig | ✅ Done | BIP-341, BIP-174/370 and Bitcoin Core sighash vectors |
+| 1.1 Solana v0 + lookup tables | ✅ Done | Byte-identical to @solana/web3.js 1.98.0 |
+| Crypto.Net.Templates (5 templates) + `cnet new` | ✅ Done | `scripts/test-templates.sh` in CI: instantiate, build, test |
+| Crypto.Net.Analyzers (CNET001–005) | ✅ Done | Roslyn tests incl. code fix; dogfooded on CLI, QuickStart, Gallery |
+| 1.1 musl build, audit/deny/SBOM, fuzzing | ✅ Done | CI jobs `native-musl`, `test-musl`, `security`, `fuzz`; fuzzing found and fixed 3 decoder crashes |
+| 1.1 WebSocket subscriptions | ✅ Done | Loopback server tests; live heads on Polkadot, Solana devnet, Ethereum |
+| 1.1 Polkadot events + dispatch outcome | ✅ Done | Asset Hub fixtures; live on Polkadot, Asset Hub, Westend AH |
 
 ## Log
 
@@ -51,3 +58,13 @@
 - **2026-10-05** — Released 1.0.0: tag `CryptoNet-v1.0.0` published 11 packages (+ symbols) to nuget.org with the
   `NUGET_API_KEY` secret and created the GitHub release.
 - **2026-10-05** — Added Polyglot notebooks for every chain (EN/ID), verified by executing them against nuget.org.
+- **2026-10-12** — Bitcoin: full BIP-341 sighash, Taproot script trees and transaction parsing, checked against the
+  official BIP-341 wallet vectors.
+- **2026-10-12** — PSBT v0/v2 with all roles and multisig (P2SH, P2WSH, P2SH-P2WSH, sortedmulti). It passes every
+  BIP-174/370 vector and Bitcoin Core's 500 legacy sighash cases.
+- **2026-10-12** — Solana v0 messages, address lookup table program and message decoder; byte-identical to web3.js.
+- **2026-10-12** — Polkadot: generic SCALE decoder, `System.Events` decoding, receipts with dispatch errors, storage reads.
+- **2026-10-12** — WebSocket JSON-RPC with typed subscriptions for EVM, Solana and Substrate. The Sepolia publicnode WSS endpoint never answers subscriptions, so the live test uses mainnet endpoints.
+- **2026-10-12** — Hardening: decoder fuzzing found and fixed 3 crash classes (metadata compact overflow, EVM decode overflow and nulls, RLP length/nesting). CI gains Alpine/musl, cargo audit/deny, the NuGet vulnerability scan, a CycloneDX SBOM and fuzz jobs.
+- **2026-10-12** — Crypto.Net.Analyzers package (CNET001–005, CNET005 code fix), documented in EN/ID.
+- **2026-10-12** — dotnet new templates and `cnet new`. Released 1.1.0.

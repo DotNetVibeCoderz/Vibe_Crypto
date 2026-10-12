@@ -18,9 +18,21 @@ public sealed class RlpItem
     internal static RlpItem String(byte[] b) => new(b, null);
     internal static RlpItem List(IReadOnlyList<RlpItem> items) => new(null, items);
 
-    public BigInteger ToBigInteger() => Bytes is null ? throw new InvalidOperationException("Item is a list") : new BigInteger(Bytes, isUnsigned: true, isBigEndian: true);
-    public ulong ToUInt64() => (ulong)ToBigInteger();
-    public RlpItem this[int index] => Items is null ? throw new InvalidOperationException("Item is not a list") : Items[index];
+    public BigInteger ToBigInteger() => new(AsBytes(), isUnsigned: true, isBigEndian: true);
+
+    public ulong ToUInt64()
+    {
+        var v = ToBigInteger();
+        return v <= ulong.MaxValue ? (ulong)v : throw new FormatException("RLP integer does not fit in 64 bits");
+    }
+
+    /// <summary>The byte string; throws <see cref="FormatException"/> when the item is a list.</summary>
+    public byte[] AsBytes() => Bytes ?? throw new FormatException("Expected an RLP string, found a list");
+
+    /// <summary>The list items; throws <see cref="FormatException"/> when the item is a string.</summary>
+    public IReadOnlyList<RlpItem> AsList() => Items ?? throw new FormatException("Expected an RLP list, found a string");
+
+    public RlpItem this[int index] => (uint)index < (uint)AsList().Count ? Items![index] : throw new FormatException($"RLP list has no item {index}");
 }
 
 /// <summary>Recursive Length Prefix encoding and decoding (Ethereum Yellow Paper, appendix B).</summary>
@@ -75,13 +87,16 @@ public static class EvmRlp
     /// <summary>Decodes exactly one RLP item spanning the whole input.</summary>
     public static RlpItem Decode(ReadOnlySpan<byte> data)
     {
-        var item = DecodeItem(data, out int consumed);
+        var item = DecodeItem(data, out int consumed, 0);
         if (consumed != data.Length) throw new FormatException("Trailing bytes after RLP item");
         return item;
     }
 
-    private static RlpItem DecodeItem(ReadOnlySpan<byte> data, out int consumed)
+    private const int MaxDepth = 256;
+
+    private static RlpItem DecodeItem(ReadOnlySpan<byte> data, out int consumed, int depth)
     {
+        if (depth > MaxDepth) throw new FormatException("RLP nesting too deep");
         if (data.IsEmpty) throw new FormatException("Unexpected end of RLP data");
         byte prefix = data[0];
 
@@ -124,7 +139,7 @@ public static class EvmRlp
         var payload = data.Slice(headerLen, listLen);
         while (!payload.IsEmpty)
         {
-            items.Add(DecodeItem(payload, out int used));
+            items.Add(DecodeItem(payload, out int used, depth + 1));
             payload = payload[used..];
         }
         consumed = headerLen + listLen;
@@ -137,6 +152,7 @@ public static class EvmRlp
         if (lenOfLen > 4 || data[1] == 0) throw new FormatException("Invalid RLP length prefix");
         int len = 0;
         for (int i = 0; i < lenOfLen; i++) len = (len << 8) | data[1 + i];
+        if (len < 0) throw new FormatException("RLP length too large");
         if (len <= 55) throw new FormatException("Non-canonical RLP length");
         return len;
     }

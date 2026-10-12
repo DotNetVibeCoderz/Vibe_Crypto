@@ -4,9 +4,60 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-12
+
+### Security
+- Decoder fuzzing (cargo-fuzz targets and .NET mutation fuzz tests in CI) found and fixed crashes on malformed input:
+  - `RuntimeMetadata.Parse`: `OverflowException` on oversized compact type ids.
+  - `EvmTransaction.DecodeSigned`: overflow on large nonce, chain id or `v`, and `NullReferenceException`s on
+    wrongly shaped RLP.
+  - `EvmRlp`: negative 4-byte lengths, and unbounded nesting that could overflow the stack.
+  - Rust `schnorr_verify` / `schnorr_sign` panicked inside k256 on keys or signatures of the wrong length. The FFI
+    turned this into `CN_ERR_PANIC`; it now returns an ordinary invalid-input result.
+
+  All of these now throw `FormatException`.
+- CI runs `cargo audit`, `cargo deny`, a NuGet vulnerability scan and produces a CycloneDX SBOM.
+
+### Changed
+- Native library for `linux-musl-x64` (Alpine) is built in CI and shipped in `Crypto.Net.Native`, tested on Alpine.
+- Polkadot `GetReceiptAsync` now reports dispatch success or failure from `System.Events`; previously a receipt only
+  meant inclusion. `RuntimeMetadata.Types` is public and uses the new `ScaleTypeInfo` records.
+
 ### Added
+- **Crypto.Net.Templates**: `dotnet new` templates.
+  - The templates are `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib` (with tests) and `cnet-test` (with docker-compose local nodes).
+  - `cnet new` is a CLI shortcut for them.
+  - `ChainCatalog.DeriveAccount` derives the standard account for any catalog network.
+  - CI smoke-tests every template against freshly packed packages.
+- **Crypto.Net.Analyzers**: new Roslyn package.
+  - CNET001: hard-coded mnemonics, keys, WIF and xprv strings.
+  - CNET002: secrets kept in strings.
+  - CNET003: `Amount` built from floating point.
+  - CNET004: mainnet clients in Debug builds.
+  - CNET005: an available `CancellationToken` not passed to RPC calls; comes with a code fix.
+  - The Gallery and the CLI now build with these analyzers.
 - Polyglot notebooks for wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos in English and
   Bahasa Indonesia (`samples/notebooks`), generated from one source and executed against the published 1.0.0 packages.
+- **Bitcoin PSBT**: `Psbt` with BIP-174 (v0) and BIP-370 (v2) plus BIP-371 Taproot fields. Covers every role:
+  creator, updater, signer, combiner, finalizer and extractor. Version conversion, unknown records preserved.
+  Passes all official BIP-174/370 vectors.
+- **Bitcoin multisig**: `BitcoinScript.Multisig` (sortedmulti), `TryParseMultisig`,
+  `BitcoinAddress.FromScriptNestedSegwit`. PSBT signing and finalizing for bare, P2SH, P2WSH and P2SH-P2WSH.
+- **Taproot**: script trees (`TaprootNode`, `Taproot.LeafSpends` control blocks). Full BIP-341 sighash
+  (ANYONECANPAY/NONE/SINGLE, script path, annex). `SignTaprootKeyPath`. Official BIP-341 wallet vectors.
+- **WebSocket subscriptions**: `WebSocketRpcClient` in Core multiplexes calls and subscriptions over one socket.
+  Typed streams per chain: `SubscribeEvmHeadsAsync`/`SubscribeEvmLogsAsync`/`SubscribeEvmPendingTransactionsAsync`;
+  `SubscribeSolanaSlotsAsync`/`SubscribeSolanaAccountAsync`/`SubscribeSolanaLogsAsync`/`WaitForSolanaSignatureAsync`;
+  `SubscribeSubstrateHeadsAsync`/`SubscribeSubstrateFinalizedHeadsAsync`/`SubmitAndWatchExtrinsicAsync`.
+- **Polkadot events**: `RuntimeMetadata` keeps the full type registry, storage entries and event/error enums.
+  `ScaleDecoder` decodes any SCALE value. `SubstrateEvents` decodes `System.Events` and dispatch errors.
+  `GetEventsAsync`, `GetExtrinsicEventsAsync` and `GetStorageAsync` are new. `StorageKeys` covers xxHash/twox
+  and the BLAKE2 hashers. Metadata is cached per spec version and fetched at the queried block.
+- **Solana v0**: versioned messages with address lookup tables. `WithLookupTables` compiles exactly as
+  web3.js `compileToV0Message`. Adds the `AddressLookupTableProgram` (create/extend/freeze/deactivate/close),
+  `GetAddressLookupTableAsync`, and the `SolanaMessage` decoder for legacy and v0 wire transactions.
+- `BitcoinTransaction.Parse`. Legacy and BIP-143 sighash for every hash type, checked against Bitcoin Core's
+  `sighash.json`.
 
 ## [1.0.0] — 2026-10-05
 

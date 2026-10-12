@@ -28,25 +28,25 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 | Quality | 95 .NET tests (official vectors, backend parity, mocked RPC, opt-in live tests), 30 Rust tests | ✅ |
 | Docs & distribution | README EN/ID, 12-page docs EN + ID, screenshots, NuGet icon, pack/publish scripts | ✅ |
 
-## Next — 1.1 (hardening and reach)
+## Release 1.1 — delivered 2026-10-12 (hardening and reach)
 
 - [x] CI (GitHub Actions): Rust build matrix for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`;
       pack with all native binaries; tests on Windows, Linux and macOS; tag-triggered NuGet publishing.
-- [ ] `linux-musl-x64` (Alpine) native build.
-- [ ] `cargo audit` / `cargo deny`, `dotnet list package --vulnerable`, SBOM in CI.
-- [ ] Fuzzing (`cargo-fuzz`) for Base58, Bech32, RLP, SCALE and metadata decoders.
-- [ ] BIP-341 official wallet test vectors (key-path spending suite) in the test project.
-- [ ] Decode `System.Events` so Polkadot receipts report dispatch success.
-- [ ] WebSocket subscriptions (`eth_subscribe`, `slotSubscribe`, `chain_subscribeNewHeads`).
-- [ ] PSBT (BIP-174/370) import/export and multisig.
-- [ ] Solana versioned (v0) transactions with address lookup tables.
+- [x] `linux-musl-x64` (Alpine) native build.
+- [x] `cargo audit` / `cargo deny`, `dotnet list package --vulnerable`, SBOM in CI.
+- [x] Fuzzing (`cargo-fuzz`) for Base58, Bech32, RLP, SCALE and metadata decoders.
+- [x] BIP-341 official wallet test vectors (key-path spending suite) in the test project; Taproot script trees.
+- [x] Decode `System.Events` so Polkadot receipts report dispatch success.
+- [x] WebSocket subscriptions (`eth_subscribe`, `slotSubscribe`, `chain_subscribeNewHeads`).
+- [x] PSBT (BIP-174/370) import/export and multisig.
+- [x] Solana versioned (v0) transactions with address lookup tables.
 
 ## Later — ecosystem (from solution-design.md)
 
 - [ ] `Crypto.Net.Indexer`: block crawler, log processor, checkpoints, EF Core/SQLite storage.
 - [ ] Source generators: Solidity ABI → typed services, Anchor IDL → clients; `cnet gen`.
-- [ ] `Crypto.Net.Analyzers` (CNET001–005: hard-coded secrets, secrets as `string`, `Amount` from `double`…).
-- [ ] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`).
+- [x] `Crypto.Net.Analyzers` (CNET001–005: hard-coded secrets, secrets as `string`, `Amount` from `double`…).
+- [x] `dotnet new` templates (`cnet-console`, `cnet-webapi`, `cnet-worker`, `cnet-lib`, `cnet-test`); `cnet-contract-client` follows the source generators.
 - [x] Polyglot notebooks (EN/ID) — one per chain.
 - [ ] Notebooks for indexer, benchmarks and security practices.
 - [ ] VS Code extension "Crypto.Net Tools".

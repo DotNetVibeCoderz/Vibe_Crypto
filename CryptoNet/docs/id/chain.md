@@ -111,6 +111,47 @@ Input yang membelanjakan P2PKH (sighash legacy), P2WPKH (BIP-143) dan P2TR key-p
 Schnorr) ditandatangani otomatis sesuai script output yang dibelanjakan. Input memakai sequence `0xFFFFFFFD` (RBF).
 `EsploraClient.GetFeeRateAsync(targetBlocks)` membaca `/fee-estimates`.
 
+### Script tree Taproot
+
+```csharp
+var tree = new TaprootNode.Branch(new TaprootNode.Leaf(scriptA), new TaprootNode.Leaf(scriptB));
+string address = Taproot.Address(internalXOnlyKey, tree, BitcoinNetwork.Testnet);
+var spends = Taproot.LeafSpends(internalXOnlyKey, tree);      // leaf hash + control block per leaf
+byte[] msg = tx.GetTaprootSigMessage(0, utxos, SigHashType.SingleAnyoneCanPay, leafHash: spends[0].LeafHash);
+```
+
+`GetTaprootSigHash` mencakup semua varian BIP-341 (ANYONECANPAY, NONE, SINGLE, script path, annex), dan
+`GetLegacySigHash`/`GetSegwitV0SigHash` menerima semua tipe sighash. Semuanya diuji dengan vektor resmi BIP-341
+dan 500 kasus `sighash.json` dari Bitcoin Core. `BitcoinTransaction.Parse` membaca transaksi mentah.
+
+### PSBT dan multisig
+
+`Psbt` mengimplementasikan BIP-174 (v0) dan BIP-370 (v2) beserta field Taproot BIP-371, mencakup semua peran.
+Record unknown dan proprietary dipertahankan, dan PSBT yang tidak diubah diserialisasi ulang identik byte demi byte.
+
+```csharp
+byte[] script = BitcoinScript.Multisig(2, [pubA, pubB, pubC]);              // sortedmulti (BIP-67)
+string addr = BitcoinAddress.FromScript(script, BitcoinAddressType.SegWitP2WSH, BitcoinNetwork.Testnet).Value;
+
+var psbt = Psbt.Create(unsignedTx)                                          // creator
+    .Update(witnessScripts: [script], previousTransactions: [fundingTx],     // updater
+            keyOrigins: [PsbtKeyOrigin.Create(pubA, fingerprint, "m/48'/1'/0'/2'/0/0"), ...]);
+string untukCosigner = psbt.ToBase64();
+
+var milikSaya = Psbt.Parse(untukCosigner);
+milikSaya.Sign(wallet.MasterKey);                     // menandatangani input yang origin BIP-32-nya cocok
+var semua = Psbt.Combine(milikSaya, Psbt.Parse(milikMereka)); // combiner
+semua.Finalize();                                     // finalizer
+BitcoinTransaction signed = semua.ExtractTransaction();
+```
+
+Signer menangani P2PKH, P2WPKH, P2SH-P2WPKH, multisig bare/P2SH/P2WSH/P2SH-P2WSH, serta Taproot key path dan
+script path. Signer menerapkan pemeriksaan BIP-174: UTXO harus cocok dengan txid, script harus ber-hash sama dengan
+output yang dibelanjakan, dan witness UTXO ditolak pada input non-witness. `Psbt.CreateV2()` dengan
+`AddInput`/`AddOutput` membangun PSBT v2, termasuk aturan locktime BIP-370. `ConvertTo(0|2)` mengonversi antarversi.
+`BitcoinAddress.FromScriptNestedSegwit` menghasilkan alamat `sh(wsh(...))`.
+Semua vektor resmi BIP-174 dan BIP-370 lolos.
+
 ---
 
 ## Solana
@@ -140,6 +181,27 @@ var (error, logs) = await rpc.SimulateTransactionAsync(tx.Serialize());
 Akun dideduplikasi dan diurutkan (fee payer, signer writable, signer read-only, writable, read-only).
 `SolanaAddress.FindProgramAddress(seeds, programId)` dan `GetAssociatedTokenAddress(owner, mint)` menurunkan PDA.
 Kunci bisa diimpor/ekspor dalam format Phantom (Base58, 64 byte) dan solana-cli (array JSON).
+
+### Transaksi versioned dan lookup table
+
+```csharp
+// Buat tabel, lalu isi dengan akun yang sering dipakai
+ulong slot = await rpc.GetBlockNumberAsync();
+var (create, tableAddress) = AddressLookupTableProgram.Create(sol.Address.Value, sol.Address.Value, slot);
+var extend = AddressLookupTableProgram.Extend(tableAddress, sol.Address.Value, recipients, sol.Address.Value);
+
+// Pakai: akun non-signer yang ada di tabel dimuat lewat indeks (message v0)
+var table = await rpc.GetAddressLookupTableAsync(tableAddress);
+var tx = new SolanaTransaction(sol.Address.Value, blockhash).WithLookupTables(table!);
+foreach (var r in recipients) tx.Add(SystemProgram.Transfer(sol.Address.Value, r, 1_000));
+sol.Sign(tx);
+
+var (signatures, message) = SolanaMessage.ParseTransaction(tx.Serialize());   // decode legacy atau v0
+IReadOnlyList<string> keys = message.ResolveAccountKeys([table!]);
+```
+
+Message v0 dikompilasi persis seperti `compileToV0Message` di `@solana/web3.js`. Signer dan program id tetap statis.
+`Freeze`, `Deactivate` dan `Close` melengkapi program lookup table.
 
 ---
 
@@ -176,8 +238,24 @@ TxHash r = await rpc.SubmitCallAsync(root, call);
 Indeks pallet dan call serta daftar signed extension diambil dari metadata runtime live (V14/V15), sehingga transfer
 tetap berfungsi setelah upgrade runtime. Extrinsic bersifat mortal (64 blok) secara default. Extension yang membawa
 data yang tidak bisa diisi Crypto.Net melempar `NotSupportedException` alih-alih menghasilkan extrinsic tidak valid.
-`GetReceiptAsync` melaporkan *inklusi* (ditemukan di salah satu dari 50 blok terakhir); keberhasilan dispatch
-memerlukan pembacaan `System.Events` — periksa explorer seperti Subscan.
+`GetReceiptAsync` mencari di 50 blok terakhir. Method ini men-decode `System.Events` pada blok tersebut, sehingga
+`IsSuccess` mencerminkan hasil dispatch, dan `ErrorMessage` menyebut error-nya (`Balances.InsufficientBalance`,
+`Token.Frozen`, ...).
+
+### Event dan storage
+
+```csharp
+var events = await client.GetEventsAsync(blockHash);              // semua event dalam blok
+foreach (var e in events.Where(e => e.Is("Balances", "Transfer")))
+    Console.WriteLine($"{e["from"]} -> {e["to"]}: {e["amount"]}");
+
+object? now = await client.GetStorageAsync("Timestamp", "Now");   // item storage apa pun, di-decode dari metadata
+byte[] key = metadata.StorageKey("System", "Account", accountId); // hasher twox/blake2 diterapkan per key
+```
+
+`RuntimeMetadata` menyimpan type registry lengkap, entri storage, serta enum event/error tiap pallet.
+`ScaleDecoder.Decode(metadata, typeId, bytes)` mengubah nilai SCALE apa pun menjadi dictionary, `ScaleVariant`, array
+dan angka. Metadata diambil per blok dan di-cache per spec version, sehingga blok lama di-decode dengan runtime-nya sendiri.
 
 ---
 

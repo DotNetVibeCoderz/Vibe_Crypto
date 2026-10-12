@@ -1,0 +1,19 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+
+[*.{json,yml,yaml,props,csproj}]
+indent_size = 2
+
+[*.cs]
+# Crypto.Net analyzers: secrets and amounts are errors, the rest are suggestions.
+dotnet_diagnostic.CNET001.severity = error
+dotnet_diagnostic.CNET002.severity = warning
+dotnet_diagnostic.CNET003.severity = error
+dotnet_diagnostic.CNET004.severity = suggestion
+dotnet_diagnostic.CNET005.severity = warning

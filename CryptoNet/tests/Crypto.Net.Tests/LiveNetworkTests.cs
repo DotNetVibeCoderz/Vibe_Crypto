@@ -1,3 +1,5 @@
+using Crypto.Net.Evm;
+using Crypto.Net.Solana;
 using Crypto.Net.Extensions;
 using Crypto.Net.Polkadot;
 
@@ -36,6 +38,52 @@ public class LiveNetworkTests
             }
         }
         Assert.True(failures.Count == 0, string.Join("\n", failures));
+    }
+
+    [LiveFact]
+    public async Task WebSocketSubscriptions_ReceiveHeads()
+    {
+        static CancellationToken Budget() => new CancellationTokenSource(TimeSpan.FromSeconds(90)).Token;
+        await using (var ws = new Crypto.Net.Core.WebSocketRpcClient(PolkadotChain.Polkadot.DefaultRpcUrl))
+            await foreach (var h in ws.SubscribeSubstrateHeadsAsync(Budget())) { Assert.True(h.Number > 0); break; }
+        await using (var ws = new Crypto.Net.Core.WebSocketRpcClient(SolanaChain.Devnet.DefaultRpcUrl))
+            await foreach (var s in ws.SubscribeSolanaSlotsAsync(Budget())) { Assert.True(s.Slot > 0); break; }
+        // Public EVM WebSockets are flaky (Sepolia publicnode never answers, mainnet sometimes stalls), so accept any of
+        // two mainnet endpoints; nothing is sent besides subscriptions.
+        var errors = new List<string>();
+        foreach (string url in new[] { "wss://ethereum-rpc.publicnode.com", "wss://eth.drpc.org" })
+        {
+            try
+            {
+                await using var ws = new Crypto.Net.Core.WebSocketRpcClient(url);
+                await foreach (var h in ws.SubscribeEvmHeadsAsync(new CancellationTokenSource(TimeSpan.FromSeconds(45)).Token))
+                {
+                    Assert.True(h.Number > 0);
+                    return;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                errors.Add($"{url}: no head in 45 s");
+            }
+        }
+        Assert.Fail(string.Join("; ", errors));
+    }
+
+    [LiveFact]
+    public async Task PolkadotEvents_DecodeOnLiveChains()
+    {
+        foreach (var chain in new[] { PolkadotChain.Polkadot, PolkadotChain.PolkadotAssetHub, PolkadotChain.WestendAssetHub })
+        {
+            await using var client = new PolkadotRpcClient(chain);
+            ulong head = await client.GetBlockNumberAsync();
+            for (ulong n = head; n > head - 5; n--)
+            {
+                var events = await client.GetEventsAsync(await client.GetBlockHashAsync(n));
+                Assert.Contains(events, e => e.Is("System", "ExtrinsicSuccess"));
+            }
+            Assert.IsType<ulong>(await client.GetStorageAsync("Timestamp", "Now"));
+        }
     }
 
     [LiveFact]
