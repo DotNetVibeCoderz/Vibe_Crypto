@@ -1,4 +1,4 @@
-# Hardware wallet (Ledger)
+# Hardware wallet (Ledger dan Trezor)
 
 > Dibuat oleh Gravicode Studios dipimpin oleh Kang Fadhil. · [English](../en/hardware-wallets.md)
 
@@ -48,6 +48,30 @@ byte[] sig = await sol.SignOffchainMessageAsync(path, LedgerSolanaApp.FormatOffc
 
 Transaksi panjang dikirim dalam potongan 255 byte, dan setiap level path dibuat hardened sesuai kebutuhan aplikasi.
 
+## Trezor
+
+`Crypto.Net.Trezor` berkomunikasi dengan Trezor Model One, Model T dan Safe 3/5 lewat Trezor Bridge (bawaan Trezor
+Suite), atau dengan emulator firmware lewat UDP.
+
+```bash
+dotnet add package Crypto.Net.Trezor
+```
+
+```csharp
+using var transport = await TrezorBridgeTransport.OpenAsync();  // Trezor Suite berjalan, perangkat terhubung
+using var trezor = new TrezorClient(transport) { Passphrase = "" };   // null = passphrase diketik di perangkat
+await trezor.InitializeAsync();
+string path = TrezorClient.EthereumPath(0);                      // m/44'/60'/0'/0/0
+
+string address = await trezor.GetEthereumAddressAsync(path, display: true);
+SignedEvmTransaction signed = await trezor.SignEthereumTransactionAsync(path, tx);   // legacy atau EIP-1559, data dipotong
+byte[] sig = await trezor.SignEthereumMessageAsync(path, "Masuk ke example.org"u8.ToArray());
+byte[] typed = await trezor.SignEthereumTypedHashAsync(path, domainSeparator, structHash);
+```
+
+Permintaan tombol dijawab otomatis; pengguna mengonfirmasi di perangkat. Model One meminta PIN di komputer dengan
+matriks acak: isi `PinProvider`. `TrezorException.IsUserRejection` membedakan pembatalan dari error.
+
 ## Cara pengujian
 
 - Unit test memutar ulang sesi APDU yang direkam di test suite `hw-app-eth` milik Ledger, identik byte demi byte.
@@ -59,7 +83,9 @@ Transaksi panjang dikirim dalam potongan 255 byte, dan setiap level path dibuat 
   terhadap fee payer. CI juga membangun aplikasi Solana milik Ledger dari source dengan app builder Ledger,
   menjalankannya di Speculos, lalu memeriksa bahwa alamat perangkat sama dengan alamat path Phantom dan bahwa tanda
   tangan transfer dan pesan off-chain terverifikasi.
+- Pesan Trezor identik byte demi byte dengan encoding protobuf trezorlib. CI menjalankan firmware Trezor sendiri
+  (emulator core Model T 2.12.5) dengan frasa yang sama, menekan tombol lewat debug link, lalu memeriksa alamat serta
+  penanda tangan hasil pemulihan dari pesan personal dan dari transaksi EIP-1559 dan legacy.
 
-Aplikasi Ledger untuk chain lain, Trezor (protokol protobuf lewat Bridge atau WebUSB) dan WalletConnect v2 belum
-diimplementasikan. WalletConnect
+Aplikasi Ledger untuk chain lain, chain Trezor selain Ethereum dan WalletConnect v2 belum diimplementasikan. WalletConnect
 memerlukan project ID dari dashboard cloud Reown.

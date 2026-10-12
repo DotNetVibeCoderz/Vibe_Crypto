@@ -1,4 +1,4 @@
-# Hardware wallets (Ledger)
+# Hardware wallets (Ledger and Trezor)
 
 > Built by Gravicode Studios, led by Kang Fadhil. · [Bahasa Indonesia](../id/hardware-wallet.md)
 
@@ -51,6 +51,30 @@ byte[] sig = await sol.SignOffchainMessageAsync(path, LedgerSolanaApp.FormatOffc
 
 Long transactions are sent in 255-byte chunks, and every path level is hardened as the app requires.
 
+## Trezor
+
+`Crypto.Net.Trezor` talks to Trezor Model One, Model T and Safe 3/5 through Trezor Bridge (bundled with Trezor Suite) or
+to the firmware emulator over UDP.
+
+```bash
+dotnet add package Crypto.Net.Trezor
+```
+
+```csharp
+using var transport = await TrezorBridgeTransport.OpenAsync();  // Trezor Suite running, device plugged in
+using var trezor = new TrezorClient(transport) { Passphrase = "" };   // null = enter the passphrase on the device
+await trezor.InitializeAsync();
+string path = TrezorClient.EthereumPath(0);                      // m/44'/60'/0'/0/0
+
+string address = await trezor.GetEthereumAddressAsync(path, display: true);
+SignedEvmTransaction signed = await trezor.SignEthereumTransactionAsync(path, tx);   // legacy or EIP-1559, data chunked
+byte[] sig = await trezor.SignEthereumMessageAsync(path, "Sign in to example.org"u8.ToArray());
+byte[] typed = await trezor.SignEthereumTypedHashAsync(path, domainSeparator, structHash);
+```
+
+Button prompts are acknowledged automatically; the user confirms on the device. Model One asks for the PIN on the
+computer with a scrambled matrix: set `PinProvider`. `TrezorException.IsUserRejection` tells a cancel from an error.
+
 ## How it is tested
 
 - Unit tests replay the APDU sessions recorded in Ledger's own `hw-app-eth` test suite, byte for byte.
@@ -61,7 +85,9 @@ Long transactions are sent in 255-byte chunks, and every path level is hardened 
 - The Solana app is replayed from `hw-app-solana`'s recorded sessions; each recorded signature verifies against the
   fee payer. CI also builds Ledger's Solana app from source with Ledger's app builder, runs it in Speculos, and checks
   that the device address equals the Phantom-path address and that the transfer and off-chain signatures verify.
+- Trezor messages are byte-identical to trezorlib's protobuf encoding. CI runs Trezor's own firmware (Model T core
+  emulator 2.11.0) loaded with the same phrase, presses the buttons through the debug link, and checks the address and
+  the recovered signers of a personal message and of EIP-1559 and legacy transactions.
 
-Ledger apps for other chains, Trezor (its protobuf protocol over Bridge or WebUSB) and WalletConnect v2 are not
-implemented yet. WalletConnect
+Ledger apps for other chains, Trezor chains beyond Ethereum and WalletConnect v2 are not implemented yet. WalletConnect
 needs a project ID from Reown's cloud dashboard.

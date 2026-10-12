@@ -89,3 +89,4 @@
 - **2026-10-13** — Ledger support, verified end to end against the real Ethereum app in Speculos. NEAR package, cross-checked with near-api-js.
 - **2026-10-13** — Aptos, Sui, TON and Cardano packages. New native primitives: SHA3-256, BIP32-Ed25519 and extended-key signing (ABI 0x00010200). Fuzzing found an OverflowException in the CIP-20 reader, now fixed. All five new chains are in the catalog, the CLI and the Gallery.
 - **2026-10-13** — Ledger Solana app: replayed hw-app-solana sessions; a CI job builds app-solana with Ledger's builder and runs the end-to-end test in Speculos.
+- **2026-10-13** — Crypto.Net.Trezor: messages match trezorlib, and a CI job signs on Trezor's real firmware in the core emulator. The Ledger Solana app now uses the current off-chain message header (the end-to-end run showed the app rejects the legacy one).

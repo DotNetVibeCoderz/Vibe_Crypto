@@ -62,6 +62,7 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |
 | `Crypto.Net.Generators` | Source generator: Solidity ABI / Hardhat & Foundry artifacts and Anchor IDLs → typed clients (also `cnet gen`) |
 | `Crypto.Net.Ledger` | Ledger hardware wallets: USB HID / Speculos transports, Ethereum app (addresses, transactions, messages, EIP-712), Solana app (transactions, off-chain messages) |
+| `Crypto.Net.Trezor` | Trezor hardware wallets: Bridge and emulator transports, Ethereum (addresses, legacy/EIP-1559 transactions, messages, EIP-712 hashes) |
 | `Crypto.Net.Near` | NEAR Protocol: ed25519 accounts (implicit and named), Borsh transactions with every action, function calls, RPC |
 | `Crypto.Net.Aptos` | Aptos: AIP-40 addresses, Move type tags, BCS entry-function transactions, simulation, REST client |
 | `Crypto.Net.Sui` | Sui: programmable transactions (BCS build and parse), intent signing, personal messages, GraphQL client with gas selection |

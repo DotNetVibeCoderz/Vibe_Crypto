@@ -61,6 +61,10 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **Wallet**: `Mnemonic.ToIcarusRootKey` and `HdWallet.DeriveBip32Ed25519`.
 - `ChainCatalog`, `AddNear`/`AddAptos`/`AddSui`/`AddTon`/`AddCardano`, address detection, `cnet wallet derive` and
   the Gallery wallet all cover the five new chains.
+- **Crypto.Net.Trezor**:
+  - Protocol v1 with Trezor Bridge, UDP (emulator) and replay transports.
+  - Ethereum: addresses, legacy and EIP-1559 transactions with chunked data, personal messages, EIP-712 hashes.
+  - Handles PIN and passphrase prompts. Byte-identical to trezorlib, and verified in CI on Trezor's core emulator.
 - **Ledger Solana app** (`LedgerSolanaApp`): addresses, chunked legacy/v0 transactions, off-chain messages. Verified
   with hw-app-solana's recorded sessions and, in CI, against the Solana app built from source and run in Speculos.
   `SolanaTransaction.AddSignature` attaches signatures made elsewhere.
