@@ -111,6 +111,47 @@ Inputs spending P2PKH (legacy sighash), P2WPKH (BIP-143) and P2TR key-path (BIP-
 are signed automatically according to the spent output's script. Inputs use sequence `0xFFFFFFFD` (RBF).
 `EsploraClient.GetFeeRateAsync(targetBlocks)` reads `/fee-estimates`.
 
+### Taproot script trees
+
+```csharp
+var tree = new TaprootNode.Branch(new TaprootNode.Leaf(scriptA), new TaprootNode.Leaf(scriptB));
+string address = Taproot.Address(internalXOnlyKey, tree, BitcoinNetwork.Testnet);
+var spends = Taproot.LeafSpends(internalXOnlyKey, tree);      // leaf hash + control block per leaf
+byte[] msg = tx.GetTaprootSigMessage(0, utxos, SigHashType.SingleAnyoneCanPay, leafHash: spends[0].LeafHash);
+```
+
+`GetTaprootSigHash` covers every BIP-341 variant (ANYONECANPAY, NONE, SINGLE, script path, annex), and
+`GetLegacySigHash`/`GetSegwitV0SigHash` accept every sighash type. They are checked against the official BIP-341
+wallet vectors and Bitcoin Core's 500 `sighash.json` cases. `BitcoinTransaction.Parse` reads raw transactions.
+
+### PSBT and multisig
+
+`Psbt` implements BIP-174 (v0) and BIP-370 (v2) with the BIP-371 Taproot fields, covering every role.
+Unknown and proprietary records are preserved, and an unmodified PSBT re-serializes byte for byte.
+
+```csharp
+byte[] script = BitcoinScript.Multisig(2, [pubA, pubB, pubC]);              // sortedmulti (BIP-67)
+string addr = BitcoinAddress.FromScript(script, BitcoinAddressType.SegWitP2WSH, BitcoinNetwork.Testnet).Value;
+
+var psbt = Psbt.Create(unsignedTx)                                          // creator
+    .Update(witnessScripts: [script], previousTransactions: [fundingTx],     // updater
+            keyOrigins: [PsbtKeyOrigin.Create(pubA, fingerprint, "m/48'/1'/0'/2'/0/0"), ...]);
+string forCosigner = psbt.ToBase64();
+
+var mine = Psbt.Parse(forCosigner);
+mine.Sign(wallet.MasterKey);                     // signs every input whose BIP-32 origin matches this wallet
+var all = Psbt.Combine(mine, Psbt.Parse(theirs)); // combiner
+all.Finalize();                                  // finalizer
+BitcoinTransaction signed = all.ExtractTransaction();
+```
+
+The signer handles P2PKH, P2WPKH, P2SH-P2WPKH, bare/P2SH/P2WSH/P2SH-P2WSH multisig, and Taproot key and script
+paths. It enforces the BIP-174 signer checks: the UTXO must match the txid, scripts must hash to the spent output,
+and a witness UTXO is refused on a non-witness input. `Psbt.CreateV2()` with `AddInput`/`AddOutput` builds v2
+PSBTs, including the BIP-370 locktime rules. `ConvertTo(0|2)` converts between versions.
+`BitcoinAddress.FromScriptNestedSegwit` produces `sh(wsh(...))` addresses.
+All official BIP-174 and BIP-370 vectors pass.
+
 ---
 
 ## Solana

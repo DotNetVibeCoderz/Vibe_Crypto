@@ -29,7 +29,7 @@
 | Kurva / skema | secp256k1 ECDSA, Schnorr BIP-340 | secp256k1 ECDSA | Ed25519 | sr25519, Ed25519 | secp256k1 ECDSA |
 | Alamat | P2PKH, P2SH, P2WPKH, P2WSH, P2TR | EIP-55 | Base58, PDA, ATA | SS58 (prefix apa pun) | Bech32 (HRP apa pun) |
 | Path HD | BIP-44/84/86, xpub/zpub | BIP-44 (MetaMask) | SLIP-10 (Phantom) | substrate-bip39 `//hard/soft` | BIP-44 coin 118 |
-| Transaksi | Legacy, SegWit v0, Taproot key-path; coin selection | Legacy (EIP-155), EIP-2930, EIP-1559 | Message legacy: System, SPL Token, ATA, Compute Budget, Memo | Extrinsic v4 dari metadata runtime live | `SIGN_MODE_DIRECT`: bank, staking, distribution |
+| Transaksi | Legacy, SegWit v0, Taproot key/script path; PSBT v0/v2; multisig; coin selection | Legacy (EIP-155), EIP-2930, EIP-1559 | Message legacy: System, SPL Token, ATA, Compute Budget, Memo | Extrinsic v4 dari metadata runtime live | `SIGN_MODE_DIRECT`: bank, staking, distribution |
 | Tanda tangan off-chain | — | EIP-191, EIP-712 | Pesan Ed25519 | `signRaw` Polkadot.js | — |
 | RPC | REST Esplora | JSON-RPC | JSON-RPC | JSON-RPC | REST (LCD) |
 | Token | — | ERC-20 | SPL Token | saldo native | saldo bank |

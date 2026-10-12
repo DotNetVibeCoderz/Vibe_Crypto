@@ -7,6 +7,15 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 ### Added
 - Polyglot notebooks for wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos in English and
   Bahasa Indonesia (`samples/notebooks`), generated from one source and executed against the published 1.0.0 packages.
+- **Bitcoin PSBT**: `Psbt` with BIP-174 (v0) and BIP-370 (v2) plus BIP-371 Taproot fields. Covers every role:
+  creator, updater, signer, combiner, finalizer and extractor. Version conversion, unknown records preserved.
+  Passes all official BIP-174/370 vectors.
+- **Bitcoin multisig**: `BitcoinScript.Multisig` (sortedmulti), `TryParseMultisig`,
+  `BitcoinAddress.FromScriptNestedSegwit`. PSBT signing and finalizing for bare, P2SH, P2WSH and P2SH-P2WSH.
+- **Taproot**: script trees (`TaprootNode`, `Taproot.LeafSpends` control blocks). Full BIP-341 sighash
+  (ANYONECANPAY/NONE/SINGLE, script path, annex). `SignTaprootKeyPath`. Official BIP-341 wallet vectors.
+- `BitcoinTransaction.Parse`. Legacy and BIP-143 sighash for every hash type, checked against Bitcoin Core's
+  `sighash.json`.
 
 ## [1.0.0] — 2026-10-05
 

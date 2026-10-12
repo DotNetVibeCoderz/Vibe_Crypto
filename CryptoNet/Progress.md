@@ -27,6 +27,7 @@
 | CI (6 native RIDs, tests on 3 OSes) | ✅ Done | `cryptonet-ci.yml` green on PR and `main` |
 | NuGet publish 1.0.0 | ✅ Done | 11 packages on nuget.org via `cryptonet-publish.yml`; GitHub release `CryptoNet-v1.0.0` |
 | Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
+| 1.1 Taproot trees, PSBT v0/v2, multisig | ✅ Done | BIP-341, BIP-174/370 and Bitcoin Core sighash vectors |
 
 ## Log
 
@@ -51,3 +52,7 @@
 - **2026-10-05** — Released 1.0.0: tag `CryptoNet-v1.0.0` published 11 packages (+ symbols) to nuget.org with the
   `NUGET_API_KEY` secret and created the GitHub release.
 - **2026-10-05** — Added Polyglot notebooks for every chain (EN/ID), verified by executing them against nuget.org.
+- **2026-10-12** — Bitcoin: full BIP-341 sighash, Taproot script trees and transaction parsing, checked against the
+  official BIP-341 wallet vectors.
+- **2026-10-12** — PSBT v0/v2 with all roles and multisig (P2SH, P2WSH, P2SH-P2WSH, sortedmulti). It passes every
+  BIP-174/370 vector and Bitcoin Core's 500 legacy sighash cases.

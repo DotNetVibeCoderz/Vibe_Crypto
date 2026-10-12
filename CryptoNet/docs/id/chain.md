@@ -111,6 +111,47 @@ Input yang membelanjakan P2PKH (sighash legacy), P2WPKH (BIP-143) dan P2TR key-p
 Schnorr) ditandatangani otomatis sesuai script output yang dibelanjakan. Input memakai sequence `0xFFFFFFFD` (RBF).
 `EsploraClient.GetFeeRateAsync(targetBlocks)` membaca `/fee-estimates`.
 
+### Script tree Taproot
+
+```csharp
+var tree = new TaprootNode.Branch(new TaprootNode.Leaf(scriptA), new TaprootNode.Leaf(scriptB));
+string address = Taproot.Address(internalXOnlyKey, tree, BitcoinNetwork.Testnet);
+var spends = Taproot.LeafSpends(internalXOnlyKey, tree);      // leaf hash + control block per leaf
+byte[] msg = tx.GetTaprootSigMessage(0, utxos, SigHashType.SingleAnyoneCanPay, leafHash: spends[0].LeafHash);
+```
+
+`GetTaprootSigHash` mencakup semua varian BIP-341 (ANYONECANPAY, NONE, SINGLE, script path, annex), dan
+`GetLegacySigHash`/`GetSegwitV0SigHash` menerima semua tipe sighash. Semuanya diuji dengan vektor resmi BIP-341
+dan 500 kasus `sighash.json` dari Bitcoin Core. `BitcoinTransaction.Parse` membaca transaksi mentah.
+
+### PSBT dan multisig
+
+`Psbt` mengimplementasikan BIP-174 (v0) dan BIP-370 (v2) beserta field Taproot BIP-371, mencakup semua peran.
+Record unknown dan proprietary dipertahankan, dan PSBT yang tidak diubah diserialisasi ulang identik byte demi byte.
+
+```csharp
+byte[] script = BitcoinScript.Multisig(2, [pubA, pubB, pubC]);              // sortedmulti (BIP-67)
+string addr = BitcoinAddress.FromScript(script, BitcoinAddressType.SegWitP2WSH, BitcoinNetwork.Testnet).Value;
+
+var psbt = Psbt.Create(unsignedTx)                                          // creator
+    .Update(witnessScripts: [script], previousTransactions: [fundingTx],     // updater
+            keyOrigins: [PsbtKeyOrigin.Create(pubA, fingerprint, "m/48'/1'/0'/2'/0/0"), ...]);
+string untukCosigner = psbt.ToBase64();
+
+var milikSaya = Psbt.Parse(untukCosigner);
+milikSaya.Sign(wallet.MasterKey);                     // menandatangani input yang origin BIP-32-nya cocok
+var semua = Psbt.Combine(milikSaya, Psbt.Parse(milikMereka)); // combiner
+semua.Finalize();                                     // finalizer
+BitcoinTransaction signed = semua.ExtractTransaction();
+```
+
+Signer menangani P2PKH, P2WPKH, P2SH-P2WPKH, multisig bare/P2SH/P2WSH/P2SH-P2WSH, serta Taproot key path dan
+script path. Signer menerapkan pemeriksaan BIP-174: UTXO harus cocok dengan txid, script harus ber-hash sama dengan
+output yang dibelanjakan, dan witness UTXO ditolak pada input non-witness. `Psbt.CreateV2()` dengan
+`AddInput`/`AddOutput` membangun PSBT v2, termasuk aturan locktime BIP-370. `ConvertTo(0|2)` mengonversi antarversi.
+`BitcoinAddress.FromScriptNestedSegwit` menghasilkan alamat `sh(wsh(...))`.
+Semua vektor resmi BIP-174 dan BIP-370 lolos.
+
 ---
 
 ## Solana

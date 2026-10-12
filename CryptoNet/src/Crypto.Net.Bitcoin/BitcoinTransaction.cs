@@ -135,13 +135,19 @@ public sealed class BitcoinTransaction
     }
 
     /// <summary>Parses a serialized transaction (with or without SegWit marker).</summary>
-    public static BitcoinTransaction Parse(ReadOnlySpan<byte> raw)
+    public static BitcoinTransaction Parse(ReadOnlySpan<byte> raw) => Parse(raw, allowWitness: true);
+
+    /// <summary>
+    /// Parses a transaction. With <paramref name="allowWitness"/> false the SegWit marker is not recognised,
+    /// so a transaction with zero inputs parses (as PSBT unsigned transactions require).
+    /// </summary>
+    internal static BitcoinTransaction Parse(ReadOnlySpan<byte> raw, bool allowWitness)
     {
         var r = new TxReader(raw);
         var tx = new BitcoinTransaction { Version = r.UInt32() };
         bool segwit = false;
         ulong inputCount = r.VarInt();
-        if (inputCount == 0)
+        if (inputCount == 0 && allowWitness)
         {
             if (r.Byte() != 0x01) throw new FormatException("Invalid SegWit flag");
             segwit = true;
@@ -264,19 +270,77 @@ public sealed class BitcoinTransaction
 
     #region Sighash
 
-    /// <summary>Legacy (pre-SegWit) signature hash for input <paramref name="index"/>.</summary>
+    /// <summary>
+    /// Legacy (pre-SegWit) signature hash for input <paramref name="index"/>, for any sighash type
+    /// (ALL, NONE, SINGLE, optionally | ANYONECANPAY), including the historical SIGHASH_SINGLE "one" quirk.
+    /// </summary>
     public byte[] GetLegacySigHash(int index, ReadOnlySpan<byte> scriptCode, SigHashType type = SigHashType.All)
     {
-        if (type != SigHashType.All) throw new NotSupportedException("Only SIGHASH_ALL is supported for legacy inputs");
+        if (type == SigHashType.Default) throw new ArgumentException("SIGHASH_DEFAULT is Taproot-only");
+        return GetLegacySigHash(index, scriptCode, (uint)type);
+    }
+
+    /// <summary>
+    /// Legacy signature hash with a raw 32-bit hash type, exactly as consensus computes it (OP_CODESEPARATORs are
+    /// removed from <paramref name="scriptCode"/>).
+    /// </summary>
+    public byte[] GetLegacySigHash(int index, ReadOnlySpan<byte> scriptCode, uint hashType)
+    {
+        int baseType = (int)(hashType & 0x1f);
+        bool anyoneCanPay = (hashType & 0x80) != 0;
+        if (baseType == (int)SigHashType.Single && index >= Outputs.Count)
+        {
+            byte[] one = new byte[32];
+            one[0] = 1;
+            return one;
+        }
+        scriptCode = RemoveCodeSeparators(scriptCode);
+
         var copy = new BitcoinTransaction { Version = Version, LockTime = LockTime };
         for (int i = 0; i < Inputs.Count; i++)
-            copy.Inputs.Add(new BitcoinTxInput { TxId = Inputs[i].TxId, Vout = Inputs[i].Vout, Sequence = Inputs[i].Sequence, ScriptSig = i == index ? scriptCode.ToArray() : [] });
-        copy.Outputs.AddRange(Outputs);
+        {
+            if (anyoneCanPay && i != index) continue;
+            uint sequence = i != index && baseType is (int)SigHashType.None or (int)SigHashType.Single ? 0 : Inputs[i].Sequence;
+            copy.Inputs.Add(new BitcoinTxInput { TxId = Inputs[i].TxId, Vout = Inputs[i].Vout, Sequence = sequence, ScriptSig = i == index ? scriptCode.ToArray() : [] });
+        }
+        if (baseType == (int)SigHashType.Single)
+        {
+            for (int i = 0; i < index; i++) copy.Outputs.Add(new BitcoinTxOutput { ValueSats = -1, ScriptPubKey = [] });
+            copy.Outputs.Add(Outputs[index]);
+        }
+        else if (baseType != (int)SigHashType.None)
+        {
+            copy.Outputs.AddRange(Outputs);
+        }
         byte[] serialized = copy.Serialize(includeWitness: false);
         byte[] preimage = new byte[serialized.Length + 4];
         serialized.CopyTo(preimage, 0);
-        BinaryPrimitives.WriteUInt32LittleEndian(preimage.AsSpan(serialized.Length), (uint)type);
+        BinaryPrimitives.WriteUInt32LittleEndian(preimage.AsSpan(serialized.Length), hashType);
         return CryptoNative.DoubleSha256(preimage);
+    }
+
+    private static byte[] RemoveCodeSeparators(ReadOnlySpan<byte> script)
+    {
+        const byte OP_CODESEPARATOR = 0xab;
+        if (script.IndexOf(OP_CODESEPARATOR) < 0) return script.ToArray();
+        var result = new List<byte>(script.Length);
+        int pos = 0;
+        while (pos < script.Length)
+        {
+            int start = pos;
+            byte op = script[pos++];
+            int len = op switch
+            {
+                < 0x4c => op,
+                0x4c => pos + 1 <= script.Length ? script[pos] + 1 : script.Length - pos,
+                0x4d => pos + 2 <= script.Length ? BinaryPrimitives.ReadUInt16LittleEndian(script[pos..]) + 2 : script.Length - pos,
+                0x4e => pos + 4 <= script.Length ? (int)Math.Min(BinaryPrimitives.ReadUInt32LittleEndian(script[pos..]) + 4L, int.MaxValue) : script.Length - pos,
+                _ => 0,
+            };
+            pos = (int)Math.Min((long)pos + len, script.Length);
+            if (op != OP_CODESEPARATOR) result.AddRange(script[start..pos]);
+        }
+        return [.. result];
     }
 
     /// <summary>BIP-143 SegWit v0 signature hash for any sighash type (ALL, NONE, SINGLE, optionally | ANYONECANPAY).</summary>
