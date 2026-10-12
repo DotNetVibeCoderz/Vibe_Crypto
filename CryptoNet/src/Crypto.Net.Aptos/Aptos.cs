@@ -22,33 +22,18 @@ public static class AptosAddress
 {
     public const int Length = 32;
 
-    /// <summary>
-    /// Parses <c>0x</c> followed by 1–64 hex digits (short forms are left-padded with zeros). Without
-    /// <paramref name="relaxed"/>, the prefix is required.
-    /// </summary>
-    public static byte[] Parse(string address, bool relaxed = true)
-    {
-        ArgumentNullException.ThrowIfNull(address);
-        string hex = address.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? address[2..]
-            : relaxed ? address : throw new FormatException("Aptos addresses start with 0x");
-        if (hex.Length is 0 or > 64 || !hex.All(Uri.IsHexDigit)) throw new FormatException($"Invalid Aptos address '{address}'");
-        return System.Convert.FromHexString(hex.PadLeft(64, '0'));
-    }
+    /// <inheritdoc cref="MoveAddress.Parse"/>
+    public static byte[] Parse(string address, bool relaxed = true) => MoveAddress.Parse(address, relaxed);
 
     /// <summary>Strict AIP-40 check: <c>0x</c> plus 64 hex digits, or a special address <c>0x0</c>–<c>0xf</c>.</summary>
     public static bool IsValid(string? address) =>
         address is { Length: 3 or 66 } && address.StartsWith("0x", StringComparison.Ordinal) && address[2..].All(Uri.IsHexDigit);
 
-    /// <summary>AIP-40 form: special addresses (<c>0x0</c>–<c>0xf</c>) short, every other address as 64 hex digits.</summary>
-    public static string Format(ReadOnlySpan<byte> address)
-    {
-        if (address.Length != Length) throw new ArgumentException("Aptos addresses are 32 bytes", nameof(address));
-        bool special = address[..31].IndexOfAnyExcept((byte)0) < 0 && address[31] < 16;
-        return special ? "0x" + address[31].ToString("x", System.Globalization.CultureInfo.InvariantCulture) : "0x" + System.Convert.ToHexStringLower(address);
-    }
+    /// <inheritdoc cref="MoveAddress.Format"/>
+    public static string Format(ReadOnlySpan<byte> address) => MoveAddress.Format(address);
 
     /// <summary>Normalizes any accepted form to AIP-40.</summary>
-    public static string Normalize(string address) => Format(Parse(address));
+    public static string Normalize(string address) => MoveAddress.Normalize(address);
 
     /// <summary>Address (authentication key) of a single ed25519 key: <c>sha3-256(publicKey ‖ 0x00)</c>.</summary>
     public static byte[] FromEd25519PublicKey(ReadOnlySpan<byte> publicKey)

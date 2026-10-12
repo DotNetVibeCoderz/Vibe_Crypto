@@ -77,6 +77,7 @@ public ref struct BcsReader(ReadOnlySpan<byte> data)
     private int _pos;
 
     public readonly int Remaining => _data.Length - _pos;
+    public readonly int Position => _pos;
 
     public ReadOnlySpan<byte> Fixed(int n)
     {

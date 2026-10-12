@@ -195,6 +195,24 @@ public class DecoderFuzzTests
     }
 
     [Fact]
+    public void Sui_TransactionData_And_MoveTypeTags()
+    {
+        var gas = new Crypto.Net.Sui.SuiObjectRef("0x" + new string('1', 64), 5, CryptoNative.Base58Encode(new byte[32]));
+        var tx = new Crypto.Net.Sui.SuiTransactionBuilder("0x" + new string('a', 64));
+        var v = tx.MakeMoveVec(Crypto.Net.Core.MoveTypeTag.U64, tx.PureU64(1));
+        tx.MoveCall("0x2::m::f", [Crypto.Net.Core.MoveTypeTag.Parse("0x2::coin::Coin<vector<0x2::sui::SUI>>")], v, tx.SharedObject("0x6", 1, false), tx.Receiving(gas));
+        tx.TransferSui("0x5", 9);
+        byte[] data = tx.Build([gas], 1000, 5_000_000, expirationEpoch: 3).Serialize();
+        Fuzz("sui-tx", [data], b => Crypto.Net.Sui.SuiTransactionData.Parse(b));
+        Fuzz("sui-signed", [Crypto.Net.Sui.SuiSignedTransaction.Encode(data, [new byte[97]])], b => Crypto.Net.Sui.SuiSignedTransaction.Decode(b));
+        Fuzz("move-type-tag", [Crypto.Net.Core.MoveTypeTag.Parse("vector<0x1::option::Option<0x2::coin::Coin<u256>>>").ToBcs()], b =>
+        {
+            var r = new Crypto.Net.Core.BcsReader(b);
+            Crypto.Net.Core.MoveTypeTag.Read(ref r);
+        });
+    }
+
+    [Fact]
     public void Text_Codecs()
     {
         var rng = new Random(Seed);

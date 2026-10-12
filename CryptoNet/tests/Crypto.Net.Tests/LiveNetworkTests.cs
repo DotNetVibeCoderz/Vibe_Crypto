@@ -75,6 +75,26 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Sui_TestnetReadsAndSimulation()
+    {
+        await using var sui = new Crypto.Net.Sui.SuiGraphQlClient(Crypto.Net.Sui.SuiChain.Testnet);
+        Assert.True(await sui.GetBlockNumberAsync() > 0);
+        Assert.True(await sui.GetReferenceGasPriceAsync() > 0);
+        Assert.NotNull(await sui.GetObjectRefAsync("0x6"));
+
+        // Borrow a funded owner from the chain and simulate (never sign or submit) a transfer from it.
+        var d = await sui.QueryAsync("{ objects(first: 1, filter: { type: \"0x2::coin::Coin<0x2::sui::SUI>\" }) { nodes { owner { ... on AddressOwner { address { address } } } } } }");
+        string owner = d.GetProperty("objects").GetProperty("nodes")[0].GetProperty("owner").GetProperty("address").GetProperty("address").GetString()!;
+        Assert.True((await sui.GetBalanceAsync(new Crypto.Net.Core.Address(owner, Crypto.Net.Sui.SuiChain.Testnet.Id))).BaseUnits > 0);
+        var builder = new Crypto.Net.Sui.SuiTransactionBuilder(owner).TransferSui("0x" + new string('a', 64), 1);
+        var data = await sui.BuildAsync(builder);
+        Assert.True(data.GasBudget >= 2_000_000);
+        var sim = await sui.SimulateAsync(data.Serialize());
+        Assert.True(sim.Success, sim.Error);
+        Assert.Equal(data.Digest, sim.Digest);
+    }
+
+    [LiveFact]
     public async Task Staking_NominateIsAcceptedByAssetHub()
     {
         // Sign (never submit) a nominate extrinsic and ask the runtime to price it: decoding errors would fail here.

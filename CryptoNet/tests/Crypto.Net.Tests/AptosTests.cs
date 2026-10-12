@@ -1,4 +1,5 @@
 using Crypto.Net.Aptos;
+using Crypto.Net.Core;
 using Crypto.Net.Native;
 using Crypto.Net.Wallet;
 
@@ -56,7 +57,7 @@ public class AptosTests
     [InlineData("vector<0x1::option::Option<u256>>", "06070000000000000000000000000000000000000000000000000000000000000001066f7074696f6e064f7074696f6e010a")]
     public void TypeTags_MatchTsSdk(string text, string bcs)
     {
-        var tag = AptosTypeTag.Parse(text);
+        var tag = MoveTypeTag.Parse(text);
         Assert.Equal(bcs, Convert.ToHexStringLower(tag.ToBcs()));
         Assert.Equal(text.Replace(",", ", "), tag.ToString());
     }
@@ -66,7 +67,7 @@ public class AptosTests
     [InlineData("vector<u8")]
     [InlineData("0x1::coin")]
     [InlineData("vector<u8,u16>")]
-    public void TypeTags_RejectMalformed(string text) => Assert.Throws<FormatException>(() => AptosTypeTag.Parse(text));
+    public void TypeTags_RejectMalformed(string text) => Assert.Throws<FormatException>(() => MoveTypeTag.Parse(text));
 
     [Fact]
     public void AptTransfer_MatchesTsSdk()
@@ -86,7 +87,7 @@ public class AptosTests
     public void GenericCoinTransfer_MatchesTsSdk()
     {
         using var account = Key7();
-        var payload = AptosEntryFunction.Create("0x1::coin::transfer", [AptosTypeTag.AptosCoin], AptosArg.Address(To), AptosArg.U64(5));
+        var payload = AptosEntryFunction.Create("0x1::coin::transfer", [MoveTypeTag.Parse("0x1::aptos_coin::AptosCoin")], MoveArg.Address(To), MoveArg.U64(5));
         byte[] signed = Raw(account, payload).Sign(account);
         Assert.EndsWith("40b394850ee85fcfde5e2167075478fa446d506c517ee1c8169a94b91abec9616a796fa66a89e3813738d282792100873f62a36f0ef7be5980c040f7ebc8395d07", Convert.ToHexStringLower(signed));
         Assert.Equal("0xefa9055ef17f152b78840c741b58032de1cdb8dc6f9057e525cb2bd6d023e700", AptosRawTransaction.HashOf(signed));
@@ -96,10 +97,10 @@ public class AptosTests
     [Fact]
     public void Arguments_EncodeAsBcs()
     {
-        Assert.Equal("0568656c6c6f", Convert.ToHexStringLower(AptosArg.String("hello")));
-        Assert.Equal("0201000200", Convert.ToHexStringLower(AptosArg.Vector([AptosArg.U16(1), AptosArg.U16(2)])));
-        Assert.Equal("012a", Convert.ToHexStringLower(AptosArg.Option(AptosArg.U8(42))));
-        Assert.Equal("00", Convert.ToHexStringLower(AptosArg.Option(null)));
+        Assert.Equal("0568656c6c6f", Convert.ToHexStringLower(MoveArg.String("hello")));
+        Assert.Equal("0201000200", Convert.ToHexStringLower(MoveArg.Vector([MoveArg.U16(1), MoveArg.U16(2)])));
+        Assert.Equal("012a", Convert.ToHexStringLower(MoveArg.Option(MoveArg.U8(42))));
+        Assert.Equal("00", Convert.ToHexStringLower(MoveArg.Option(null)));
     }
 
     private static AptosRawTransaction Raw(AptosAccount account, AptosEntryFunction payload) => new()

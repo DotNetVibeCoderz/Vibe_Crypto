@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Sui adapter for Crypto.Net: ed25519 accounts (SLIP-10 m/44'/784'), suiprivkey import/export, programmable transaction blocks (BCS build and parse), intent signing, personal messages and a GraphQL client.</Description>
+    <PackageTags>$(PackageTags);sui;move;bcs;graphql</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+  </ItemGroup>
+</Project>

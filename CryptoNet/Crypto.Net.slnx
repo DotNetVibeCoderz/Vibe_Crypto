@@ -20,6 +20,7 @@
     <Project Path="src/Crypto.Net.Native/Crypto.Net.Native.csproj" />
     <Project Path="src/Crypto.Net.Near/Crypto.Net.Near.csproj" />
     <Project Path="src/Crypto.Net.Aptos/Crypto.Net.Aptos.csproj" />
+    <Project Path="src/Crypto.Net.Sui/Crypto.Net.Sui.csproj" />
     <Project Path="src/Crypto.Net.Polkadot/Crypto.Net.Polkadot.csproj" />
     <Project Path="src/Crypto.Net.Solana/Crypto.Net.Solana.csproj" />
     <Project Path="src/Crypto.Net.Testing/Crypto.Net.Testing.csproj" />
