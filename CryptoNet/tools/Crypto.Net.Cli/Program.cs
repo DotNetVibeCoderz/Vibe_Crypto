@@ -4,6 +4,11 @@ using Crypto.Net.Bitcoin;
 using Crypto.Net.Cli;
 using Crypto.Net.Core;
 using Crypto.Net.Cosmos;
+using Crypto.Net.Aptos;
+using Crypto.Net.Cardano;
+using Crypto.Net.Near;
+using Crypto.Net.Sui;
+using Crypto.Net.Ton;
 using Crypto.Net.Evm;
 using Crypto.Net.Extensions;
 using Crypto.Net.Native;
@@ -405,6 +410,11 @@ static int PrintWallet(HdWallet w, bool testnet, int count, bool showKeys, bool 
     var solNet = testnet ? SolanaChain.Devnet : SolanaChain.MainnetBeta;
     var dotNet = testnet ? PolkadotChain.Westend : PolkadotChain.Polkadot;
     var atomNet = testnet ? CosmosChain.CosmosHubTestnet : CosmosChain.CosmosHub;
+    var nearNet = testnet ? NearChain.Testnet : NearChain.Mainnet;
+    var aptNet = testnet ? AptosChain.Testnet : AptosChain.Mainnet;
+    var suiNet = testnet ? SuiChain.Testnet : SuiChain.Mainnet;
+    var tonNet = testnet ? TonChain.Testnet : TonChain.Mainnet;
+    var adaNet = testnet ? CardanoChain.Preprod : CardanoChain.Mainnet;
 
     var rows = new List<(string Chain, string Path, string Address, string? Key)>();
     for (uint i = 0; i < count; i++)
@@ -420,6 +430,16 @@ static int PrintWallet(HdWallet w, bool testnet, int count, bool showKeys, bool 
         rows.Add(("Solana", sol.DerivationPath!, sol.Address.Value, showKeys ? sol.ExportBase58SecretKey() : null));
         using var atom = w.GetCosmosAccount(i, atomNet);
         rows.Add(("Cosmos Hub", atom.DerivationPath!, atom.Address.Value, showKeys ? Key(w, atom.DerivationPath!) : null));
+        using var near = w.GetNearAccount(i, nearNet);
+        rows.Add(("NEAR", near.DerivationPath!, near.Address.Value, showKeys ? near.ExportSecretKey() : null));
+        using var apt = w.GetAptosAccount(i, aptNet);
+        rows.Add(("Aptos", apt.DerivationPath!, apt.Address.Value, showKeys ? apt.ExportPrivateKey() : null));
+        using var sui = w.GetSuiAccount(i, suiNet);
+        rows.Add(("Sui", sui.DerivationPath!, sui.Address.Value, showKeys ? sui.ExportPrivateKey() : null));
+        using var ton = w.GetTonAccount(i, tonNet);
+        rows.Add(("TON (W5)", ton.DerivationPath!, ton.Address.Value, null));
+        using var ada = w.GetCardanoAccount(0, i, adaNet);
+        rows.Add(("Cardano", ada.DerivationPath!, ada.Address.Value, null));
         if (NativeLoader.IsNativeAvailable)
         {
             string path = i == 0 ? "" : $"//{i}";

@@ -199,6 +199,7 @@
   const chainLabels = {
     "evm": "Ethereum · EVM", "btc-segwit": "Bitcoin · SegWit", "btc-taproot": "Bitcoin · Taproot",
     "sol": "Solana", "dot": "Polkadot", "atom": "Cosmos Hub",
+    "near": "NEAR", "apt": "Aptos", "sui": "Sui", "ton": "TON", "ada": "Cardano",
   };
 
   function renderWallet(w, animate = true) {

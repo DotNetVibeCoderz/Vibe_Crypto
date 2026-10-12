@@ -4,6 +4,11 @@ using System.Text.Json;
 using Crypto.Net.Bitcoin;
 using Crypto.Net.Core;
 using Crypto.Net.Cosmos;
+using Crypto.Net.Aptos;
+using Crypto.Net.Cardano;
+using Crypto.Net.Near;
+using Crypto.Net.Sui;
+using Crypto.Net.Ton;
 using Crypto.Net.Evm;
 using Crypto.Net.Extensions;
 using Crypto.Net.Native;
@@ -297,6 +302,11 @@ public static class GalleryApi
         var sol = testnet ? SolanaChain.Devnet : SolanaChain.MainnetBeta;
         var dot = testnet ? PolkadotChain.Westend : PolkadotChain.Polkadot;
         var atom = testnet ? CosmosChain.CosmosHubTestnet : CosmosChain.CosmosHub;
+        var near = testnet ? NearChain.Testnet : NearChain.Mainnet;
+        var apt = testnet ? AptosChain.Testnet : AptosChain.Mainnet;
+        var sui = testnet ? SuiChain.Testnet : SuiChain.Mainnet;
+        var ton = testnet ? TonChain.Testnet : TonChain.Mainnet;
+        var ada = testnet ? CardanoChain.Preprod : CardanoChain.Mainnet;
 
         var accounts = new List<object>();
         for (uint i = 0; i < count; i++)
@@ -312,6 +322,11 @@ public static class GalleryApi
                 accounts.Add(Row("dot", dot, "sr25519", path.Length == 0 ? "root (Polkadot.js)" : path, a.Address.Value, i));
             }
             using (var a = wallet.GetCosmosAccount(i, atom)) accounts.Add(Row("atom", atom, "secp256k1", a.DerivationPath!, a.Address.Value, i));
+            using (var a = wallet.GetNearAccount(i, near)) accounts.Add(Row("near", near, "ed25519 · implicit", a.DerivationPath!, a.Address.Value, i));
+            using (var a = wallet.GetAptosAccount(i, apt)) accounts.Add(Row("apt", apt, "ed25519", a.DerivationPath!, a.Address.Value, i));
+            using (var a = wallet.GetSuiAccount(i, sui)) accounts.Add(Row("sui", sui, "ed25519", a.DerivationPath!, a.Address.Value, i));
+            using (var a = wallet.GetTonAccount(i, ton)) accounts.Add(Row("ton", ton, "ed25519 · W5", a.DerivationPath!, a.Address.Value, i));
+            using (var a = wallet.GetCardanoAccount(0, i, ada)) accounts.Add(Row("ada", ada, "BIP32-Ed25519", a.DerivationPath!, a.Address.Value, i));
         }
 
         // Fingerprint drawn as the guilloché rosette. Derived from the xpub, so the picture never reveals the seed.
