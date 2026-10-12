@@ -213,6 +213,23 @@ public class DecoderFuzzTests
     }
 
     [Fact]
+    public void Ton_BagOfCells()
+    {
+        using var account = new Crypto.Net.Ton.TonAccount(Enumerable.Repeat((byte)7, 32).ToArray());
+        var dest = Crypto.Net.Ton.TonAddress.Parse("0:" + new string('a', 64));
+        var external = account.CreateTransfer(0, [Crypto.Net.Ton.TonMessage.WithComment(dest, 5, new string('x', 150))]);
+        byte[][] seeds = [external.ToBoc(), external.ToBoc(withIndex: true, withCrc: false), Crypto.Net.Ton.TonWalletContract.Code(Crypto.Net.Ton.TonWalletVersion.V4R2).ToBoc(withCrc: false)];
+        Fuzz("ton-boc", seeds, b =>
+        {
+            foreach (var root in Crypto.Net.Ton.TonBoc.Deserialize(b))
+            {
+                if (!root.IsExotic) root.Hash();
+            }
+        });
+        Fuzz("ton-ext-msg", [external.ToBoc(withCrc: false)], b => Crypto.Net.Ton.TonMessage.NormalizedHash(Crypto.Net.Ton.TonCell.FromBoc(b)));
+    }
+
+    [Fact]
     public void Text_Codecs()
     {
         var rng = new Random(Seed);

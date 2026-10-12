@@ -95,6 +95,27 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Ton_TestnetReadsAndEmulatedTransfer()
+    {
+        await using var ton = new Crypto.Net.Ton.TonCenterClient(Crypto.Net.Ton.TonChain.Testnet);
+        Assert.True(await ton.GetBlockNumberAsync() > 0);
+        foreach (var version in new[] { Crypto.Net.Ton.TonWalletVersion.V4R2, Crypto.Net.Ton.TonWalletVersion.V5R1 })
+        {
+            using var account = new Crypto.Net.Ton.TonAccount(Enumerable.Repeat((byte)7, 32).ToArray(), Crypto.Net.Ton.TonChain.Testnet, version);
+            // This well-known test key's wallets may have been deployed by others; handle both states.
+            var state = await ton.GetAccountStateAsync(account.Address.Value);
+            uint seqno = await ton.GetSeqnoAsync(account.Address.Value);
+            if (!state.IsActive) Assert.Equal(0u, seqno);
+
+            // The node parses our state init and body and runs the wallet code on them.
+            var body = account.CreateTransferBody(seqno, [Crypto.Net.Ton.TonMessage.WithComment(account.WalletAddress, 1, "cryptonet")]);
+            var fees = await ton.EstimateFeeAsync(account, body, includeStateInit: !state.IsActive);
+            Assert.True(fees.GasFee > 0 && fees.InForwardFee > 0);
+        }
+        Assert.Null(await ton.GetReceiptAsync(new Crypto.Net.Core.TxHash(new string('0', 64))));
+    }
+
+    [LiveFact]
     public async Task Staking_NominateIsAcceptedByAssetHub()
     {
         // Sign (never submit) a nominate extrinsic and ask the runtime to price it: decoding errors would fail here.

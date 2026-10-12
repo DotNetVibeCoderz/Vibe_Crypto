@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>TON adapter for Crypto.Net: cells and bags of cells, raw and user-friendly addresses, TON mnemonics, wallet contracts V4R2 and W5 (V5R1), transfers with comments, jetton transfers and a TON Center client.</Description>
+    <PackageTags>$(PackageTags);ton;the-open-network;jetton</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+  </ItemGroup>
+</Project>
