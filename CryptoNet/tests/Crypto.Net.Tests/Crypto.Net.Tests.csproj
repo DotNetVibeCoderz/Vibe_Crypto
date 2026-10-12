@@ -23,4 +23,8 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Vectors\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

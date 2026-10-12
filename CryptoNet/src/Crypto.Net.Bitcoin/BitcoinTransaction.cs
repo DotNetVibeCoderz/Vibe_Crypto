@@ -65,6 +65,9 @@ public enum SigHashType : byte
     None = 0x02,
     Single = 0x03,
     AnyoneCanPay = 0x80,
+    AllAnyoneCanPay = 0x81,
+    NoneAnyoneCanPay = 0x82,
+    SingleAnyoneCanPay = 0x83,
 }
 
 /// <summary>
@@ -131,6 +134,88 @@ public sealed class BitcoinTransaction
         return ms.ToArray();
     }
 
+    /// <summary>Parses a serialized transaction (with or without SegWit marker).</summary>
+    public static BitcoinTransaction Parse(ReadOnlySpan<byte> raw)
+    {
+        var r = new TxReader(raw);
+        var tx = new BitcoinTransaction { Version = r.UInt32() };
+        bool segwit = false;
+        ulong inputCount = r.VarInt();
+        if (inputCount == 0)
+        {
+            if (r.Byte() != 0x01) throw new FormatException("Invalid SegWit flag");
+            segwit = true;
+            inputCount = r.VarInt();
+        }
+        for (ulong i = 0; i < inputCount; i++)
+        {
+            byte[] txid = r.Bytes(32).ToArray();
+            Array.Reverse(txid);
+            uint vout = r.UInt32();
+            byte[] scriptSig = r.VarBytes().ToArray();
+            uint sequence = r.UInt32();
+            tx.Inputs.Add(new BitcoinTxInput { TxId = Convert.ToHexStringLower(txid), Vout = vout, ScriptSig = scriptSig, Sequence = sequence });
+        }
+        ulong outputCount = r.VarInt();
+        for (ulong i = 0; i < outputCount; i++)
+        {
+            long value = (long)r.UInt64();
+            tx.Outputs.Add(new BitcoinTxOutput { ValueSats = value, ScriptPubKey = r.VarBytes().ToArray() });
+        }
+        if (segwit)
+        {
+            foreach (var input in tx.Inputs)
+            {
+                ulong items = r.VarInt();
+                for (ulong k = 0; k < items; k++) input.Witness.Add(r.VarBytes().ToArray());
+            }
+        }
+        tx.LockTime = r.UInt32();
+        if (r.Remaining != 0) throw new FormatException("Trailing bytes after transaction");
+        return tx;
+    }
+
+    public static BitcoinTransaction Parse(string hex) => Parse(Convert.FromHexString(hex.Trim()));
+
+    internal ref struct TxReader(ReadOnlySpan<byte> data)
+    {
+        private readonly ReadOnlySpan<byte> _data = data;
+        private int _pos;
+
+        public readonly int Remaining => _data.Length - _pos;
+
+        public ReadOnlySpan<byte> Bytes(int n)
+        {
+            if (n < 0 || _pos + n > _data.Length) throw new FormatException("Transaction data is truncated");
+            var s = _data.Slice(_pos, n);
+            _pos += n;
+            return s;
+        }
+
+        public byte Byte() => Bytes(1)[0];
+        public uint UInt32() => BinaryPrimitives.ReadUInt32LittleEndian(Bytes(4));
+        public ulong UInt64() => BinaryPrimitives.ReadUInt64LittleEndian(Bytes(8));
+
+        public ulong VarInt()
+        {
+            byte b = Byte();
+            return b switch
+            {
+                0xFD => BinaryPrimitives.ReadUInt16LittleEndian(Bytes(2)),
+                0xFE => BinaryPrimitives.ReadUInt32LittleEndian(Bytes(4)),
+                0xFF => UInt64(),
+                _ => b,
+            };
+        }
+
+        public ReadOnlySpan<byte> VarBytes()
+        {
+            ulong len = VarInt();
+            if (len > (ulong)Remaining) throw new FormatException("Length prefix exceeds the data");
+            return Bytes((int)len);
+        }
+    }
+
     /// <summary>Transaction id (double SHA-256 of the non-witness serialization, displayed reversed).</summary>
     public string TxId => DisplayHash(CryptoNative.DoubleSha256(Serialize(includeWitness: false)));
 
@@ -194,71 +279,163 @@ public sealed class BitcoinTransaction
         return CryptoNative.DoubleSha256(preimage);
     }
 
-    /// <summary>BIP-143 SegWit v0 signature hash (SIGHASH_ALL).</summary>
+    /// <summary>BIP-143 SegWit v0 signature hash for any sighash type (ALL, NONE, SINGLE, optionally | ANYONECANPAY).</summary>
     public byte[] GetSegwitV0SigHash(int index, ReadOnlySpan<byte> scriptCode, long amountSats, SigHashType type = SigHashType.All)
     {
-        if (type != SigHashType.All) throw new NotSupportedException("Only SIGHASH_ALL is supported for SegWit v0 inputs");
-        using var prevouts = new MemoryStream();
-        using var sequences = new MemoryStream();
-        foreach (var i in Inputs)
+        if (type == SigHashType.Default) throw new ArgumentException("SIGHASH_DEFAULT is Taproot-only");
+        int baseType = (int)type & 0x1f;
+        bool anyoneCanPay = ((int)type & 0x80) != 0;
+        byte[] zero = new byte[32];
+
+        byte[] hashPrevouts = zero, hashSequence = zero, hashOutputs = zero;
+        if (!anyoneCanPay)
         {
-            prevouts.Write(i.OutpointBytes());
-            WriteUInt32(sequences, i.Sequence);
+            using var prevouts = new MemoryStream();
+            foreach (var i in Inputs) prevouts.Write(i.OutpointBytes());
+            hashPrevouts = CryptoNative.DoubleSha256(prevouts.ToArray());
         }
-        using var outputs = new MemoryStream();
-        foreach (var o in Outputs) outputs.Write(o.Serialize());
+        if (!anyoneCanPay && baseType != (int)SigHashType.Single && baseType != (int)SigHashType.None)
+        {
+            using var sequences = new MemoryStream();
+            foreach (var i in Inputs) WriteUInt32(sequences, i.Sequence);
+            hashSequence = CryptoNative.DoubleSha256(sequences.ToArray());
+        }
+        if (baseType != (int)SigHashType.Single && baseType != (int)SigHashType.None)
+        {
+            using var outputs = new MemoryStream();
+            foreach (var o in Outputs) outputs.Write(o.Serialize());
+            hashOutputs = CryptoNative.DoubleSha256(outputs.ToArray());
+        }
+        else if (baseType == (int)SigHashType.Single && index < Outputs.Count)
+        {
+            hashOutputs = CryptoNative.DoubleSha256(Outputs[index].Serialize());
+        }
 
         using var ms = new MemoryStream();
         WriteUInt32(ms, Version);
-        ms.Write(CryptoNative.DoubleSha256(prevouts.ToArray()));
-        ms.Write(CryptoNative.DoubleSha256(sequences.ToArray()));
+        ms.Write(hashPrevouts);
+        ms.Write(hashSequence);
         ms.Write(Inputs[index].OutpointBytes());
         WriteVarBytes(ms, scriptCode);
         Span<byte> amount = stackalloc byte[8];
         BinaryPrimitives.WriteInt64LittleEndian(amount, amountSats);
         ms.Write(amount);
         WriteUInt32(ms, Inputs[index].Sequence);
-        ms.Write(CryptoNative.DoubleSha256(outputs.ToArray()));
+        ms.Write(hashOutputs);
         WriteUInt32(ms, LockTime);
         WriteUInt32(ms, (uint)type);
         return CryptoNative.DoubleSha256(ms.ToArray());
     }
 
-    /// <summary>BIP-341 Taproot key-path signature hash (SIGHASH_DEFAULT, no annex).</summary>
-    public byte[] GetTaprootSigHash(int index, IReadOnlyList<BitcoinUtxo> spentOutputs, SigHashType type = SigHashType.Default)
+    /// <summary>
+    /// BIP-341 signature message, including the leading epoch byte 0x00 (the input to the TapSighash tagged hash),
+    /// for any sighash type. Pass
+    /// <paramref name="leafHash"/> for a script-path spend (BIP-342) and <paramref name="annex"/> when present.
+    /// </summary>
+    public byte[] GetTaprootSigMessage(int index, IReadOnlyList<BitcoinUtxo> spentOutputs, SigHashType type = SigHashType.Default,
+        ReadOnlySpan<byte> leafHash = default, ReadOnlySpan<byte> annex = default, uint codeSeparatorPosition = 0xFFFFFFFF)
     {
-        if (type is not (SigHashType.Default or SigHashType.All)) throw new NotSupportedException("Only SIGHASH_DEFAULT/ALL are supported for Taproot inputs");
-        if (spentOutputs.Count != Inputs.Count) throw new ArgumentException("Taproot signing needs every spent output");
-
-        using var prevouts = new MemoryStream();
-        using var amounts = new MemoryStream();
-        using var scripts = new MemoryStream();
-        using var sequences = new MemoryStream();
-        Span<byte> v8 = stackalloc byte[8];
-        for (int i = 0; i < Inputs.Count; i++)
-        {
-            prevouts.Write(Inputs[i].OutpointBytes());
-            BinaryPrimitives.WriteInt64LittleEndian(v8, spentOutputs[i].ValueSats);
-            amounts.Write(v8);
-            WriteVarBytes(scripts, spentOutputs[i].ScriptPubKey);
-            WriteUInt32(sequences, Inputs[i].Sequence);
-        }
-        using var outputs = new MemoryStream();
-        foreach (var o in Outputs) outputs.Write(o.Serialize());
+        int baseType = (int)type & 0x03;
+        bool anyoneCanPay = ((int)type & 0x80) != 0;
+        if ((int)type is not (0x00 or 0x01 or 0x02 or 0x03 or 0x81 or 0x82 or 0x83))
+            throw new ArgumentException($"Invalid Taproot sighash type 0x{(int)type:x2}");
+        if (!anyoneCanPay && spentOutputs.Count != Inputs.Count)
+            throw new ArgumentException("Taproot signing needs every spent output");
+        if (baseType == (int)SigHashType.Single && index >= Outputs.Count)
+            throw new ArgumentException("SIGHASH_SINGLE without a matching output");
+        if (!annex.IsEmpty && annex[0] != 0x50) throw new ArgumentException("Annex must start with 0x50");
+        if (!leafHash.IsEmpty && leafHash.Length != 32) throw new ArgumentException("Leaf hash must be 32 bytes");
 
         using var msg = new MemoryStream();
         msg.WriteByte(0x00); // epoch
         msg.WriteByte((byte)type);
         WriteUInt32(msg, Version);
         WriteUInt32(msg, LockTime);
-        msg.Write(CryptoNative.Sha256(prevouts.ToArray()));
-        msg.Write(CryptoNative.Sha256(amounts.ToArray()));
-        msg.Write(CryptoNative.Sha256(scripts.ToArray()));
-        msg.Write(CryptoNative.Sha256(sequences.ToArray()));
-        msg.Write(CryptoNative.Sha256(outputs.ToArray()));
-        msg.WriteByte(0x00); // spend_type: key path, no annex
-        WriteUInt32(msg, (uint)index);
-        return CryptoNative.TaggedHash("TapSighash", msg.ToArray());
+
+        Span<byte> v8 = stackalloc byte[8];
+        if (!anyoneCanPay)
+        {
+            using var prevouts = new MemoryStream();
+            using var amounts = new MemoryStream();
+            using var scripts = new MemoryStream();
+            using var sequences = new MemoryStream();
+            for (int i = 0; i < Inputs.Count; i++)
+            {
+                prevouts.Write(Inputs[i].OutpointBytes());
+                BinaryPrimitives.WriteInt64LittleEndian(v8, spentOutputs[i].ValueSats);
+                amounts.Write(v8);
+                WriteVarBytes(scripts, spentOutputs[i].ScriptPubKey);
+                WriteUInt32(sequences, Inputs[i].Sequence);
+            }
+            msg.Write(CryptoNative.Sha256(prevouts.ToArray()));
+            msg.Write(CryptoNative.Sha256(amounts.ToArray()));
+            msg.Write(CryptoNative.Sha256(scripts.ToArray()));
+            msg.Write(CryptoNative.Sha256(sequences.ToArray()));
+        }
+        if (baseType is not ((int)SigHashType.None or (int)SigHashType.Single))
+        {
+            using var outputs = new MemoryStream();
+            foreach (var o in Outputs) outputs.Write(o.Serialize());
+            msg.Write(CryptoNative.Sha256(outputs.ToArray()));
+        }
+
+        int extFlag = leafHash.IsEmpty ? 0 : 1;
+        msg.WriteByte((byte)(extFlag * 2 + (annex.IsEmpty ? 0 : 1)));
+        if (anyoneCanPay)
+        {
+            var utxo = spentOutputs[anyoneCanPay && spentOutputs.Count == 1 ? 0 : index];
+            msg.Write(Inputs[index].OutpointBytes());
+            BinaryPrimitives.WriteInt64LittleEndian(v8, utxo.ValueSats);
+            msg.Write(v8);
+            WriteVarBytes(msg, utxo.ScriptPubKey);
+            WriteUInt32(msg, Inputs[index].Sequence);
+        }
+        else
+        {
+            WriteUInt32(msg, (uint)index);
+        }
+        if (!annex.IsEmpty)
+        {
+            using var a = new MemoryStream();
+            WriteVarBytes(a, annex);
+            msg.Write(CryptoNative.Sha256(a.ToArray()));
+        }
+        if (baseType == (int)SigHashType.Single)
+            msg.Write(CryptoNative.Sha256(Outputs[index].Serialize()));
+        if (extFlag == 1)
+        {
+            msg.Write(leafHash);
+            msg.WriteByte(0x00); // key_version
+            WriteUInt32(msg, codeSeparatorPosition);
+        }
+        return msg.ToArray();
+    }
+
+    /// <summary>BIP-341 signature hash: TaggedHash("TapSighash", 0x00 || sigMsg).</summary>
+    public byte[] GetTaprootSigHash(int index, IReadOnlyList<BitcoinUtxo> spentOutputs, SigHashType type = SigHashType.Default,
+        ReadOnlySpan<byte> leafHash = default, ReadOnlySpan<byte> annex = default)
+    {
+        return CryptoNative.TaggedHash("TapSighash", GetTaprootSigMessage(index, spentOutputs, type, leafHash, annex));
+    }
+
+    /// <summary>
+    /// Schnorr signature for a Taproot key-path spend with an optional script tree. Appends the sighash byte unless
+    /// it is SIGHASH_DEFAULT. <paramref name="auxRand"/> defaults to fresh randomness.
+    /// </summary>
+    public static byte[] SignTaprootKeyPath(ReadOnlySpan<byte> internalPrivateKey, ReadOnlySpan<byte> sigHash, SigHashType type = SigHashType.Default,
+        ReadOnlySpan<byte> merkleRoot = default, ReadOnlySpan<byte> auxRand = default)
+    {
+        byte[] tweaked = CryptoNative.TaprootTweakSecretKey(internalPrivateKey, merkleRoot);
+        try
+        {
+            byte[] aux = auxRand.IsEmpty ? System.Security.Cryptography.RandomNumberGenerator.GetBytes(32) : auxRand.ToArray();
+            byte[] sig = CryptoNative.SchnorrSign(tweaked, sigHash, aux);
+            return type == SigHashType.Default ? sig : [.. sig, (byte)type];
+        }
+        finally
+        {
+            System.Security.Cryptography.CryptographicOperations.ZeroMemory(tweaked);
+        }
     }
 
     #endregion
@@ -305,16 +482,8 @@ public sealed class BitcoinTransaction
                 if (!outputKey.AsSpan().SequenceEqual(utxo.ScriptPubKey.AsSpan(2)))
                     throw new InvalidOperationException($"Input {index}: key does not match the Taproot output");
                 byte[] hash = GetTaprootSigHash(index, spentOutputs);
-                byte[] tweaked = CryptoNative.TaprootTweakSecretKey(privateKey);
-                try
-                {
-                    Inputs[index].ScriptSig = [];
-                    Inputs[index].Witness = [CryptoNative.SchnorrSign(tweaked, hash, System.Security.Cryptography.RandomNumberGenerator.GetBytes(32))];
-                }
-                finally
-                {
-                    System.Security.Cryptography.CryptographicOperations.ZeroMemory(tweaked);
-                }
+                Inputs[index].ScriptSig = [];
+                Inputs[index].Witness = [SignTaprootKeyPath(privateKey, hash)];
                 break;
             }
             default:
