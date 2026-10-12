@@ -50,7 +50,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [x] Polyglot notebooks (EN/ID) — one per chain.
 - [ ] Notebooks for indexer, benchmarks and security practices.
 - [ ] VS Code extension "Crypto.Net Tools".
-- [ ] ERC-721/1155, ENS, EIP-4337; SPL Token-2022 extensions; CosmWasm; Polkadot staking/nomination helpers.
+- [x] ERC-721/1155, ENS, EIP-4337; SPL Token-2022 extensions; CosmWasm; Polkadot staking/nomination helpers.
 - [ ] Hardware wallets (Ledger/Trezor) and WalletConnect v2 as `ISigner` implementations.
 - [ ] Gallery desktop/mobile (Avalonia or MAUI) and WASM.
 - [ ] External security audit before 2.0.

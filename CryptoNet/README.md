@@ -54,11 +54,11 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Native` | Rust core + managed fallback: SHA-2, Keccak, BLAKE2b, RIPEMD-160, secp256k1 ECDSA/Schnorr/Taproot, Ed25519, sr25519, BIP-32, SLIP-10, PBKDF2, scrypt, Base58, Bech32/Bech32m |
 | `Crypto.Net.Core` | `Amount` (exact), `Address`, `TxHash`, `ISigner`, `IChainClient`, JSON-RPC transport, receipt polling |
 | `Crypto.Net.Wallet` | BIP-39 mnemonics, BIP-32/SLIP-10 HD keys, xprv/xpub/zpub, Web3 v3 keystores, `KeySigner` |
-| `Crypto.Net.Evm` | EIP-55, Legacy/EIP-2930/EIP-1559 transactions, ABI codec, EIP-191/712, ERC-20, JSON-RPC client |
+| `Crypto.Net.Evm` | EIP-55, Legacy/EIP-2930/EIP-1559 transactions, ABI codec, EIP-191/712, ERC-20, JSON-RPC client, ERC-721/1155, ENS, ERC-4337 |
 | `Crypto.Net.Bitcoin` | P2PKH/P2SH/P2WPKH/P2WSH/P2TR, Taproot script trees, legacy/BIP-143/BIP-341 signing, PSBT (BIP-174/370), multisig, coin selection, Esplora |
-| `Crypto.Net.Solana` | Legacy and v0 transactions, address lookup tables, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC |
-| `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, event and storage decoding, RPC |
-| `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client |
+| `Crypto.Net.Solana` | Legacy and v0 transactions, address lookup tables, System/SPL Token/ATA/Compute Budget/Memo, PDAs, Phantom & solana-cli keys, RPC, Token-2022 extensions, Borsh/Anchor |
+| `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, event and storage decoding, RPC, metadata-driven SCALE encoder, staking & nomination pools |
+| `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client, CosmWasm and CW20 |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |
 | `Crypto.Net.Generators` | Source generator: Solidity ABI / Hardhat & Foundry artifacts and Anchor IDLs → typed clients (also `cnet gen`) |
 | `Crypto.Net.Indexer` | EVM log indexer with ABI event decoding, block crawler, checkpoints, hosted services |

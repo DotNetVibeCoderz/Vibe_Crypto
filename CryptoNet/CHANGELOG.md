@@ -26,6 +26,23 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   - New `cnet-contract-client` template.
 - **Solana**: `BorshWriter`/`BorshReader`, `Anchor` discriminator helpers, `SolanaRpcClient.GetAccountDataAsync`.
 - **EVM**: `EvmContract` base class for typed contract clients.
+- **EVM standards**:
+  - `Erc721Client` / `Erc1155Client` with ERC-165 detection and EIP-2981 royalties.
+  - `EnsClient`: EIP-137 namehash, forward/reverse resolution with verification, text and contenthash records.
+  - ERC-4337: `UserOperation` hashing for EntryPoint v0.6/v0.7/v0.8 (matches viem), `BundlerClient`, and
+    `SimpleAccount` helpers.
+- **Solana Token-2022**:
+  - `TokenMint` / `TokenAccountData` with TLV extensions: transfer fee, metadata, pointers, hook, interest,
+    delegate.
+  - Fee calculation.
+  - Extension instructions identical to @solana/spl-token.
+  - `GetMintAsync`.
+- **CosmWasm**:
+  - Execute/instantiate/migrate/update-admin messages (identical to cosmjs-types).
+  - Smart/raw queries, contract info, and a `Cw20Client`.
+- **Polkadot**:
+  - `ScaleEncoder`: a metadata-driven encoder with `EncodeCall(pallet, call, args)` and nested calls.
+  - `PolkadotStaking`: staking and nomination-pool calls. Verified by a fee quote from Polkadot Asset Hub.
 - `MockRpcError` in Crypto.Net.Testing lets an `OnRpc` factory answer with an error.
 
 ### Changed

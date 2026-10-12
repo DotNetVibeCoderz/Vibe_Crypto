@@ -41,6 +41,20 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Staking_NominateIsAcceptedByAssetHub()
+    {
+        // Sign (never submit) a nominate extrinsic and ask the runtime to price it: decoding errors would fail here.
+        await using var client = new PolkadotRpcClient(PolkadotChain.PolkadotAssetHub);
+        var md = await client.GetMetadataAsync();
+        using var alice = PolkadotAccount.FromSuri("//Alice", chain: PolkadotChain.PolkadotAssetHub);
+        byte[] call = PolkadotStaking.Nominate(md, [alice.Address.Value]);
+        var ctx = await client.GetExtrinsicContextAsync(alice.Address.Value);
+        byte[] signed = Extrinsic.Sign(md, call, alice, ctx);
+        var fee = await client.EstimateFeeAsync(signed);
+        Assert.True(fee.BaseUnits > 0);
+    }
+
+    [LiveFact]
     public async Task CosmWasm_ContractInfoOnOsmosis()
     {
         using var rest = new Crypto.Net.Cosmos.CosmosRestClient(Crypto.Net.Cosmos.CosmosChain.Osmosis);

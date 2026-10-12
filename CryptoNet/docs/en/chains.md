@@ -69,6 +69,49 @@ Amount bal = await usdc.GetBalanceAsync(owner);                 // scaled with d
 TxHash h = await usdc.TransferAsync(signer, recipient, Amount.Parse("12.5", 6));
 ```
 
+### NFTs (ERC-721 / ERC-1155)
+
+```csharp
+var nft = new Erc721Client(client, "0x…");
+if (await nft.SupportsInterfaceAsync(InterfaceIds.Erc721)) Console.WriteLine(await nft.GetOwnerAsync(tokenId));
+string uri = await new Erc1155Client(client, "0x…").GetUriAsync(id);     // {id} replaced as ERC-1155 requires
+var royalty = await nft.GetRoyaltyAsync(tokenId, salePrice);            // EIP-2981, null when unsupported
+```
+
+`Erc721Client.TransferEvent` (token id indexed) and `Erc1155Client.TransferSingleEvent`/`TransferBatchEvent` plug into
+the [indexer](indexer.md).
+
+### ENS
+
+```csharp
+var ens = new EnsClient(mainnet);
+string? address = await ens.ResolveAddressAsync("vitalik.eth");
+string? name = await ens.LookupAddressAsync(address!);          // reverse record, verified forward
+string? avatar = await ens.GetTextAsync("vitalik.eth", "avatar");
+```
+
+`EnsClient.NameHash` implements EIP-137. Normalization lower-cases and NFC-normalizes names. Names that need full
+ENSIP-15 handling (emoji, confusables), and off-chain CCIP-read resolvers, are outside its scope.
+
+### Account abstraction (ERC-4337)
+
+```csharp
+var op = new UserOperation
+{
+    Sender = await SimpleAccount.GetAddressAsync(client, owner, salt: 0),
+    Nonce = await SimpleAccount.GetNonceAsync(client, sender, EntryPointVersion.V07),
+    CallData = SimpleAccount.EncodeExecute(recipient, value, []),
+    /* gas fields from bundler.EstimateGasAsync(op, …), fees from client.EstimateFeesAsync() */
+};
+SimpleAccount.Sign(op, ownerKey, EntryPointVersion.V07, chainId: 11155111);
+using var bundler = new BundlerClient("https://…bundler…");
+string hash = await bundler.SendAsync(op, EntryPointVersion.V07);
+var receipt = await bundler.GetReceiptAsync(hash);
+```
+
+`UserOperation.GetHash` supports EntryPoint v0.6, v0.7 (packed gas fields) and v0.8 (EIP-712). It matches viem's
+`getUserOperationHash`.
+
 ---
 
 ## Bitcoin
@@ -203,6 +246,23 @@ IReadOnlyList<string> keys = message.ResolveAccountKeys([table!]);
 v0 messages compile exactly as `@solana/web3.js` `compileToV0Message` does. Signers and program ids stay static.
 `Freeze`, `Deactivate` and `Close` complete the lookup table program.
 
+### Token-2022
+
+```csharp
+TokenMint? mint = await rpc.GetMintAsync("2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo");   // PYUSD
+var fee = mint!.TransferFeeConfig?.ForEpoch(currentEpoch).Calculate(amount) ?? 0;
+Console.WriteLine($"{mint.Metadata?.Name} ({mint.Metadata?.Symbol}), fee {fee}");
+tx.Add(Token2022.TransferCheckedWithFee(sourceAta, mintAddress, destinationAta, owner, amount, mint.Decimals, fee));
+```
+
+`TokenMint` and `TokenAccountData` parse both token programs. All TLV extensions are listed. These have typed
+accessors: transfer fee, metadata pointer, on-chain token metadata, permanent delegate, close authority, transfer
+hook, interest rate and non-transferable.
+
+The following builders produce bytes identical to `@solana/spl-token`: `InitializeMint2`,
+`InitializeTransferFeeConfig`, `InitializeMetadataPointer`, `InitializePermanentDelegate`,
+`InitializeNonTransferableMint` and `InitializeMetadata`. `Token2022.MintSpace(...)` sizes the account.
+
 ---
 
 ## Polkadot and Substrate
@@ -256,6 +316,27 @@ byte[] key = metadata.StorageKey("System", "Account", accountId); // twox/blake2
 `ScaleDecoder.Decode(metadata, typeId, bytes)` turns any SCALE value into dictionaries, `ScaleVariant`s, arrays and
 numbers. Metadata is fetched per block and cached per spec version, so historical blocks decode with their own runtime.
 
+### Any call by name, staking and pools
+
+```csharp
+byte[] call = ScaleEncoder.EncodeCall(md, "Balances", "transfer_keep_alive", new { dest = "15oF4…", value = planck });
+byte[] nominate = PolkadotStaking.Nominate(md, ["1zugca…", "14Ns6…"]);       // Staking lives on Asset Hub now
+byte[] join = PolkadotStaking.JoinPool(md, amount, poolId: 12);
+var ctx = await client.GetExtrinsicContextAsync(account.Address.Value);
+await client.SendRawTransactionAsync(Extrinsic.Sign(md, nominate, account, ctx));
+```
+
+`ScaleEncoder` encodes any value against the runtime's type registry:
+
+- **Composites** accept dictionaries or objects with matching properties.
+- **Enums** accept a `ScaleVariant`, or the variant name for variants without fields.
+- **Account ids and `MultiAddress`** accept SS58 strings.
+- **Nested `RuntimeCall`s** (for `Utility.batch_all` or a proxy) are written as a pallet `ScaleVariant` that wraps
+  a call `ScaleVariant`.
+
+`PolkadotStaking` wraps these calls: bond, bond_extra, nominate, unbond, withdraw_unbonded, chill and set_payee.
+For nomination pools it wraps join, bond_extra, claim_payout, unbond and withdraw_unbonded.
+
 ---
 
 ## Cosmos SDK
@@ -276,3 +357,21 @@ TxHash d = await rest.SignAndBroadcastAsync(atom, builder);       // simulates f
 Transactions are protobuf `TxRaw` signed in `SIGN_MODE_DIRECT`. `CosmosAddress.ConvertPrefix(address, "osmo")`
 re-encodes an account for another chain. For chains with a different coin type (e.g. 60 for Evmos-style keys) pass
 `coinType` to `GetCosmosAccount`.
+
+### CosmWasm
+
+```csharp
+await using var rest = new CosmosRestClient(CosmosChain.Osmosis);
+JsonElement state = await rest.QueryContractAsync(contract, new { get_count = new { } });
+var cw20 = new Cw20Client(rest, tokenContract);
+BigInteger balance = await cw20.GetBalanceAsync(osmo.Address.Value);
+var tx = new CosmosTxBuilder()
+    .Add(CosmWasm.Execute(osmo.Address.Value, contract, new { increment = new { } }, new Coin("uosmo", 1000)))
+    .Add(cw20.Transfer(osmo.Address.Value, recipient, 5_000));
+await rest.SignAndBroadcastAsync(osmo, tx);
+```
+
+`MsgExecuteContract`, `MsgInstantiateContract`, `MsgMigrateContract` and `MsgUpdateAdmin` encode exactly as
+cosmjs-types does. Contract messages can be objects (serialized to compact JSON) or raw JSON strings. Use
+`QueryContractRawAsync` for raw storage reads, and `GetContractInfoAsync` / `GetContractsByCodeAsync` for code
+metadata.

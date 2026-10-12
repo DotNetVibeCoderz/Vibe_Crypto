@@ -69,6 +69,49 @@ Amount bal = await usdc.GetBalanceAsync(owner);                 // diskalakan de
 TxHash h = await usdc.TransferAsync(signer, recipient, Amount.Parse("12.5", 6));
 ```
 
+### NFT (ERC-721 / ERC-1155)
+
+```csharp
+var nft = new Erc721Client(client, "0x…");
+if (await nft.SupportsInterfaceAsync(InterfaceIds.Erc721)) Console.WriteLine(await nft.GetOwnerAsync(tokenId));
+string uri = await new Erc1155Client(client, "0x…").GetUriAsync(id);     // {id} diganti sesuai ERC-1155
+var royalty = await nft.GetRoyaltyAsync(tokenId, salePrice);            // EIP-2981, null bila tidak didukung
+```
+
+`Erc721Client.TransferEvent` (token id indexed) dan `Erc1155Client.TransferSingleEvent`/`TransferBatchEvent` bisa
+langsung dipakai dengan [indexer](indexer.md).
+
+### ENS
+
+```csharp
+var ens = new EnsClient(mainnet);
+string? address = await ens.ResolveAddressAsync("vitalik.eth");
+string? name = await ens.LookupAddressAsync(address!);          // reverse record, diverifikasi ke arah forward
+string? avatar = await ens.GetTextAsync("vitalik.eth", "avatar");
+```
+
+`EnsClient.NameHash` mengimplementasikan EIP-137. Normalisasi mengecilkan huruf dan menerapkan NFC. Nama yang memerlukan
+ENSIP-15 penuh (emoji, karakter mirip), dan resolver off-chain CCIP-read, berada di luar cakupannya.
+
+### Account abstraction (ERC-4337)
+
+```csharp
+var op = new UserOperation
+{
+    Sender = await SimpleAccount.GetAddressAsync(client, owner, salt: 0),
+    Nonce = await SimpleAccount.GetNonceAsync(client, sender, EntryPointVersion.V07),
+    CallData = SimpleAccount.EncodeExecute(recipient, value, []),
+    /* field gas dari bundler.EstimateGasAsync(op, …), fee dari client.EstimateFeesAsync() */
+};
+SimpleAccount.Sign(op, ownerKey, EntryPointVersion.V07, chainId: 11155111);
+using var bundler = new BundlerClient("https://…bundler…");
+string hash = await bundler.SendAsync(op, EntryPointVersion.V07);
+var receipt = await bundler.GetReceiptAsync(hash);
+```
+
+`UserOperation.GetHash` mendukung EntryPoint v0.6, v0.7 (field gas packed) dan v0.8 (EIP-712). Hasilnya sama dengan
+`getUserOperationHash` dari viem.
+
 ---
 
 ## Bitcoin
@@ -203,6 +246,23 @@ IReadOnlyList<string> keys = message.ResolveAccountKeys([table!]);
 Message v0 dikompilasi persis seperti `compileToV0Message` di `@solana/web3.js`. Signer dan program id tetap statis.
 `Freeze`, `Deactivate` dan `Close` melengkapi program lookup table.
 
+### Token-2022
+
+```csharp
+TokenMint? mint = await rpc.GetMintAsync("2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo");   // PYUSD
+var fee = mint!.TransferFeeConfig?.ForEpoch(currentEpoch).Calculate(amount) ?? 0;
+Console.WriteLine($"{mint.Metadata?.Name} ({mint.Metadata?.Symbol}), fee {fee}");
+tx.Add(Token2022.TransferCheckedWithFee(sourceAta, mintAddress, destinationAta, owner, amount, mint.Decimals, fee));
+```
+
+`TokenMint` dan `TokenAccountData` mem-parse kedua program token. Semua extension TLV didaftar. Yang punya accessor
+bertipe: transfer fee, metadata pointer, metadata token on-chain, permanent delegate, close authority, transfer hook,
+suku bunga dan non-transferable.
+
+Builder berikut menghasilkan byte yang identik dengan `@solana/spl-token`: `InitializeMint2`,
+`InitializeTransferFeeConfig`, `InitializeMetadataPointer`, `InitializePermanentDelegate`,
+`InitializeNonTransferableMint` dan `InitializeMetadata`. `Token2022.MintSpace(...)` menghitung ukuran akun.
+
 ---
 
 ## Polkadot dan Substrate
@@ -257,6 +317,27 @@ byte[] key = metadata.StorageKey("System", "Account", accountId); // hasher twox
 `ScaleDecoder.Decode(metadata, typeId, bytes)` mengubah nilai SCALE apa pun menjadi dictionary, `ScaleVariant`, array
 dan angka. Metadata diambil per blok dan di-cache per spec version, sehingga blok lama di-decode dengan runtime-nya sendiri.
 
+### Call apa pun lewat nama, staking dan pool
+
+```csharp
+byte[] call = ScaleEncoder.EncodeCall(md, "Balances", "transfer_keep_alive", new { dest = "15oF4…", value = planck });
+byte[] nominate = PolkadotStaking.Nominate(md, ["1zugca…", "14Ns6…"]);       // Staking kini ada di Asset Hub
+byte[] join = PolkadotStaking.JoinPool(md, amount, poolId: 12);
+var ctx = await client.GetExtrinsicContextAsync(account.Address.Value);
+await client.SendRawTransactionAsync(Extrinsic.Sign(md, nominate, account, ctx));
+```
+
+`ScaleEncoder` meng-encode nilai apa pun berdasarkan type registry runtime:
+
+- **Composite** menerima dictionary atau objek dengan property yang cocok.
+- **Enum** menerima `ScaleVariant`, atau nama variant untuk variant tanpa field.
+- **Account id dan `MultiAddress`** menerima string SS58.
+- **`RuntimeCall` bersarang** (untuk `Utility.batch_all` atau proxy) ditulis sebagai `ScaleVariant` pallet yang
+  membungkus `ScaleVariant` call.
+
+`PolkadotStaking` membungkus call berikut: bond, bond_extra, nominate, unbond, withdraw_unbonded, chill dan set_payee.
+Untuk nomination pool ia membungkus join, bond_extra, claim_payout, unbond dan withdraw_unbonded.
+
 ---
 
 ## Cosmos SDK
@@ -277,3 +358,21 @@ TxHash d = await rest.SignAndBroadcastAsync(atom, builder);       // simulasi ga
 Transaksi berupa protobuf `TxRaw` yang ditandatangani dalam `SIGN_MODE_DIRECT`. `CosmosAddress.ConvertPrefix(address, "osmo")`
 mengodekan ulang akun untuk chain lain. Untuk chain dengan coin type berbeda (mis. 60 untuk kunci gaya Evmos), isi
 `coinType` pada `GetCosmosAccount`.
+
+### CosmWasm
+
+```csharp
+await using var rest = new CosmosRestClient(CosmosChain.Osmosis);
+JsonElement state = await rest.QueryContractAsync(contract, new { get_count = new { } });
+var cw20 = new Cw20Client(rest, tokenContract);
+BigInteger balance = await cw20.GetBalanceAsync(osmo.Address.Value);
+var tx = new CosmosTxBuilder()
+    .Add(CosmWasm.Execute(osmo.Address.Value, contract, new { increment = new { } }, new Coin("uosmo", 1000)))
+    .Add(cw20.Transfer(osmo.Address.Value, recipient, 5_000));
+await rest.SignAndBroadcastAsync(osmo, tx);
+```
+
+`MsgExecuteContract`, `MsgInstantiateContract`, `MsgMigrateContract` dan `MsgUpdateAdmin` di-encode persis seperti
+cosmjs-types. Pesan kontrak bisa berupa objek (diserialisasi menjadi JSON ringkas) atau string JSON mentah. Pakai
+`QueryContractRawAsync` untuk membaca storage mentah, dan `GetContractInfoAsync` / `GetContractsByCodeAsync` untuk
+metadata kode.
