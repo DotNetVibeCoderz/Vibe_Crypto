@@ -16,6 +16,7 @@
     <Project Path="src/Crypto.Net.Generators/Crypto.Net.Generators.csproj" />
     <Project Path="src/Crypto.Net.Indexer.EntityFrameworkCore/Crypto.Net.Indexer.EntityFrameworkCore.csproj" />
     <Project Path="src/Crypto.Net.Indexer/Crypto.Net.Indexer.csproj" />
+    <Project Path="src/Crypto.Net.Ledger/Crypto.Net.Ledger.csproj" />
     <Project Path="src/Crypto.Net.Native/Crypto.Net.Native.csproj" />
     <Project Path="src/Crypto.Net.Polkadot/Crypto.Net.Polkadot.csproj" />
     <Project Path="src/Crypto.Net.Solana/Crypto.Net.Solana.csproj" />

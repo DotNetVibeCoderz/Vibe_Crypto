@@ -279,6 +279,39 @@ jobs:
           path: CryptoNet/tools/vscode-extension/crypto-net-tools.vsix
           if-no-files-found: error
 
+  ledger:
+    name: Ledger (Speculos + Ethereum app)
+    needs: native
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-linux-x64
+          path: CryptoNet/runtimes/linux-x64/native
+
+      - name: Start Speculos with Ledger's Ethereum app (public test seed)
+        run: |
+          mkdir -p speculos-apps
+          curl -sSfL -o speculos-apps/eth.elf https://github.com/LedgerHQ/app-ethereum/releases/download/1.22.3/app-1.22.3-nanox.elf
+          docker run -d --name speculos -p 9999:9999 -p 5000:5000 -v "$PWD/speculos-apps:/apps" ghcr.io/ledgerhq/speculos:latest             --model nanox /apps/eth.elf --display headless --apdu-port 9999 --api-port 5000             --seed "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:5000/events > /dev/null && break; sleep 2; done
+          curl -s http://127.0.0.1:5000/events | head -c 400
+
+      - name: Ledger end-to-end tests
+        env:
+          CRYPTONET_SPECULOS: "1"
+        run: dotnet test tests/Crypto.Net.Tests -c Release --filter "FullyQualifiedName~LedgerSpeculosTests" --logger "console;verbosity=normal"
+
+      - name: Speculos log
+        if: failure()
+        run: docker logs speculos | tail -100
+
   gallery:
     name: Gallery (desktop build + WebAssembly in Chrome)
     runs-on: ubuntu-24.04

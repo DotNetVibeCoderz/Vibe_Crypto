@@ -21,6 +21,7 @@
     <ProjectReference Include="..\..\src\Crypto.Net.Extensions\Crypto.Net.Extensions.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Testing\Crypto.Net.Testing.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Analyzers\Crypto.Net.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\Crypto.Net.Ledger\Crypto.Net.Ledger.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Indexer.EntityFrameworkCore\Crypto.Net.Indexer.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
