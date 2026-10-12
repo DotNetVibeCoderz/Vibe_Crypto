@@ -61,6 +61,7 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` and official test vectors |
+| `Crypto.Net.Analyzers` | Roslyn rules CNET001–005: hard-coded keys, secrets in strings, float amounts, mainnet in Debug, dropped cancellation tokens |
 | `Crypto.Net.Cli` | The `cnet` dotnet tool |
 
 ```bash

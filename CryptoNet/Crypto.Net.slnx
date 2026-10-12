@@ -4,6 +4,7 @@
     <Project Path="samples/Crypto.Net.QuickStart/Crypto.Net.QuickStart.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Crypto.Net.Analyzers/Crypto.Net.Analyzers.csproj" />
     <Project Path="src/Crypto.Net.Bitcoin/Crypto.Net.Bitcoin.csproj" />
     <Project Path="src/Crypto.Net.Core/Crypto.Net.Core.csproj" />
     <Project Path="src/Crypto.Net.Cosmos/Crypto.Net.Cosmos.csproj" />

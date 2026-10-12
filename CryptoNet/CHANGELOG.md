@@ -20,6 +20,13 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   meant inclusion. `RuntimeMetadata.Types` is public and uses the new `ScaleTypeInfo` records.
 
 ### Added
+- **Crypto.Net.Analyzers**: new Roslyn package.
+  - CNET001: hard-coded mnemonics, keys, WIF and xprv strings.
+  - CNET002: secrets kept in strings.
+  - CNET003: `Amount` built from floating point.
+  - CNET004: mainnet clients in Debug builds.
+  - CNET005: an available `CancellationToken` not passed to RPC calls; comes with a code fix.
+  - The Gallery and the CLI now build with these analyzers.
 - Polyglot notebooks for wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos in English and
   Bahasa Indonesia (`samples/notebooks`), generated from one source and executed against the published 1.0.0 packages.
 - **Bitcoin PSBT**: `Psbt` with BIP-174 (v0) and BIP-370 (v2) plus BIP-371 Taproot fields. Covers every role:

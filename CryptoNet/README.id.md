@@ -61,6 +61,7 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` dengan client ber-key, resilience, `ChainCatalog`, penyedia Ankr/dRPC, benchmark |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` dan test vector resmi |
+| `Crypto.Net.Analyzers` | Aturan Roslyn CNET001–005: kunci hard-coded, rahasia dalam string, amount dari float, mainnet di Debug, cancellation token yang terlewat |
 | `Crypto.Net.Cli` | Tool dotnet `cnet` |
 
 ```bash

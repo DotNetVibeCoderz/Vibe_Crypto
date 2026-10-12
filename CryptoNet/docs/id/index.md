@@ -18,6 +18,7 @@
 | [Gallery](gallery.md) | menjelajahi setiap fitur secara interaktif |
 | [Arsitektur](arsitektur.md) | melihat bagaimana inti Rust, C ABI dan fallback managed saling terhubung |
 | [Keamanan](keamanan.md) | menjalankan di produksi dengan aman |
+| [Analyzer](analyzer.md) | menangkap kunci hard-coded, amount dari float dan kesalahan lain saat kompilasi |
 | [Build dan kontribusi](kontribusi.md) | build dari source, menjalankan test, merilis paket |
 | [FAQ](faq.md) | mencari jawaban cepat |
 | [Notebook](../../samples/notebooks/README.md) | mempelajari setiap chain secara interaktif di Polyglot Notebooks |

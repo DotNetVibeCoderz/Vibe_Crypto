@@ -305,6 +305,9 @@ static object DescribeWallet(HdWallet wallet, bool testnet, int count)
         new { id, chain = chain.Name, symbol = chain.Symbol, curve, path, address, index };
 }
 
+// CNET002: these DTOs receive secrets from the browser as JSON text, so a string is unavoidable here; the Gallery is a
+// local demo and never persists them.
+#pragma warning disable CNET002
 record WalletRequest(int? Words, string? Passphrase, bool? Testnet, string? Mnemonic, int? Count);
 record AddressRequest(string? Address);
 record ConvertRequest(string? Value, string? From, string? To);
@@ -312,3 +315,4 @@ record SignRequest(string? Scheme, string? Message, string? Mnemonic);
 record SignResponse(string Scheme, string Signer, string? Digest, string Signature, bool Verified, string Note);
 record KeystoreRequest(string? PrivateKey, string? Password, string? Kdf, string? Keystore);
 record BenchmarkRequest(double? Scale);
+#pragma warning restore CNET002

@@ -18,6 +18,7 @@
 | [The Gallery](gallery.md) | explore every feature interactively |
 | [Architecture](architecture.md) | see how the Rust core, the C ABI and the managed fallback fit together |
 | [Security](security.md) | deploy safely |
+| [Analyzers](analyzers.md) | catch hard-coded keys, float amounts and other mistakes at compile time |
 | [Building and contributing](contributing.md) | build from source, run tests, release packages |
 | [FAQ](faq.md) | find quick answers |
 | [Notebooks](../../samples/notebooks/README.md) | learn each chain interactively in Polyglot Notebooks |
