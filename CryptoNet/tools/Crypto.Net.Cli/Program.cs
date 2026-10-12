@@ -256,7 +256,7 @@ tx.SetAction(async (r, ct) =>
 root.Subcommands.Add(tx);
 
 // ------------------------------------------------------------------ new (dotnet new templates)
-string[] templateNames = ["console", "worker", "webapi", "lib", "test"];
+string[] templateNames = ["console", "worker", "webapi", "lib", "test", "contract-client"];
 var templateArg = new Argument<string>("template") { Description = string.Join(", ", templateNames) };
 var nameOpt = new Option<string?>("--name", "-n") { Description = "Project name (defaults to the folder name)" };
 var outputOpt = new Option<string?>("--output", "-o") { Description = "Output folder" };
@@ -275,6 +275,45 @@ newCmd.SetAction(async (r, ct) =>
     return code;
 });
 root.Subcommands.Add(newCmd);
+
+// ------------------------------------------------------------------ gen (contract clients)
+var genFileArg = new Argument<FileInfo>("file") { Description = "Solidity ABI / Hardhat or Foundry artifact (*.json) or Anchor IDL (*.idl.json)" };
+var genNameOpt = new Option<string?>("--name", "-n") { Description = "Class name (defaults to the file name)" };
+var genNsOpt = new Option<string?>("--namespace") { Description = "Namespace of the generated code" };
+var genOutOpt = new Option<string?>("--output", "-o") { Description = "Output .cs file (defaults to <Name>.g.cs next to the input; '-' prints it)" };
+var genKindOpt = new Option<string?>("--kind") { Description = "abi or anchor (detected from the file when omitted)" };
+var gen = new Command("gen", "Generate a typed C# client from a Solidity ABI or an Anchor IDL") { genFileArg, genNameOpt, genNsOpt, genOutOpt, genKindOpt };
+gen.SetAction(r =>
+{
+    var file = r.GetValue(genFileArg)!;
+    if (!file.Exists) { Ui.Error($"{file.FullName} not found"); return 1; }
+    string source = File.ReadAllText(file.FullName);
+    string baseName = file.Name;
+    foreach (string suffix in new[] { ".abi.json", ".idl.json", ".json" })
+        if (baseName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)) { baseName = baseName[..^suffix.Length]; break; }
+    string name = r.GetValue(genNameOpt) ?? baseName;
+    string kind = r.GetValue(genKindOpt)
+        ?? (file.Name.EndsWith(".idl.json", StringComparison.OrdinalIgnoreCase) || source.Contains("\"instructions\"", StringComparison.Ordinal) ? "anchor" : "abi");
+    string code;
+    try
+    {
+        code = kind.Equals("anchor", StringComparison.OrdinalIgnoreCase)
+            ? Crypto.Net.Generators.AnchorClientGenerator.Generate(source, r.GetValue(genNsOpt) ?? "", name)
+            : Crypto.Net.Generators.EvmContractGenerator.Generate(source, r.GetValue(genNsOpt) ?? "", name);
+    }
+    catch (Exception ex) when (ex is FormatException or InvalidCastException or ArgumentException)
+    {
+        Ui.Error($"Could not generate: {ex.Message}");
+        return 1;
+    }
+    string output = r.GetValue(genOutOpt) ?? Path.Combine(file.DirectoryName!, name + ".g.cs");
+    if (output == "-") { Console.Write(code); return 0; }
+    File.WriteAllText(output, code);
+    if (r.GetValue(json)) { Ui.Json(new { input = file.FullName, output = Path.GetFullPath(output), kind, lines = code.Split('\n').Length }); return 0; }
+    AnsiConsole.MarkupLine($"[#{Ui.Accent.ToHex()}]✓[/] {Markup.Escape(kind)} client [bold]{Markup.Escape(name)}[/] → {Markup.Escape(Path.GetFullPath(output))}");
+    return 0;
+});
+root.Subcommands.Add(gen);
 
 // ------------------------------------------------------------------ sign / verify (EVM)
 var sign = new Command("sign", "Sign messages (EIP-191) and typed data (EIP-712)");

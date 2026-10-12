@@ -27,7 +27,7 @@ cat > "$work/nuget.config" <<XML
 </configuration>
 XML
 
-for template in cnet-console cnet-worker cnet-webapi cnet-lib cnet-test ${EXTRA_TEMPLATES:-}; do
+for template in cnet-console cnet-worker cnet-webapi cnet-lib cnet-test cnet-contract-client ${EXTRA_TEMPLATES:-}; do
   out="$work/apps/$template"
   echo "== $template"
   dotnet new "$template" -n Sample -o "$out" --CryptoNetVersion "$version" --skipRestore --debug:custom-hive "$hive" > /dev/null

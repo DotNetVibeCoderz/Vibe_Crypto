@@ -12,7 +12,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
   </ItemGroup>
@@ -22,6 +22,12 @@
     <ProjectReference Include="..\..\src\Crypto.Net.Testing\Crypto.Net.Testing.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Analyzers\Crypto.Net.Analyzers.csproj" />
     <ProjectReference Include="..\..\src\Crypto.Net.Indexer.EntityFrameworkCore\Crypto.Net.Indexer.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+  <!-- Consume the source generator exactly like a package user: ABI / IDL files as AdditionalFiles. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Crypto.Net.Generators\Crypto.Net.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <AdditionalFiles Include="Contracts\*.abi.json;Contracts\*.idl.json" />
   </ItemGroup>
 
   <ItemGroup>

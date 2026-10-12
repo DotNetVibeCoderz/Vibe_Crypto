@@ -28,7 +28,8 @@ Every command accepts `--json` for scripting. Secrets can come from options, the
 | `cnet sign typed-data <file.json> …` | EIP-712 digest and signature |
 | `cnet verify "<text>" -s <signature>` | Recovers the signer address |
 | `cnet bench [--scale 1.0]` | Rust core vs managed C# on this machine |
-| `cnet new <console\|worker\|webapi\|lib\|test> [-n name] [-o dir] [--network key]` | New project from [the templates](templates.md) (`dotnet new cnet-*`) |
+| `cnet new <console\|worker\|webapi\|lib\|test\|contract-client> [-n name] [-o dir] [--network key]` | New project from [the templates](templates.md) (`dotnet new cnet-*`) |
+| `cnet gen <abi-or-idl.json> [-n Name] [--namespace NS] [-o file\|-] [--kind abi\|anchor]` | Typed C# client from a Solidity ABI or Anchor IDL ([details](codegen.md)) |
 
 ![cnet bench](../assets/screenshots/cli-bench.png)
 

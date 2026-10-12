@@ -127,6 +127,15 @@ public sealed class SolanaRpcClient : IChainClient
         return data.Length >= 45 ? data[44] : throw new InvalidOperationException($"{mint} is not a mint account");
     }
 
+    /// <summary>Raw data of an account, or null when it does not exist.</summary>
+    public async ValueTask<byte[]?> GetAccountDataAsync(string address, CancellationToken ct = default)
+    {
+        var options = new Dictionary<string, string> { ["encoding"] = "base64", ["commitment"] = "confirmed" };
+        var r = await _rpc.CallAsync("getAccountInfo", [address, options], ct);
+        var value = r.GetProperty("value");
+        return value.ValueKind == JsonValueKind.Null ? null : Convert.FromBase64String(value.GetProperty("data")[0].GetString()!);
+    }
+
     /// <summary>Fetches and decodes an address lookup table; null when the account does not exist.</summary>
     public async ValueTask<AddressLookupTableAccount?> GetAddressLookupTableAsync(string tableAddress, CancellationToken ct = default)
     {

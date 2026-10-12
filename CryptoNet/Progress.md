@@ -29,6 +29,7 @@
 | Polyglot notebooks EN + ID | ✅ Done | 6 × 2 notebooks executed with dotnet-repl against nuget.org packages, 0 errors |
 | 1.1 Taproot trees, PSBT v0/v2, multisig | ✅ Done | BIP-341, BIP-174/370 and Bitcoin Core sighash vectors |
 | 1.1 Solana v0 + lookup tables | ✅ Done | Byte-identical to @solana/web3.js 1.98.0 |
+| Crypto.Net.Generators + `cnet gen` + cnet-contract-client | ✅ Done | Generated clients compiled and exercised in tests; live Sepolia USDC via template |
 | Crypto.Net.Indexer (+ EF Core storage) | ✅ Done | Mock + SQLite tests; live Sepolia USDC; cnet-worker indexes into SQLite |
 | Crypto.Net.Templates (5 templates) + `cnet new` | ✅ Done | `scripts/test-templates.sh` in CI: instantiate, build, test |
 | Crypto.Net.Analyzers (CNET001–005) | ✅ Done | Roslyn tests incl. code fix; dogfooded on CLI, QuickStart, Gallery |
@@ -70,3 +71,4 @@
 - **2026-10-12** — Crypto.Net.Analyzers package (CNET001–005, CNET005 code fix), documented in EN/ID.
 - **2026-10-12** — dotnet new templates and `cnet new`. Released 1.1.0.
 - **2026-10-12** — Crypto.Net.Indexer and its EF Core storage. `EvmEvent` decoding. The worker template now indexes real Sepolia USDC transfers into SQLite.
+- **2026-10-13** — Source generators for Solidity ABI and Anchor IDL, `cnet gen`, and the `cnet-contract-client` template (works live against Sepolia USDC).

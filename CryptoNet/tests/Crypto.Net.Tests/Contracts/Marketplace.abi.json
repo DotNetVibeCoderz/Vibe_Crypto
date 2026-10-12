@@ -1,0 +1,400 @@
+{
+ "contractName": "Marketplace",
+ "abi": [
+  {
+   "type": "function",
+   "name": "getListing",
+   "inputs": [
+    {
+     "name": "id",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "",
+     "type": "tuple",
+     "internalType": "struct Marketplace.Listing",
+     "components": [
+      {
+       "name": "id",
+       "type": "uint256",
+       "internalType": "uint256"
+      },
+      {
+       "name": "seller",
+       "type": "address",
+       "internalType": "address"
+      },
+      {
+       "name": "price",
+       "type": "uint96",
+       "internalType": "uint96"
+      },
+      {
+       "name": "title",
+       "type": "string",
+       "internalType": "string"
+      },
+      {
+       "name": "tags",
+       "type": "bytes32[]",
+       "internalType": "bytes32[]"
+      }
+     ]
+    }
+   ],
+   "stateMutability": "view"
+  },
+  {
+   "type": "function",
+   "name": "listings",
+   "inputs": [
+    {
+     "name": "offset",
+     "type": "uint256",
+     "internalType": "uint256"
+    },
+    {
+     "name": "limit",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "items",
+     "type": "tuple[]",
+     "internalType": "struct Marketplace.Listing[]",
+     "components": [
+      {
+       "name": "id",
+       "type": "uint256",
+       "internalType": "uint256"
+      },
+      {
+       "name": "seller",
+       "type": "address",
+       "internalType": "address"
+      },
+      {
+       "name": "price",
+       "type": "uint96",
+       "internalType": "uint96"
+      },
+      {
+       "name": "title",
+       "type": "string",
+       "internalType": "string"
+      },
+      {
+       "name": "tags",
+       "type": "bytes32[]",
+       "internalType": "bytes32[]"
+      }
+     ]
+    },
+    {
+     "name": "total",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "stateMutability": "view"
+  },
+  {
+   "type": "function",
+   "name": "order",
+   "inputs": [
+    {
+     "name": "id",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "",
+     "type": "tuple",
+     "internalType": "struct Marketplace.Order",
+     "components": [
+      {
+       "name": "listing",
+       "type": "tuple",
+       "internalType": "struct Marketplace.Listing",
+       "components": [
+        {
+         "name": "id",
+         "type": "uint256",
+         "internalType": "uint256"
+        },
+        {
+         "name": "seller",
+         "type": "address",
+         "internalType": "address"
+        },
+        {
+         "name": "price",
+         "type": "uint96",
+         "internalType": "uint96"
+        },
+        {
+         "name": "title",
+         "type": "string",
+         "internalType": "string"
+        },
+        {
+         "name": "tags",
+         "type": "bytes32[]",
+         "internalType": "bytes32[]"
+        }
+       ]
+      },
+      {
+       "name": "buyer",
+       "type": "address",
+       "internalType": "address"
+      }
+     ]
+    }
+   ],
+   "stateMutability": "view"
+  },
+  {
+   "type": "function",
+   "name": "create",
+   "inputs": [
+    {
+     "name": "listing",
+     "type": "tuple",
+     "internalType": "struct Marketplace.Listing",
+     "components": [
+      {
+       "name": "id",
+       "type": "uint256",
+       "internalType": "uint256"
+      },
+      {
+       "name": "seller",
+       "type": "address",
+       "internalType": "address"
+      },
+      {
+       "name": "price",
+       "type": "uint96",
+       "internalType": "uint96"
+      },
+      {
+       "name": "title",
+       "type": "string",
+       "internalType": "string"
+      },
+      {
+       "name": "tags",
+       "type": "bytes32[]",
+       "internalType": "bytes32[]"
+      }
+     ]
+    }
+   ],
+   "outputs": [
+    {
+     "name": "",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "stateMutability": "nonpayable"
+  },
+  {
+   "type": "function",
+   "name": "batchCreate",
+   "inputs": [
+    {
+     "name": "items",
+     "type": "tuple[]",
+     "internalType": "struct Marketplace.Listing[]",
+     "components": [
+      {
+       "name": "id",
+       "type": "uint256",
+       "internalType": "uint256"
+      },
+      {
+       "name": "seller",
+       "type": "address",
+       "internalType": "address"
+      },
+      {
+       "name": "price",
+       "type": "uint96",
+       "internalType": "uint96"
+      },
+      {
+       "name": "title",
+       "type": "string",
+       "internalType": "string"
+      },
+      {
+       "name": "tags",
+       "type": "bytes32[]",
+       "internalType": "bytes32[]"
+      }
+     ]
+    }
+   ],
+   "outputs": [],
+   "stateMutability": "nonpayable"
+  },
+  {
+   "type": "function",
+   "name": "buy",
+   "inputs": [
+    {
+     "name": "id",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "outputs": [],
+   "stateMutability": "payable"
+  },
+  {
+   "type": "function",
+   "name": "ping",
+   "inputs": [],
+   "outputs": [],
+   "stateMutability": "view"
+  },
+  {
+   "type": "function",
+   "name": "safeTransferFrom",
+   "inputs": [
+    {
+     "name": "from",
+     "type": "address",
+     "internalType": "address"
+    },
+    {
+     "name": "to",
+     "type": "address",
+     "internalType": "address"
+    },
+    {
+     "name": "id",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "outputs": [],
+   "stateMutability": "nonpayable"
+  },
+  {
+   "type": "function",
+   "name": "safeTransferFrom",
+   "inputs": [
+    {
+     "name": "from",
+     "type": "address",
+     "internalType": "address"
+    },
+    {
+     "name": "to",
+     "type": "address",
+     "internalType": "address"
+    },
+    {
+     "name": "id",
+     "type": "uint256",
+     "internalType": "uint256"
+    },
+    {
+     "name": "data",
+     "type": "bytes",
+     "internalType": "bytes"
+    }
+   ],
+   "outputs": [],
+   "stateMutability": "nonpayable"
+  },
+  {
+   "type": "function",
+   "name": "setFlags",
+   "inputs": [
+    {
+     "name": "flags",
+     "type": "bool[2]",
+     "internalType": "bool[2]"
+    },
+    {
+     "name": "matrix",
+     "type": "uint8[][]",
+     "internalType": "uint8[][]"
+    }
+   ],
+   "outputs": [],
+   "stateMutability": "nonpayable"
+  },
+  {
+   "type": "event",
+   "name": "Listed",
+   "anonymous": false,
+   "inputs": [
+    {
+     "name": "id",
+     "type": "uint256",
+     "internalType": "uint256",
+     "indexed": true
+    },
+    {
+     "name": "seller",
+     "type": "address",
+     "internalType": "address",
+     "indexed": true
+    },
+    {
+     "name": "title",
+     "type": "string",
+     "internalType": "string",
+     "indexed": true
+    },
+    {
+     "name": "price",
+     "type": "uint96",
+     "internalType": "uint96",
+     "indexed": false
+    }
+   ]
+  },
+  {
+   "type": "event",
+   "name": "Raw",
+   "anonymous": true,
+   "inputs": [
+    {
+     "name": "data",
+     "type": "bytes",
+     "internalType": "bytes",
+     "indexed": false
+    }
+   ]
+  },
+  {
+   "type": "constructor",
+   "inputs": [
+    {
+     "name": "fee",
+     "type": "uint256",
+     "internalType": "uint256"
+    }
+   ],
+   "stateMutability": "nonpayable"
+  },
+  {
+   "type": "error",
+   "name": "NotSeller",
+   "inputs": []
+  }
+ ]
+}

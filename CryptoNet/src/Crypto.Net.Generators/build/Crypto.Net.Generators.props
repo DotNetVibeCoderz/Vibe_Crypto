@@ -1,0 +1,9 @@
+<Project>
+  <!-- Every *.abi.json / *.idl.json in the project becomes input for the Crypto.Net source generator. -->
+  <ItemGroup>
+    <AdditionalFiles Include="**/*.abi.json;**/*.idl.json" Exclude="$(BaseOutputPath)/**;$(BaseIntermediateOutputPath)/**;bin/**;obj/**" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="CryptoNetName" />
+    <CompilerVisibleItemMetadata Include="AdditionalFiles" MetadataName="CryptoNetNamespace" />
+    <CompilerVisibleProperty Include="RootNamespace" />
+  </ItemGroup>
+</Project>

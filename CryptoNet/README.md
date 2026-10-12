@@ -60,17 +60,18 @@ RPC across five blockchain families. The heavy cryptography lives in a small Rus
 | `Crypto.Net.Polkadot` | SS58, sr25519/ed25519 Substrate derivation, SCALE, runtime-metadata-driven extrinsics, event and storage decoding, RPC |
 | `Crypto.Net.Cosmos` | Bech32 accounts, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), REST client |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` keyed clients, resilience, `ChainCatalog`, dRPC provider, benchmark runner |
+| `Crypto.Net.Generators` | Source generator: Solidity ABI / Hardhat & Foundry artifacts and Anchor IDLs → typed clients (also `cnet gen`) |
 | `Crypto.Net.Indexer` | EVM log indexer with ABI event decoding, block crawler, checkpoints, hosted services |
 | `Crypto.Net.Indexer.EntityFrameworkCore` | EF Core storage (SQLite, PostgreSQL, SQL Server) for checkpoints, logs and ERC-20 transfers |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` and official test vectors |
 | `Crypto.Net.Analyzers` | Roslyn rules CNET001–005: hard-coded keys, secrets in strings, float amounts, mainnet in Debug, dropped cancellation tokens |
 | `Crypto.Net.Cli` | The `cnet` dotnet tool |
-| `Crypto.Net.Templates` | `dotnet new` templates: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
+| `Crypto.Net.Templates` | `dotnet new` templates: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test`, `cnet-contract-client` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # pulls in every chain
 dotnet tool install -g Crypto.Net.Cli      # the cnet command
-dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test | cnet-contract-client
 ```
 
 ## Quick start

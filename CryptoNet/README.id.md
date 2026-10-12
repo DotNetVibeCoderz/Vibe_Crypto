@@ -60,17 +60,18 @@ yang menghasilkan keluaran **identik per byte**, sehingga library tetap berjalan
 | `Crypto.Net.Polkadot` | SS58, derivasi Substrate sr25519/ed25519, SCALE, extrinsic berbasis metadata runtime, decoding event dan storage, RPC |
 | `Crypto.Net.Cosmos` | Akun Bech32, protobuf `SIGN_MODE_DIRECT` (bank, staking, distribution), client REST |
 | `Crypto.Net.Extensions` | `AddCryptoNet()` dengan client ber-key, resilience, `ChainCatalog`, penyedia Ankr/dRPC, benchmark |
+| `Crypto.Net.Generators` | Source generator: ABI Solidity / artifact Hardhat & Foundry dan IDL Anchor → client bertipe (juga `cnet gen`) |
 | `Crypto.Net.Indexer` | Indexer log EVM dengan decoding event ABI, block crawler, checkpoint, hosted service |
 | `Crypto.Net.Indexer.EntityFrameworkCore` | Penyimpanan EF Core (SQLite, PostgreSQL, SQL Server) untuk checkpoint, log dan transfer ERC-20 |
 | `Crypto.Net.Testing` | `MockHttpMessageHandler` dan test vector resmi |
 | `Crypto.Net.Analyzers` | Aturan Roslyn CNET001–005: kunci hard-coded, rahasia dalam string, amount dari float, mainnet di Debug, cancellation token yang terlewat |
 | `Crypto.Net.Cli` | Tool dotnet `cnet` |
-| `Crypto.Net.Templates` | Template `dotnet new`: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test` |
+| `Crypto.Net.Templates` | Template `dotnet new`: `cnet-console`, `cnet-worker`, `cnet-webapi`, `cnet-lib`, `cnet-test`, `cnet-contract-client` |
 
 ```bash
 dotnet add package Crypto.Net.Extensions   # menarik semua chain
 dotnet tool install -g Crypto.Net.Cli      # perintah cnet
-dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test
+dotnet new install Crypto.Net.Templates    # dotnet new cnet-console | cnet-worker | cnet-webapi | cnet-lib | cnet-test | cnet-contract-client
 ```
 
 ## Mulai cepat

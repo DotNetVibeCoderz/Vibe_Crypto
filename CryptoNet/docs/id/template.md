@@ -16,6 +16,7 @@ cnet new webapi -n Payments.Api --network solana-devnet     # sama, lewat CLI cn
 | `cnet-worker` | Worker Service: mengikuti blok baru, mencatat perubahan saldo dan mengindeks transfer ERC-20 ke SQLite ([Indexer](indexer.md)) |
 | `cnet-webapi` | Minimal API dengan OpenAPI: jaringan, head, saldo, deteksi alamat; hanya testnet kecuali `CryptoNet:AllowMainnet` |
 | `cnet-lib` | Class library dengan `PortfolioService` yang terdaftar di DI, plus project xUnit yang memakai mock `Crypto.Net.Testing` |
+| `cnet-contract-client` | Aplikasi console yang client `Erc20` dan `CounterProgram`-nya [dibuat otomatis](codegen.md) saat build dari ABI dan IDL Anchor |
 | `cnet-test` | Project xUnit dengan vektor resmi, `MockHttpMessageHandler`, dan `docker-compose.yml` untuk Anvil, chain dev Polkadot dan `solana-test-validator` |
 
 Setiap template berisi:

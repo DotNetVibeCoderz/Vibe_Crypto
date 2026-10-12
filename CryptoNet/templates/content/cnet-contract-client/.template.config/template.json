@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Gravicode Studios",
+  "classifications": [
+    "Crypto.Net",
+    "Blockchain",
+    "Web3",
+    "Console",
+    "SourceGenerator"
+  ],
+  "identity": "Crypto.Net.Templates.cnet-contract-client",
+  "groupIdentity": "Crypto.Net.Templates.cnet-contract-client",
+  "name": "Crypto.Net Contract Client",
+  "shortName": "cnet-contract-client",
+  "description": "Console app whose typed contract clients are generated at build time from a Solidity ABI (ERC-20) and an Anchor IDL. Built by Gravicode Studios, led by Kang Fadhil.",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "CnetContracts",
+  "preferNameDirectory": true,
+  "symbols": {
+    "CryptoNetVersion": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "1.1.0",
+      "replaces": "CRYPTONET_VERSION",
+      "description": "Version of the Crypto.Net packages to reference."
+    },
+    "Network": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "sepolia",
+      "replaces": "CNET_DEFAULT_NETWORK",
+      "description": "Default network key (sepolia, bitcoin-testnet, solana-devnet, westend, cosmoshub-testnet, ...)."
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Skip dotnet restore after creation."
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            "**/bin/**",
+            "**/obj/**",
+            ".template.config/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": [
+    {
+      "condition": "(!skipRestore)",
+      "description": "Restore NuGet packages required by this project.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}

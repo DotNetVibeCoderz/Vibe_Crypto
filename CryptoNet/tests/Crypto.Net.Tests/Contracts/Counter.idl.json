@@ -1,0 +1,231 @@
+{
+ "address": "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS",
+ "metadata": {
+  "name": "counter",
+  "version": "0.1.0",
+  "spec": "0.1.0"
+ },
+ "instructions": [
+  {
+   "name": "initialize",
+   "discriminator": [
+    175,
+    175,
+    109,
+    31,
+    13,
+    152,
+    155,
+    237
+   ],
+   "accounts": [
+    {
+     "name": "counter",
+     "writable": true,
+     "signer": true
+    },
+    {
+     "name": "user",
+     "writable": true,
+     "signer": true
+    },
+    {
+     "name": "system_program",
+     "address": "11111111111111111111111111111111"
+    }
+   ],
+   "args": [
+    {
+     "name": "start",
+     "type": "u64"
+    },
+    {
+     "name": "label",
+     "type": "string"
+    },
+    {
+     "name": "mode",
+     "type": {
+      "defined": {
+       "name": "Mode"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "name": "set_config",
+   "discriminator": [
+    108,
+    158,
+    154,
+    175,
+    212,
+    98,
+    52,
+    66
+   ],
+   "accounts": [
+    {
+     "name": "counter",
+     "writable": true
+    },
+    {
+     "name": "authority",
+     "signer": true
+    },
+    {
+     "name": "oracle",
+     "optional": true
+    }
+   ],
+   "args": [
+    {
+     "name": "config",
+     "type": {
+      "defined": {
+       "name": "Config"
+      }
+     }
+    },
+    {
+     "name": "limits",
+     "type": {
+      "vec": "u32"
+     }
+    },
+    {
+     "name": "delegate",
+     "type": {
+      "option": "pubkey"
+     }
+    },
+    {
+     "name": "seed",
+     "type": {
+      "array": [
+       "u8",
+       4
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "accounts": [
+  {
+   "name": "Counter",
+   "discriminator": [
+    255,
+    176,
+    4,
+    245,
+    188,
+    253,
+    124,
+    25
+   ]
+  }
+ ],
+ "types": [
+  {
+   "name": "Counter",
+   "type": {
+    "kind": "struct",
+    "fields": [
+     {
+      "name": "authority",
+      "type": "pubkey"
+     },
+     {
+      "name": "count",
+      "type": "u64"
+     },
+     {
+      "name": "label",
+      "type": "string"
+     },
+     {
+      "name": "mode",
+      "type": {
+       "defined": {
+        "name": "Mode"
+       }
+      }
+     },
+     {
+      "name": "history",
+      "type": {
+       "vec": "i64"
+      }
+     },
+     {
+      "name": "config",
+      "type": {
+       "option": {
+        "defined": {
+         "name": "Config"
+        }
+       }
+      }
+     },
+     {
+      "name": "total",
+      "type": "u128"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Mode",
+   "type": {
+    "kind": "enum",
+    "variants": [
+     {
+      "name": "Off"
+     },
+     {
+      "name": "On"
+     },
+     {
+      "name": "Auto"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Config",
+   "type": {
+    "kind": "enum",
+    "variants": [
+     {
+      "name": "None"
+     },
+     {
+      "name": "Fixed",
+      "fields": [
+       {
+        "name": "step",
+        "type": "u16"
+       }
+      ]
+     },
+     {
+      "name": "Range",
+      "fields": [
+       "u64",
+       "u64"
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "errors": [
+  {
+   "code": 6000,
+   "name": "Overflow",
+   "msg": "Counter overflowed"
+  }
+ ]
+}

@@ -17,6 +17,15 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 - **EVM**:
   - `EvmEvent`: event signatures with `indexed` and anonymous events, plus log decoding (ERC-20/721 ready-made).
   - `EvmLogFilter` for multi-address / OR-topic `eth_getLogs`.
+- **Crypto.Net.Generators**: an incremental source generator that turns build inputs into typed clients.
+  - Solidity ABI / Hardhat & Foundry artifacts (`*.abi.json`) become `EvmContract` clients with views, sends,
+    calldata encoders, struct records and typed events.
+  - Anchor IDLs (`*.idl.json`, 0.30+ and older formats) become instruction builders, Borsh account decoders, fetchers
+    and error tables.
+  - `cnet gen` writes the same code to a file.
+  - New `cnet-contract-client` template.
+- **Solana**: `BorshWriter`/`BorshReader`, `Anchor` discriminator helpers, `SolanaRpcClient.GetAccountDataAsync`.
+- **EVM**: `EvmContract` base class for typed contract clients.
 - `MockRpcError` in Crypto.Net.Testing lets an `OnRpc` factory answer with an error.
 
 ### Changed

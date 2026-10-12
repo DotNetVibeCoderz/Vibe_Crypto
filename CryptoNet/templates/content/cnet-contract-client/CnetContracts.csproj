@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Crypto.Net.Extensions" />
+    <!-- Turns every *.abi.json / *.idl.json in this project into a typed client at build time. -->
+    <PackageReference Include="Crypto.Net.Generators" PrivateAssets="all" />
+    <PackageReference Include="Crypto.Net.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+</Project>
