@@ -373,10 +373,10 @@ jobs:
 
       - name: Start Trezor's Model T emulator with the public test seed
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq patchelf libsdl2-2.0-0 libsdl2-image-2.0-0 > /dev/null
+          sudo apt-get update -qq && sudo apt-get install -y -qq patchelf libjpeg62 > /dev/null
           pip install --quiet trezor==0.13.10
           mkdir -p "$RUNNER_TEMP/trezor"
-          curl -sSfL -o "$RUNNER_TEMP/trezor/emu" https://data.trezor.io/dev/firmware/releases/emulators-new/T2T1/trezor-emu-core-T2T1-v2.12.5
+          curl -sSfL -o "$RUNNER_TEMP/trezor/emu" https://data.trezor.io/dev/firmware/releases/emulators-new/T2T1/trezor-emu-core-T2T1-v2.11.0
           chmod +x "$RUNNER_TEMP/trezor/emu"
           patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 "$RUNNER_TEMP/trezor/emu"
           nohup python scripts/trezor-emulator.py "$RUNNER_TEMP/trezor/emu" "$RUNNER_TEMP/trezor/profile" > "$RUNNER_TEMP/trezor/runner.log" 2>&1 &
