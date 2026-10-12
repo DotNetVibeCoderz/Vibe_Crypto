@@ -4,6 +4,8 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-13
+
 ### Added
 - **Crypto.Net.Indexer**:
   - `EvmLogIndexer` pages from a checkpoint to the confirmed head with adaptive ranges and at-least-once delivery.

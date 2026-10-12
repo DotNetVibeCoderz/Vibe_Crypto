@@ -92,3 +92,4 @@
 - **2026-10-13** — Ledger Solana app: replayed hw-app-solana sessions; a CI job builds app-solana with Ledger's builder and runs the end-to-end test in Speculos.
 - **2026-10-13** — Crypto.Net.Trezor: messages match trezorlib, and a CI job signs on Trezor's real firmware in the core emulator. The Ledger Solana app now uses the current off-chain message header (the end-to-end run showed the app rejects the legacy one).
 - **2026-10-13** — Added Crypto.Net.WalletConnect and the X25519 primitive. Verified through Reown's relay using the owner's project id (kept out of the repo): a .NET app paired with the official sign-client wallet, and the official app paired with a .NET wallet.
+- **2026-10-13** — Released 1.2.0.

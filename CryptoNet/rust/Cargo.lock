@@ -132,7 +132,7 @@ dependencies = [
 
 [[package]]
 name = "cryptonet-codec"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "bech32",
  "bs58",
@@ -141,7 +141,7 @@ dependencies = [
 
 [[package]]
 name = "cryptonet-crypto"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "blake2",
  "curve25519-dalek",
@@ -160,7 +160,7 @@ dependencies = [
 
 [[package]]
 name = "cryptonet-ffi"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "cryptonet-codec",
  "cryptonet-crypto",
