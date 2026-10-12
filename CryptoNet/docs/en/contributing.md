@@ -26,10 +26,23 @@ systems and placed in `runtimes/linux-x64/native/libcryptonet.so`, `runtimes/osx
 
 ## Continuous integration
 
-`.github/workflows/cryptonet-ci.yml` (repository root) runs on every push and pull request: it builds the Rust library for `win-x64`,
-`win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64` and `osx-arm64`, checks `cargo fmt`/`clippy`, runs the .NET
-tests on Windows, Linux and macOS with the native library, and packs NuGet packages that contain all six binaries
-(downloadable as the `packages` artifact).
+`.github/workflows/cryptonet-ci.yml` (repository root) runs on every push and pull request. It:
+
+- builds the Rust library for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `linux-musl-x64` (Alpine),
+  `osx-x64` and `osx-arm64`;
+- checks `cargo fmt` and `clippy`;
+- runs the .NET tests with the native library on Windows, Linux, macOS and Alpine;
+- runs `cargo audit`, `cargo deny` (`rust/deny.toml`) and a NuGet vulnerability scan, and produces a CycloneDX
+  SBOM (`cryptonet-sbom.cdx.json` artifact);
+- fuzzes for 60 seconds per `cargo-fuzz` target (`rust/fuzz`), and runs the .NET decoder fuzz tests with 50,000
+  mutants per decoder and a fresh seed every run;
+- packs NuGet packages that contain all seven native binaries (`cryptonet-packages` artifact).
+
+Fuzz locally:
+
+- Rust (Linux/macOS, nightly): `cd rust && cargo +nightly fuzz run bech32`.
+- .NET: `CRYPTONET_FUZZ_ITERATIONS=100000 dotnet test tests/Crypto.Net.Tests --filter DecoderFuzz`.
+  Set `CRYPTONET_FUZZ_SEED` to reproduce a CI failure.
 
 ## Releasing
 

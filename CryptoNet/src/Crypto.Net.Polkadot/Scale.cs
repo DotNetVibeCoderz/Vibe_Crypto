@@ -88,6 +88,13 @@ public ref struct ScaleReader
         }
     }
 
+    /// <summary>A compact value that must fit in a <c>u32</c> (type ids, lengths); larger values are malformed input.</summary>
+    public uint CompactU32()
+    {
+        var v = Compact();
+        return v <= uint.MaxValue ? (uint)v : throw new FormatException("Compact value too large for u32");
+    }
+
     public int CompactInt()
     {
         var v = Compact();

@@ -4,7 +4,18 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
+### Security
+- Decoder fuzzing (cargo-fuzz targets and .NET mutation fuzz tests in CI) found and fixed crashes on malformed input:
+  - `RuntimeMetadata.Parse`: `OverflowException` on oversized compact type ids.
+  - `EvmTransaction.DecodeSigned`: overflow on large nonce, chain id or `v`, and `NullReferenceException`s on
+    wrongly shaped RLP.
+  - `EvmRlp`: negative 4-byte lengths, and unbounded nesting that could overflow the stack.
+
+  All of these now throw `FormatException`.
+- CI runs `cargo audit`, `cargo deny`, a NuGet vulnerability scan and produces a CycloneDX SBOM.
+
 ### Changed
+- Native library for `linux-musl-x64` (Alpine) is built in CI and shipped in `Crypto.Net.Native`, tested on Alpine.
 - Polkadot `GetReceiptAsync` now reports dispatch success or failure from `System.Events`; previously a receipt only
   meant inclusion. `RuntimeMetadata.Types` is public and uses the new `ScaleTypeInfo` records.
 

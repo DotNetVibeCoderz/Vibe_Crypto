@@ -39,10 +39,12 @@ dotnet run --project samples/Crypto.Net.QuickStart         # README code, read-o
 ```
 
 CI: `.github/workflows/cryptonet-ci.yml` (repo root) runs on push and PR when `CryptoNet/**` changes.
-- Builds Rust for win-x64/arm64, linux-x64/arm64 and osx-x64/arm64.
+- Builds Rust for win-x64/arm64, linux-x64/arm64, linux-musl-x64 (in a `rust:alpine` docker run) and osx-x64/arm64.
 - Runs `cargo fmt --check` and `clippy -D warnings`.
-- Runs the .NET tests on Windows, Linux and macOS.
-- Packs packages containing all 6 native binaries.
+- Runs the .NET tests on Windows, Linux, macOS and Alpine.
+- Supply chain: `cargo audit`, `cargo deny` (`rust/deny.toml`), the NuGet vulnerable-package scan, and a syft CycloneDX SBOM.
+- Fuzz: `cargo fuzz` targets in `rust/fuzz` (a separate workspace, nightly) plus `DecoderFuzzTests` (`CRYPTONET_FUZZ_ITERATIONS`, `CRYPTONET_FUZZ_SEED`).
+- Packs packages containing all 7 native binaries.
 - Windows DLLs link the CRT statically (`rust/.cargo/config.toml`).
 
 Known gotchas:

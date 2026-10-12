@@ -125,8 +125,8 @@ public sealed class RuntimeMetadata
         {
             string name = r.String();
             var storage = r.Option() ? ReadStorage(ref r) : new Dictionary<string, StorageEntryInfo>(StringComparer.Ordinal);
-            uint? calls = r.Option() ? (uint)r.Compact() : null;
-            uint? events = r.Option() ? (uint)r.Compact() : null;
+            uint? calls = r.Option() ? r.CompactU32() : null;
+            uint? events = r.Option() ? r.CompactU32() : null;
             int constCount = r.CompactInt();
             var constants = new Dictionary<string, byte[]>(StringComparer.Ordinal);
             for (int c = 0; c < constCount; c++)
@@ -136,7 +136,7 @@ public sealed class RuntimeMetadata
                 constants[cname] = r.VecU8();
                 r.SkipStrings();
             }
-            uint? errors = r.Option() ? (uint)r.Compact() : null;
+            uint? errors = r.Option() ? r.CompactU32() : null;
             byte index = r.U8();
             if (version == 15) r.SkipStrings(); // docs
 
@@ -167,7 +167,7 @@ public sealed class RuntimeMetadata
         int extCount = r.CompactInt();
         var extensions = new List<SignedExtensionInfo>(extCount);
         for (int i = 0; i < extCount; i++)
-            extensions.Add(new SignedExtensionInfo(r.String(), (uint)r.Compact(), (uint)r.Compact()));
+            extensions.Add(new SignedExtensionInfo(r.String(), r.CompactU32(), r.CompactU32()));
 
         return new RuntimeMetadata
         {
@@ -185,7 +185,7 @@ public sealed class RuntimeMetadata
         var types = new Dictionary<uint, ScaleTypeInfo>(count);
         for (int i = 0; i < count; i++)
         {
-            uint id = (uint)r.Compact();
+            uint id = r.CompactU32();
             int pathLen = r.CompactInt();
             var path = new string[pathLen];
             for (int p = 0; p < pathLen; p++) path[p] = r.String();
@@ -219,15 +219,15 @@ public sealed class RuntimeMetadata
                     }
                     break;
                 case 2:
-                    children.Add((uint)r.Compact());
+                    children.Add(r.CompactU32());
                     break;
                 case 3:
                     arrayLen = r.U32();
-                    children.Add((uint)r.Compact());
+                    children.Add(r.CompactU32());
                     break;
                 case 4:
                     int tc = r.CompactInt();
-                    for (int t = 0; t < tc; t++) children.Add((uint)r.Compact());
+                    for (int t = 0; t < tc; t++) children.Add(r.CompactU32());
                     break;
                 case 5:
                     byte prim = r.U8();
@@ -235,11 +235,11 @@ public sealed class RuntimeMetadata
                     primitive = (ScalePrimitive)prim;
                     break;
                 case 6:
-                    children.Add((uint)r.Compact());
+                    children.Add(r.CompactU32());
                     break;
                 case 7:
-                    children.Add((uint)r.Compact()); // bit store
-                    children.Add((uint)r.Compact()); // bit order
+                    children.Add(r.CompactU32()); // bit store
+                    children.Add(r.CompactU32()); // bit order
                     break;
                 default:
                     throw new FormatException($"Unknown TypeDef tag {tag}");
@@ -257,7 +257,7 @@ public sealed class RuntimeMetadata
         for (int i = 0; i < n; i++)
         {
             string? name = r.OptionString();
-            uint type = (uint)r.Compact();
+            uint type = r.CompactU32();
             string? typeName = r.OptionString();
             r.SkipStrings();
             list.Add(new ScaleField(name, type, typeName));
@@ -280,7 +280,7 @@ public sealed class RuntimeMetadata
             uint valueType;
             if (kind == 0)
             {
-                valueType = (uint)r.Compact();
+                valueType = r.CompactU32();
             }
             else if (kind == 1)
             {
@@ -291,8 +291,8 @@ public sealed class RuntimeMetadata
                     if (hasher > (byte)StorageHasher.Identity) throw new FormatException($"Unknown storage hasher {hasher}");
                     hashers.Add((StorageHasher)hasher);
                 }
-                keyType = (uint)r.Compact();
-                valueType = (uint)r.Compact();
+                keyType = r.CompactU32();
+                valueType = r.CompactU32();
             }
             else
             {

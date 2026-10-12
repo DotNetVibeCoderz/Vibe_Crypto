@@ -26,10 +26,23 @@ sistem tersebut dan diletakkan di `runtimes/linux-x64/native/libcryptonet.so`, `
 
 ## Continuous integration
 
-`.github/workflows/cryptonet-ci.yml` (di root repositori) berjalan di setiap push dan pull request: membangun library Rust untuk `win-x64`,
-`win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64` dan `osx-arm64`, memeriksa `cargo fmt`/`clippy`, menjalankan
-test .NET di Windows, Linux dan macOS dengan library native, dan membuat paket NuGet yang berisi keenam binary
-(bisa diunduh sebagai artifact `packages`).
+`.github/workflows/cryptonet-ci.yml` (di root repositori) berjalan di setiap push dan pull request. Workflow ini:
+
+- membangun library Rust untuk `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `linux-musl-x64` (Alpine),
+  `osx-x64` dan `osx-arm64`;
+- memeriksa `cargo fmt` dan `clippy`;
+- menjalankan test .NET dengan library native di Windows, Linux, macOS dan Alpine;
+- menjalankan `cargo audit`, `cargo deny` (`rust/deny.toml`) dan pemindaian kerentanan NuGet, serta membuat SBOM
+  CycloneDX (artifact `cryptonet-sbom.cdx.json`);
+- melakukan fuzzing 60 detik per target `cargo-fuzz` (`rust/fuzz`), dan menjalankan test fuzz decoder .NET dengan
+  50.000 mutan per decoder dan seed baru setiap kali berjalan;
+- membuat paket NuGet yang berisi ketujuh binary native (artifact `cryptonet-packages`).
+
+Fuzzing lokal:
+
+- Rust (Linux/macOS, nightly): `cd rust && cargo +nightly fuzz run bech32`.
+- .NET: `CRYPTONET_FUZZ_ITERATIONS=100000 dotnet test tests/Crypto.Net.Tests --filter DecoderFuzz`.
+  Set `CRYPTONET_FUZZ_SEED` untuk mereproduksi kegagalan di CI.
 
 ## Merilis
 

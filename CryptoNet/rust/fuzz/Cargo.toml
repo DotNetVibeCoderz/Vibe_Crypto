@@ -1,0 +1,52 @@
+[package]
+name = "cryptonet-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+cryptonet-codec = { path = "../crates/cryptonet-codec" }
+cryptonet-crypto = { path = "../crates/cryptonet-crypto" }
+
+# Separate workspace: cargo-fuzz needs nightly and sanitizers, the main workspace does not.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "base58"
+path = "fuzz_targets/base58.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "bech32"
+path = "fuzz_targets/bech32.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "hex"
+path = "fuzz_targets/hex.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "signatures"
+path = "fuzz_targets/signatures.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "substrate_path"
+path = "fuzz_targets/substrate_path.rs"
+test = false
+doc = false
+bench = false

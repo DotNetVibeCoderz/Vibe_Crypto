@@ -5,6 +5,7 @@ members = [
     "crates/cryptonet-ffi",
 ]
 resolver = "2"
+exclude = ["fuzz"]
 
 [workspace.package]
 version = "1.0.0"

@@ -1,5 +1,5 @@
-# Builds the Rust core for every supported runtime, tests Crypto.Net on Windows, Linux and macOS,
-# and packs the NuGet packages with all native binaries.
+# Builds the Rust core for every supported runtime (including Alpine/musl), tests Crypto.Net on Windows, Linux,
+# macOS and Alpine, fuzzes the decoders, audits dependencies, produces an SBOM and packs the NuGet packages.
 name: CryptoNet CI
 
 on:
@@ -71,6 +71,49 @@ jobs:
           path: CryptoNet/rust/target/${{ matrix.target }}/release/${{ matrix.file }}
           if-no-files-found: error
 
+  native-musl:
+    name: Rust linux-musl-x64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      # JavaScript actions do not run inside Alpine containers, so build with docker run instead.
+      - name: cargo test + build in Alpine
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src/rust rust:1-alpine sh -euc '
+            apk add --no-cache musl-dev
+            cargo test --release
+            RUSTFLAGS="-C target-feature=-crt-static" cargo build --release -p cryptonet-ffi
+          '
+          mkdir -p out
+          sudo cp rust/target/release/libcryptonet.so out/
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: native-linux-musl-x64
+          path: CryptoNet/out/libcryptonet.so
+          if-no-files-found: error
+
+  test-musl:
+    name: .NET tests linux-musl-x64 (Alpine)
+    needs: native-musl
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: native-linux-musl-x64
+          path: CryptoNet/runtimes/linux-musl-x64/native
+
+      - name: dotnet test in Alpine
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src -e DOTNET_NOLOGO=1 -e DOTNET_CLI_TELEMETRY_OPTOUT=1             mcr.microsoft.com/dotnet/sdk:10.0-alpine sh -euc '
+              dotnet test tests/Crypto.Net.Tests -c Release
+              dotnet run --project tools/Crypto.Net.Cli -c Release -- doctor --json | tee doctor.json
+              grep -q "\"nativeLoaded\": true" doctor.json
+            '
+
   lint:
     name: Rust lint
     runs-on: ubuntu-24.04
@@ -86,6 +129,82 @@ jobs:
         run: |
           cargo fmt --all --check
           cargo clippy --all-targets -- -D warnings
+
+  security:
+    name: Supply chain (audit, deny, vulnerable packages, SBOM)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit,cargo-deny
+
+      - name: cargo audit + cargo deny
+        working-directory: CryptoNet/rust
+        run: |
+          cargo audit --deny warnings
+          cargo deny check
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: NuGet vulnerability scan
+        shell: bash
+        run: |
+          dotnet restore Crypto.Net.slnx
+          dotnet list Crypto.Net.slnx package --vulnerable --include-transitive | tee vulnerable.txt
+          if grep -q "has the following vulnerable packages" vulnerable.txt; then exit 1; fi
+
+      - name: SBOM (CycloneDX)
+        uses: anchore/sbom-action@v0
+        with:
+          path: CryptoNet
+          format: cyclonedx-json
+          output-file: cryptonet-sbom.cdx.json
+          artifact-name: cryptonet-sbom.cdx.json
+
+  fuzz:
+    name: Fuzz (cargo-fuzz + .NET decoders)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@nightly
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: CryptoNet/rust/fuzz
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
+
+      - name: cargo fuzz (60 s per target)
+        working-directory: CryptoNet/rust
+        run: |
+          for target in $(cargo fuzz list); do
+            cargo fuzz run "$target" -- -max_total_time=60
+          done
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: .NET decoder fuzzing (50k mutants per decoder, fresh seed per run)
+        env:
+          CRYPTONET_FUZZ_ITERATIONS: "50000"
+          CRYPTONET_FUZZ_SEED: ${{ github.run_id }}
+        run: dotnet test tests/Crypto.Net.Tests -c Release --filter "FullyQualifiedName~DecoderFuzz"
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: fuzz-artifacts
+          path: CryptoNet/rust/fuzz/artifacts
 
   test:
     name: .NET tests ${{ matrix.rid }}
@@ -127,7 +246,7 @@ jobs:
 
   pack:
     name: Pack NuGet packages
-    needs: [native, test, lint]
+    needs: [native, native-musl, test, test-musl, lint, security]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -163,7 +282,7 @@ jobs:
         run: |
           pkg=$(ls artifacts/Crypto.Net.Native.*.nupkg | grep -v snupkg)
           unzip -l "$pkg" | grep runtimes/
-          test "$(unzip -l "$pkg" | grep -c 'runtimes/.*/native/')" -eq 6
+          test "$(unzip -l "$pkg" | grep -c 'runtimes/.*/native/')" -eq 7
 
       - uses: actions/upload-artifact@v7
         with:

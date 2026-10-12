@@ -32,9 +32,9 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 
 - [x] CI (GitHub Actions): Rust build matrix for `win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`;
       pack with all native binaries; tests on Windows, Linux and macOS; tag-triggered NuGet publishing.
-- [ ] `linux-musl-x64` (Alpine) native build.
-- [ ] `cargo audit` / `cargo deny`, `dotnet list package --vulnerable`, SBOM in CI.
-- [ ] Fuzzing (`cargo-fuzz`) for Base58, Bech32, RLP, SCALE and metadata decoders.
+- [x] `linux-musl-x64` (Alpine) native build.
+- [x] `cargo audit` / `cargo deny`, `dotnet list package --vulnerable`, SBOM in CI.
+- [x] Fuzzing (`cargo-fuzz`) for Base58, Bech32, RLP, SCALE and metadata decoders.
 - [x] BIP-341 official wallet test vectors (key-path spending suite) in the test project; Taproot script trees.
 - [x] Decode `System.Events` so Polkadot receipts report dispatch success.
 - [x] WebSocket subscriptions (`eth_subscribe`, `slotSubscribe`, `chain_subscribeNewHeads`).
