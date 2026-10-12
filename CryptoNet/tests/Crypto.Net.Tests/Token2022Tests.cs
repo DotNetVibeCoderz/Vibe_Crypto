@@ -1,3 +1,4 @@
+using Crypto.Net.Core;
 using System.Buffers.Binary;
 using Crypto.Net.Native;
 using Crypto.Net.Solana;

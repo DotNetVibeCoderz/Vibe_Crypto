@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>NEAR Protocol adapter for Crypto.Net: ed25519 keys (SLIP-10 m/44'/397'), implicit and named accounts, Borsh transactions with every action, function calls, access keys and a JSON-RPC client.</Description>
+    <PackageTags>$(PackageTags);near</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Crypto.Net.Core\Crypto.Net.Core.csproj" />
+    <ProjectReference Include="..\Crypto.Net.Wallet\Crypto.Net.Wallet.csproj" />
+  </ItemGroup>
+</Project>

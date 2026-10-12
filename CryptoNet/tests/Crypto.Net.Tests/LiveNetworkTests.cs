@@ -41,6 +41,19 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task Near_TestnetReads()
+    {
+        await using var near = new Crypto.Net.Near.NearRpcClient(Crypto.Net.Near.NearChain.Testnet);
+        Assert.True(await near.GetBlockNumberAsync() > 0);
+        var state = await near.GetAccountAsync("wrap.testnet");
+        Assert.NotNull(state);
+        Assert.True(state!.HasContract);
+        var meta = await near.ViewFunctionAsync("wrap.testnet", "ft_metadata");
+        Assert.Equal("wNEAR", meta.GetProperty("symbol").GetString());
+        Assert.Null(await near.GetAccountAsync("this-account-should-not-exist-cryptonet-" + Guid.NewGuid().ToString("N")[..10] + ".testnet"));
+    }
+
+    [LiveFact]
     public async Task Staking_NominateIsAcceptedByAssetHub()
     {
         // Sign (never submit) a nominate extrinsic and ask the runtime to price it: decoding errors would fail here.

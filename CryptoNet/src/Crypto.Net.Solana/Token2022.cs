@@ -1,3 +1,4 @@
+using Crypto.Net.Core;
 using System.Buffers.Binary;
 using System.Text;
 using Crypto.Net.Native;

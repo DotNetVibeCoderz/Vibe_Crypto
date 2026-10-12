@@ -43,6 +43,7 @@ public static class AnchorClientGenerator
         code.Line("#nullable enable");
         code.Line("#pragma warning disable CS1591");
         code.Line("using System.Numerics;");
+        code.Line("using Crypto.Net.Core;");
         code.Line("using Crypto.Net.Solana;");
         code.Line();
         if (!string.IsNullOrEmpty(ns)) code.Line($"namespace {ns};").Line();
