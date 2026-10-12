@@ -39,6 +39,22 @@ public class LiveNetworkTests
     }
 
     [LiveFact]
+    public async Task PolkadotEvents_DecodeOnLiveChains()
+    {
+        foreach (var chain in new[] { PolkadotChain.Polkadot, PolkadotChain.PolkadotAssetHub, PolkadotChain.WestendAssetHub })
+        {
+            await using var client = new PolkadotRpcClient(chain);
+            ulong head = await client.GetBlockNumberAsync();
+            for (ulong n = head; n > head - 5; n--)
+            {
+                var events = await client.GetEventsAsync(await client.GetBlockHashAsync(n));
+                Assert.Contains(events, e => e.Is("System", "ExtrinsicSuccess"));
+            }
+            Assert.IsType<ulong>(await client.GetStorageAsync("Timestamp", "Now"));
+        }
+    }
+
+    [LiveFact]
     public async Task PolkadotMetadata_BuildsDecodableTransfer()
     {
         foreach (var chain in new[] { PolkadotChain.Polkadot, PolkadotChain.WestendAssetHub, PolkadotChain.Kusama })

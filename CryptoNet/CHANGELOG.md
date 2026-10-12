@@ -4,6 +4,10 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
 
 ## [Unreleased]
 
+### Changed
+- Polkadot `GetReceiptAsync` now reports dispatch success or failure from `System.Events`; previously a receipt only
+  meant inclusion. `RuntimeMetadata.Types` is public and uses the new `ScaleTypeInfo` records.
+
 ### Added
 - Polyglot notebooks for wallets, Bitcoin, Ethereum/EVM, Solana, Polkadot and Cosmos in English and
   Bahasa Indonesia (`samples/notebooks`), generated from one source and executed against the published 1.0.0 packages.
@@ -14,6 +18,10 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   `BitcoinAddress.FromScriptNestedSegwit`. PSBT signing and finalizing for bare, P2SH, P2WSH and P2SH-P2WSH.
 - **Taproot**: script trees (`TaprootNode`, `Taproot.LeafSpends` control blocks). Full BIP-341 sighash
   (ANYONECANPAY/NONE/SINGLE, script path, annex). `SignTaprootKeyPath`. Official BIP-341 wallet vectors.
+- **Polkadot events**: `RuntimeMetadata` keeps the full type registry, storage entries and event/error enums.
+  `ScaleDecoder` decodes any SCALE value. `SubstrateEvents` decodes `System.Events` and dispatch errors.
+  `GetEventsAsync`, `GetExtrinsicEventsAsync` and `GetStorageAsync` are new. `StorageKeys` covers xxHash/twox
+  and the BLAKE2 hashers. Metadata is cached per spec version and fetched at the queried block.
 - **Solana v0**: versioned messages with address lookup tables. `WithLookupTables` compiles exactly as
   web3.js `compileToV0Message`. Adds the `AddressLookupTableProgram` (create/extend/freeze/deactivate/close),
   `GetAddressLookupTableAsync`, and the `SolanaMessage` decoder for legacy and v0 wire transactions.

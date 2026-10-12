@@ -36,7 +36,7 @@ CLI, interactive Gallery, bilingual documentation (English / Bahasa Indonesia) a
 - [ ] `cargo audit` / `cargo deny`, `dotnet list package --vulnerable`, SBOM in CI.
 - [ ] Fuzzing (`cargo-fuzz`) for Base58, Bech32, RLP, SCALE and metadata decoders.
 - [x] BIP-341 official wallet test vectors (key-path spending suite) in the test project; Taproot script trees.
-- [ ] Decode `System.Events` so Polkadot receipts report dispatch success.
+- [x] Decode `System.Events` so Polkadot receipts report dispatch success.
 - [ ] WebSocket subscriptions (`eth_subscribe`, `slotSubscribe`, `chain_subscribeNewHeads`).
 - [x] PSBT (BIP-174/370) import/export and multisig.
 - [x] Solana versioned (v0) transactions with address lookup tables.

@@ -19,8 +19,7 @@ public sealed class PolkadotRpcClient : IChainClient
     private static readonly byte[] SystemAccountPrefix = Convert.FromHexString("26aa394eea5630e07c48ae0c9558cef7b99d880ec681799c0cf30e8886371da9");
 
     private readonly JsonRpcClient _rpc;
-    private RuntimeMetadata? _metadata;
-    private uint _metadataSpec;
+    private readonly Dictionary<uint, RuntimeMetadata> _metadataCache = [];
 
     public PolkadotRpcClient(PolkadotChain chain, string? rpcUrl = null, HttpClient? httpClient = null)
         : this(chain, [new RpcEndpoint(rpcUrl ?? chain.DefaultRpcUrl)], httpClient)
@@ -48,15 +47,21 @@ public sealed class PolkadotRpcClient : IChainClient
         return (r.GetProperty("specVersion").GetUInt32(), r.GetProperty("transactionVersion").GetUInt32(), r.GetProperty("specName").GetString()!);
     }
 
-    /// <summary>Runtime metadata, cached per spec version.</summary>
-    public async ValueTask<RuntimeMetadata> GetMetadataAsync(CancellationToken ct = default)
+    /// <summary>Runtime metadata of the latest block, cached per spec version.</summary>
+    public ValueTask<RuntimeMetadata> GetMetadataAsync(CancellationToken ct = default) => GetMetadataAsync(null, ct);
+
+    /// <summary>Runtime metadata at <paramref name="blockHash"/> (latest when null), cached per spec version.</summary>
+    public async ValueTask<RuntimeMetadata> GetMetadataAsync(byte[]? blockHash, CancellationToken ct = default)
     {
-        var (spec, _, _) = await GetRuntimeVersionAsync(ct);
-        if (_metadata is not null && _metadataSpec == spec) return _metadata;
-        var r = await _rpc.CallAsync("state_getMetadata", null, ct);
-        _metadata = RuntimeMetadata.Parse(HexUtil.Decode(r.GetString()!));
-        _metadataSpec = spec;
-        return _metadata;
+        object?[]? at = blockHash is null ? null : [HexUtil.Encode(blockHash)];
+        var version = await _rpc.CallAsync("state_getRuntimeVersion", at, ct);
+        uint spec = version.GetProperty("specVersion").GetUInt32();
+        lock (_metadataCache)
+            if (_metadataCache.TryGetValue(spec, out var cached)) return cached;
+        var r = await _rpc.CallAsync("state_getMetadata", at, ct);
+        var metadata = RuntimeMetadata.Parse(HexUtil.Decode(r.GetString()!));
+        lock (_metadataCache) _metadataCache[spec] = metadata;
+        return metadata;
     }
 
     public async ValueTask<byte[]> GetBlockHashAsync(ulong? number = null, CancellationToken ct = default)
@@ -104,8 +109,8 @@ public sealed class PolkadotRpcClient : IChainClient
     }
 
     /// <summary>
-    /// Looks for the extrinsic in the 50 most recent blocks. A receipt means the extrinsic was
-    /// included; dispatch success requires decoding <c>System.Events</c> (check an explorer for failures).
+    /// Looks for the extrinsic in the 50 most recent blocks and reports its dispatch outcome from <c>System.Events</c>
+    /// (<see cref="TxReceipt.ErrorMessage"/> names the error, e.g. <c>Balances.InsufficientBalance</c>).
     /// </summary>
     public async ValueTask<TxReceipt?> GetReceiptAsync(TxHash hash, CancellationToken ct = default) => await FindExtrinsicAsync(hash, 50, ct);
 
@@ -116,13 +121,43 @@ public sealed class PolkadotRpcClient : IChainClient
         {
             byte[] blockHash = await GetBlockHashAsync(n, ct);
             var block = await _rpc.CallAsync("chain_getBlock", [HexUtil.Encode(blockHash)], ct);
+            uint index = 0;
             foreach (var ext in block.GetProperty("block").GetProperty("extrinsics").EnumerateArray())
             {
                 if (Extrinsic.Hash(HexUtil.Decode(ext.GetString()!)) == hash)
-                    return new TxReceipt(hash, n, true);
+                {
+                    var metadata = await GetMetadataAsync(blockHash, ct);
+                    var events = await GetEventsAsync(blockHash, ct);
+                    var outcome = SubstrateEvents.Outcome(metadata, events, index);
+                    return new TxReceipt(hash, n, outcome?.Success ?? true, 0, outcome?.Error);
+                }
+                index++;
             }
         }
         return null;
+    }
+
+    /// <summary>All events emitted in block <paramref name="blockHash"/> (latest block when null).</summary>
+    public async ValueTask<IReadOnlyList<SubstrateEvent>> GetEventsAsync(byte[]? blockHash = null, CancellationToken ct = default)
+    {
+        var metadata = await GetMetadataAsync(blockHash, ct);
+        object?[] args = blockHash is null ? [HexUtil.Encode(SubstrateEvents.StorageKey)] : [HexUtil.Encode(SubstrateEvents.StorageKey), HexUtil.Encode(blockHash)];
+        var r = await _rpc.CallAsync("state_getStorage", args, ct);
+        return r.ValueKind == JsonValueKind.Null ? [] : SubstrateEvents.Decode(metadata, HexUtil.Decode(r.GetString()!));
+    }
+
+    /// <summary>Events of extrinsic <paramref name="index"/> in block <paramref name="blockHash"/>.</summary>
+    public async ValueTask<IReadOnlyList<SubstrateEvent>> GetExtrinsicEventsAsync(byte[] blockHash, uint index, CancellationToken ct = default) =>
+        [.. (await GetEventsAsync(blockHash, ct)).Where(e => e.ExtrinsicIndex == index)];
+
+    /// <summary>Reads and decodes any storage item, e.g. <c>("Timestamp", "Now")</c>; null when the value is absent.</summary>
+    public async ValueTask<object?> GetStorageAsync(string pallet, string entry, byte[][]? encodedKeys = null, byte[]? blockHash = null, CancellationToken ct = default)
+    {
+        var metadata = await GetMetadataAsync(blockHash, ct);
+        byte[] key = metadata.StorageKey(pallet, entry, encodedKeys ?? []);
+        object?[] args = blockHash is null ? [HexUtil.Encode(key)] : [HexUtil.Encode(key), HexUtil.Encode(blockHash)];
+        var r = await _rpc.CallAsync("state_getStorage", args, ct);
+        return r.ValueKind == JsonValueKind.Null ? null : ScaleDecoder.Decode(metadata, metadata.GetStorageEntry(pallet, entry).ValueType, HexUtil.Decode(r.GetString()!));
     }
 
     /// <summary>Collects everything needed to sign an extrinsic for <paramref name="signer"/>.</summary>

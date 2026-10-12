@@ -238,8 +238,24 @@ TxHash r = await rpc.SubmitCallAsync(root, call);
 Indeks pallet dan call serta daftar signed extension diambil dari metadata runtime live (V14/V15), sehingga transfer
 tetap berfungsi setelah upgrade runtime. Extrinsic bersifat mortal (64 blok) secara default. Extension yang membawa
 data yang tidak bisa diisi Crypto.Net melempar `NotSupportedException` alih-alih menghasilkan extrinsic tidak valid.
-`GetReceiptAsync` melaporkan *inklusi* (ditemukan di salah satu dari 50 blok terakhir); keberhasilan dispatch
-memerlukan pembacaan `System.Events` — periksa explorer seperti Subscan.
+`GetReceiptAsync` mencari di 50 blok terakhir. Method ini men-decode `System.Events` pada blok tersebut, sehingga
+`IsSuccess` mencerminkan hasil dispatch, dan `ErrorMessage` menyebut error-nya (`Balances.InsufficientBalance`,
+`Token.Frozen`, ...).
+
+### Event dan storage
+
+```csharp
+var events = await client.GetEventsAsync(blockHash);              // semua event dalam blok
+foreach (var e in events.Where(e => e.Is("Balances", "Transfer")))
+    Console.WriteLine($"{e["from"]} -> {e["to"]}: {e["amount"]}");
+
+object? now = await client.GetStorageAsync("Timestamp", "Now");   // item storage apa pun, di-decode dari metadata
+byte[] key = metadata.StorageKey("System", "Account", accountId); // hasher twox/blake2 diterapkan per key
+```
+
+`RuntimeMetadata` menyimpan type registry lengkap, entri storage, serta enum event/error tiap pallet.
+`ScaleDecoder.Decode(metadata, typeId, bytes)` mengubah nilai SCALE apa pun menjadi dictionary, `ScaleVariant`, array
+dan angka. Metadata diambil per blok dan di-cache per spec version, sehingga blok lama di-decode dengan runtime-nya sendiri.
 
 ---
 

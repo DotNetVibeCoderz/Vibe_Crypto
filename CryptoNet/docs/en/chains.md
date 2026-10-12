@@ -238,8 +238,23 @@ TxHash r = await rpc.SubmitCallAsync(root, call);
 Pallet and call indices and the signed-extension list come from the live runtime metadata (V14/V15), so
 transfers keep working across runtime upgrades. Extrinsics are mortal (64 blocks) by default. Extensions that carry
 data Crypto.Net cannot fill raise `NotSupportedException` instead of producing an invalid extrinsic.
-`GetReceiptAsync` reports *inclusion* (found in one of the last 50 blocks); dispatch success requires reading
-`System.Events` — check an explorer such as Subscan.
+`GetReceiptAsync` searches the last 50 blocks. It decodes `System.Events` at that block, so `IsSuccess` reflects
+dispatch, and `ErrorMessage` names the error (`Balances.InsufficientBalance`, `Token.Frozen`, ...).
+
+### Events and storage
+
+```csharp
+var events = await client.GetEventsAsync(blockHash);              // every event in the block
+foreach (var e in events.Where(e => e.Is("Balances", "Transfer")))
+    Console.WriteLine($"{e["from"]} -> {e["to"]}: {e["amount"]}");
+
+object? now = await client.GetStorageAsync("Timestamp", "Now");   // any storage item, decoded from metadata
+byte[] key = metadata.StorageKey("System", "Account", accountId); // twox/blake2 hashers applied per key
+```
+
+`RuntimeMetadata` keeps the full type registry, storage entries and each pallet's event/error enums.
+`ScaleDecoder.Decode(metadata, typeId, bytes)` turns any SCALE value into dictionaries, `ScaleVariant`s, arrays and
+numbers. Metadata is fetched per block and cached per spec version, so historical blocks decode with their own runtime.
 
 ---
 
