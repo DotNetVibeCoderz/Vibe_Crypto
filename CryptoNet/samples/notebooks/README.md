@@ -19,6 +19,7 @@ Notebook memasang `Crypto.Net.Extensions` dari nuget.org, membaca jaringan publi
 | 07 | [Indexing events](07-indexer.en.ipynb) | [Mengindeks event](07-indexer.id.ipynb) | Event decoding, EvmLogIndexer → SQLite (EF Core), LINQ, BlockCrawler on Asset Hub |
 | 08 | [Rust vs managed](08-benchmarks.en.ipynb) | [Rust vs managed](08-benchmarks.id.ipynb) | CryptoBenchmark, UseBackend timing, parity, why SHA-2 stays on the platform |
 | 09 | [Security practices](09-security.en.ipynb) | [Praktik keamanan](09-security.id.ipynb) | SecureBuffer, keystores, exact amounts, checksums, replay protection, hostile input, key redaction |
+| 10 | [NEAR, Aptos, Sui, TON, Cardano](10-more-chains.en.ipynb) | [NEAR, Aptos, Sui, TON, Cardano](10-more-chains.id.ipynb) | Catalog derivation, Borsh/BCS/cells/CBOR signing, Aptos simulation, Sui dry run, TON fee emulation, Cardano UTxO selection |
 
 ## Run / Menjalankan
 

@@ -83,8 +83,9 @@ All notable changes to Crypto.Net. Format: [Keep a Changelog](https://keepachang
   - Snippets and local-node launcher.
   - EN/ID localization.
   - Tested in a real VS Code in CI; the `.vsix` is attached to releases.
-- Notebooks 07 (indexer to SQLite), 08 (Rust vs managed benchmarks) and 09 (security practices) in EN/ID. All
-  nine notebooks now target 1.2.0 and were executed against the packed packages.
+- Notebooks 07 (indexer to SQLite), 08 (Rust vs managed benchmarks), 09 (security practices) and 10 (NEAR, Aptos,
+  Sui, TON and Cardano, with live dry runs) in EN/ID. All ten notebooks target 1.2.0 and were executed against the
+  packed packages.
 - `MockRpcError` in Crypto.Net.Testing lets an `OnRpc` factory answer with an error.
 
 ### Changed

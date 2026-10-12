@@ -923,6 +923,115 @@ $"logged as: {endpoint}"
 # ----------------------------------------------------------------------------------------------- writer
 
 
+# ============================================================================== 10 more chains
+NOTEBOOKS.append(("10-more-chains", {"en": "Crypto.Net · 10 — NEAR, Aptos, Sui, TON and Cardano", "id": "Crypto.Net · 10 — NEAR, Aptos, Sui, TON dan Cardano"}, [
+    md("One recovery phrase, five more chains. Each section derives the account its wallets show, reads the live "
+       "network, signs offline and asks a real node to dry-run the result.",
+       "Satu frasa pemulihan, lima chain lagi. Setiap bagian menurunkan akun yang ditampilkan wallet-nya, membaca jaringan "
+       "live, menandatangani secara offline, lalu meminta node sungguhan melakukan dry run atas hasilnya."),
+    code(INSTALL),
+    code(r'''
+using Crypto.Net.Core;
+using Crypto.Net.Wallet;
+using Crypto.Net.Extensions;
+using Crypto.Net.Near;
+using Crypto.Net.Aptos;
+using Crypto.Net.Sui;
+using Crypto.Net.Ton;
+using Crypto.Net.Cardano;
+
+const string TestPhrase = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+var wallet = HdWallet.FromMnemonic(TestPhrase);
+new[] { "near-testnet", "aptos-testnet", "sui-testnet", "ton-testnet", "cardano-preprod" }
+    .Select(key => ChainCatalog.Get(key))
+    .Select(e => { var a = ChainCatalog.DeriveAccount(wallet, e); var r = new { Network = e.Name, Address = a.Address.Value }; (a as IDisposable)?.Dispose(); return r; })
+'''),
+    md("## NEAR\n\nAccounts are implicit (the hex public key) or named (`alice.testnet`). Transactions are Borsh-encoded "
+       "and signed as ed25519(sha256(bytes)).",
+       "## NEAR\n\nAkun bisa implicit (public key dalam hex) atau bernama (`alice.testnet`). Transaksi di-encode dengan "
+       "Borsh dan ditandatangani sebagai ed25519(sha256(bytes))."),
+    code(r'''
+var near = wallet.GetNearAccount(0, NearChain.Testnet);
+var nearRpc = new NearRpcClient(NearChain.Testnet);
+var meta = await nearRpc.ViewFunctionAsync("wrap.testnet", "ft_metadata");
+var nearTx = new NearTransaction
+{
+    SignerId = near.AccountId, PublicKey = near.PublicKey.ToArray(), Nonce = 1, ReceiverId = "wrap.testnet",
+    BlockHash = Crypto.Net.Native.CryptoNative.Base58Decode(await nearRpc.GetLatestBlockHashAsync()),
+    Actions = [NearAction.FunctionCall.Json("ft_transfer", new { receiver_id = "bob.testnet", amount = "1" }, deposit: 1)],
+};
+Console.WriteLine($"wNEAR symbol {meta.GetProperty("symbol")}, block {await nearRpc.GetBlockNumberAsync():N0}");
+Console.WriteLine($"signed {nearTx.Sign(near).Length} bytes, hash {nearTx.HashBase58}");
+'''),
+    md("## Aptos\n\nA BCS `RawTransaction` calling `0x1::aptos_account::transfer`. Simulation runs the Move VM without a "
+       "signature; this key holds no APT, so the VM reports the missing balance, which proves it decoded the transaction.",
+       "## Aptos\n\n`RawTransaction` BCS yang memanggil `0x1::aptos_account::transfer`. Simulasi menjalankan Move VM tanpa "
+       "tanda tangan; kunci ini tidak memiliki APT, jadi VM melaporkan saldo yang kurang, yang membuktikan transaksinya "
+       "berhasil di-decode."),
+    code(r'''
+var apt = wallet.GetAptosAccount(0, AptosChain.Testnet);
+var aptos = new AptosRestClient(AptosChain.Testnet);
+var aptTx = await aptos.BuildTransactionAsync(apt.Address.Value, AptosEntryFunction.Transfer("0x1", 1));
+var sim = await aptos.SimulateAsync(aptTx, apt.PublicKey);
+Console.WriteLine($"ledger {(await aptos.GetLedgerInfoAsync()).BlockHeight:N0}, sequence {aptTx.SequenceNumber}");
+Console.WriteLine($"simulation: {sim.VmStatus}, gas {sim.GasUsed}");
+Console.WriteLine($"signed hash {AptosRawTransaction.HashOf(aptTx.Sign(apt))}");
+'''),
+    md("## Sui\n\nA programmable transaction splits the gas coin and transfers the piece. To dry-run with real coins we "
+       "borrow a funded address from the chain; nothing is signed for it.",
+       "## Sui\n\nProgrammable transaction memecah gas coin lalu mentransfer potongannya. Untuk dry run dengan coin "
+       "sungguhan kita meminjam alamat yang memiliki saldo dari chain; tidak ada yang ditandatangani untuk alamat itu."),
+    code(r'''
+var sui = wallet.GetSuiAccount(0, SuiChain.Testnet);
+var suiClient = new SuiGraphQlClient(SuiChain.Testnet);
+var found = await suiClient.QueryAsync("{ objects(first: 1, filter: { type: \"0x2::coin::Coin<0x2::sui::SUI>\" }) { nodes { owner { ... on AddressOwner { address { address } } } } } }");
+string funded = found.GetProperty("objects").GetProperty("nodes")[0].GetProperty("owner").GetProperty("address").GetProperty("address").GetString()!;
+var data = await suiClient.BuildAsync(new SuiTransactionBuilder(funded).TransferSui(sui.Address.Value, 1));
+var effects = await suiClient.SimulateAsync(data.Serialize());
+Console.WriteLine($"dry run {(effects.Success ? "succeeded" : effects.Error)}, gas {effects.NetGas:N0} MIST");
+Console.WriteLine($"node digest {effects.Digest} = ours {data.Digest}: {effects.Digest == data.Digest}");
+'''),
+    md("## TON\n\nTON wallets are contracts: the address is the hash of the wallet's code and data. W5 is the default; the "
+       "first transfer deploys it. TON Center emulates the wallet code on our signed body to price it.",
+       "## TON\n\nWallet TON adalah kontrak: alamatnya adalah hash dari kode dan data wallet. W5 adalah default; transfer "
+       "pertama sekaligus men-deploy-nya. TON Center mengemulasikan kode wallet atas body yang kita tanda tangani untuk "
+       "menghitung biayanya."),
+    code(r'''
+var ton = wallet.GetTonAccount(0, TonChain.Testnet);
+var center = new TonCenterClient(TonChain.Testnet);
+var state = await center.GetAccountStateAsync(ton.Address.Value);
+uint seqno = await center.GetSeqnoAsync(ton.Address.Value);
+var body = ton.CreateTransferBody(seqno, [TonMessage.WithComment(ton.WalletAddress, 1, "Crypto.Net notebook")]);
+var fees = await center.EstimateFeeAsync(ton, body, includeStateInit: !state.IsActive);
+Console.WriteLine($"{ton.Address.Value} is {state.State}, seqno {seqno}");
+Console.WriteLine($"estimated fees {TonUnits.Nano(fees.Total)} TON; message hash {Convert.ToHexStringLower(TonMessage.NormalizedHash(ton.CreateTransfer(seqno, [])))}");
+'''),
+    md("## Cardano\n\nCardano keys come from the mnemonic entropy (Icarus) through BIP32-Ed25519. The test phrase holds test "
+       "ADA on preprod, so we can select real UTxOs, return change and pay the exact fee, then stop before submitting.",
+       "## Cardano\n\nKunci Cardano berasal dari entropi mnemonic (Icarus) lewat BIP32-Ed25519. Frasa uji ini memiliki "
+       "test ADA di preprod, jadi kita bisa memilih UTxO sungguhan, mengembalikan kembalian dan membayar fee yang tepat, "
+       "lalu berhenti sebelum submit."),
+    code(r'''
+var ada = wallet.GetCardanoAccount(0, 0, CardanoChain.Preprod);
+var koios = new KoiosClient(CardanoChain.Preprod);
+Console.WriteLine($"balance {await koios.GetBalanceAsync(ada.Address)} tADA");
+try
+{
+    var adaTx = await koios.BuildTransferAsync(ada, [new CardanoOutput(ada.EnterpriseAddress, 2_000_000)], message: "Crypto.Net notebook");
+    byte[] signedAda = adaTx.Sign(ada);
+    Console.WriteLine($"{adaTx.Inputs.Count} input(s), {adaTx.Outputs.Count} outputs, fee {adaTx.Fee:N0} lovelace, {signedAda.Length} bytes");
+    Console.WriteLine($"tx id {adaTx.Id}");
+}
+catch (InvalidOperationException e) { Console.WriteLine(e.Message); }
+'''),
+    code(r'''
+near.Dispose(); apt.Dispose(); sui.Dispose(); ton.Dispose(); ada.Dispose();
+nearRpc.Dispose(); aptos.Dispose(); suiClient.Dispose(); center.Dispose(); koios.Dispose(); wallet.Dispose();
+"disposed"
+'''),
+]))
+
+
 def lines(text):
     parts = text.split("\n")
     return [p + "\n" for p in parts[:-1]] + [parts[-1]]
